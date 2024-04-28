@@ -29,6 +29,7 @@ Route::resource('jurusan', JurusanController::class);
 
 Route::resource('mapel', MapelController::class);
 Route::post('importmapel', [MapelController::class,'import'])->name('importmapel');
+Route::get('exporttmapel', [MapelController::class,'export'])->name('exportportmapel');
 
 Route::resource('siswa', SiswaController::class);
 Route::get('/Addpegawai', [PegawaiController::class, 'Addpegawai']);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\MapelExport;
 use App\Models\mapel;
 use App\Imports\mapelImport;
 use Illuminate\Http\Request;
@@ -24,20 +25,14 @@ class MapelController extends Controller
             'file' => 'required|mimes:xlsx,xls,csv|max:2048',
         ]);
         $file=$request->file('file')->store('public/import');
-        // $file = $request->file('file');
-
-        // $import= new mapelImport;
-        // $import->import($file);
         Excel::import(new mapelImport, $file);
-
-        // if ($import->failures()) {
-        //     return back()->withFailures($import->failures());
-        // } else {
-        //     return redirect('/mapel')->with('success','Data berhasil di import');
-        // }
         return redirect('/mapel')->with('success','Data berhasil di import');
 
     }
+     public function export(){
+        return Excel::download(new MapelExport, 'mapel.xlsx');
+
+     }
 
     /**
      * Show the form for creating a new resource.

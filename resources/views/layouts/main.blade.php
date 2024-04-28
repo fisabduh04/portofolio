@@ -1,848 +1,218 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-    <title>Admin Dashboard</title>
-    <link rel="shortcut icon" href="assets/img/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700&display=swap"rel="stylesheet">
-    <link rel="stylesheet" href="assets/plugins/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="assets/plugins/feather/feather.css">
-    <link rel="stylesheet" href="assets/plugins/icons/flags/flags.css">
-    <link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
-    <link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
+    @include('layouts.header')
 
-<body>
 
-    <div class="main-wrapper">
+    <body x-data="main" class="relative overflow-x-hidden font-nunito text-sm font-normal antialiased" :class="[ $store.app.sidebar ? 'toggle-sidebar' : '', $store.app.theme === 'dark' || $store.app.isDarkMode ?  'dark' : '', $store.app.menu, $store.app.layout,$store.app.rtlClass]">
+        <!-- sidebar menu overlay -->
+        <div x-cloak="" class="fixed inset-0 z-50 bg-[black]/60 lg:hidden" :class="{'hidden' : !$store.app.sidebar}" @click="$store.app.toggleSidebar()"></div>
 
-        <div class="header">
-
-            <div class="header-left">
-                <a href="index.html" class="logo">
-                    <img src="assets/img/logo.png" alt="Logo">
-                </a>
-                <a href="index.html" class="logo logo-small">
-                    <img src="assets/img/logo-small.png" alt="Logo" width="30" height="30">
-                </a>
-            </div>
-            <div class="menu-toggle">
-                <a href="javascript:void(0);" id="toggle_btn">
-                    <i class="fas fa-bars"></i>
-                </a>
-            </div>
-
-            <div class="top-nav-search">
-                <form>
-                    <input type="text" class="form-control" placeholder="Search here">
-                    <button class="btn" type="submit"><i class="fas fa-search"></i></button>
-                </form>
-            </div>
-            <a class="mobile_btn" id="mobile_btn">
-                <i class="fas fa-bars"></i>
-            </a>
-
-            <ul class="nav user-menu">
-                <li class="nav-item dropdown noti-dropdown language-drop me-2">
-                    <a href="#" class="dropdown-toggle nav-link header-nav-list" data-bs-toggle="dropdown">
-                        <img src="assets/img/icons/header-icon-01.svg" alt="">
-                    </a>
-                    <div class="dropdown-menu ">
-                        <div class="noti-content">
-                            <div>
-                                <a class="dropdown-item" href="javascript:;"><i
-                                        class="flag flag-lr me-2"></i>English</a>
-                                <a class="dropdown-item" href="javascript:;"><i
-                                        class="flag flag-bl me-2"></i>Francais</a>
-                                <a class="dropdown-item" href="javascript:;"><i class="flag flag-cn me-2"></i>Turkce</a>
-                            </div>
-                        </div>
-                    </div>
-                </li>
-
-                <li class="nav-item dropdown noti-dropdown me-2">
-                    <a href="#" class="dropdown-toggle nav-link header-nav-list" data-bs-toggle="dropdown">
-                        <img src="assets/img/icons/header-icon-05.svg" alt="">
-                    </a>
-                    <div class="dropdown-menu notifications">
-                        <div class="topnav-dropdown-header">
-                            <span class="notification-title">Notifications</span>
-                            <a href="javascript:void(0)" class="clear-noti"> Clear All </a>
-                        </div>
-                        <div class="noti-content">
-                            <ul class="notification-list">
-                                <li class="notification-message">
-                                    <a href="#">
-                                        <div class="media d-flex">
-                                            <span class="avatar avatar-sm flex-shrink-0">
-                                                <img class="avatar-img rounded-circle" alt="User Image"
-                                                    src="assets/img/profiles/avatar-02.jpg">
-                                            </span>
-                                            <div class="media-body flex-grow-1">
-                                                <p class="noti-details"><span class="noti-title">Carlson Tech</span> has
-                                                    approved <span class="noti-title">your estimate</span></p>
-                                                <p class="noti-time"><span class="notification-time">4 mins ago</span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li class="notification-message">
-                                    <a href="#">
-                                        <div class="media d-flex">
-                                            <span class="avatar avatar-sm flex-shrink-0">
-                                                <img class="avatar-img rounded-circle" alt="User Image"
-                                                    src="assets/img/profiles/avatar-11.jpg">
-                                            </span>
-                                            <div class="media-body flex-grow-1">
-                                                <p class="noti-details"><span class="noti-title">International Software
-                                                        Inc</span> has sent you a invoice in the amount of <span
-                                                        class="noti-title">$218</span></p>
-                                                <p class="noti-time"><span class="notification-time">6 mins ago</span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li class="notification-message">
-                                    <a href="#">
-                                        <div class="media d-flex">
-                                            <span class="avatar avatar-sm flex-shrink-0">
-                                                <img class="avatar-img rounded-circle" alt="User Image"
-                                                    src="assets/img/profiles/avatar-17.jpg">
-                                            </span>
-                                            <div class="media-body flex-grow-1">
-                                                <p class="noti-details"><span class="noti-title">John Hendry</span> sent
-                                                    a cancellation request <span class="noti-title">Apple iPhone
-                                                        XR</span></p>
-                                                <p class="noti-time"><span class="notification-time">8 mins ago</span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li class="notification-message">
-                                    <a href="#">
-                                        <div class="media d-flex">
-                                            <span class="avatar avatar-sm flex-shrink-0">
-                                                <img class="avatar-img rounded-circle" alt="User Image"
-                                                    src="assets/img/profiles/avatar-13.jpg">
-                                            </span>
-                                            <div class="media-body flex-grow-1">
-                                                <p class="noti-details"><span class="noti-title">Mercury Software
-                                                        Inc</span> added a new product <span class="noti-title">Apple
-                                                        MacBook Pro</span></p>
-                                                <p class="noti-time"><span class="notification-time">12 mins ago</span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="topnav-dropdown-footer">
-                            <a href="#">View all Notifications</a>
-                        </div>
-                    </div>
-                </li>
-
-                <li class="nav-item zoom-screen me-2">
-                    <a href="#" class="nav-link header-nav-list win-maximize">
-                        <img src="assets/img/icons/header-icon-04.svg" alt="">
-                    </a>
-                </li>
-
-                <li class="nav-item dropdown has-arrow new-user-menus">
-                    <a href="#" class="dropdown-toggle nav-link" data-bs-toggle="dropdown">
-                        <span class="user-img">
-                            <img class="rounded-circle" src="assets/img/profiles/avatar-01.jpg" width="31"
-                                alt="Soeng Souy">
-                            <div class="user-text">
-                                <h6>Soeng Souy</h6>
-                                <p class="text-muted mb-0">Administrator</p>
-                            </div>
-                        </span>
-                    </a>
-                    <div class="dropdown-menu">
-                        <div class="user-header">
-                            <div class="avatar avatar-sm">
-                                <img src="assets/img/profiles/avatar-01.jpg" alt="User Image"
-                                    class="avatar-img rounded-circle">
-                            </div>
-                            <div class="user-text">
-                                <h6>Soeng Souy</h6>
-                                <p class="text-muted mb-0">Administrator</p>
-                            </div>
-                        </div>
-                        <a class="dropdown-item" href="profile.html">My Profile</a>
-                        <a class="dropdown-item" href="inbox.html">Inbox</a>
-                        <a class="dropdown-item" href="login.html">Logout</a>
-                    </div>
-                </li>
-
-            </ul>
-
+        <!-- screen loader -->
+        <div class="screen_loader animate__animated fixed inset-0 z-[60] grid place-content-center bg-[#fafafa] dark:bg-[#060818]">
+            <svg width="64" height="64" viewbox="0 0 135 135" xmlns="http://www.w3.org/2000/svg" fill="#4361ee">
+                <path d="M67.447 58c5.523 0 10-4.477 10-10s-4.477-10-10-10-10 4.477-10 10 4.477 10 10 10zm9.448 9.447c0 5.523 4.477 10 10 10 5.522 0 10-4.477 10-10s-4.478-10-10-10c-5.523 0-10 4.477-10 10zm-9.448 9.448c-5.523 0-10 4.477-10 10 0 5.522 4.477 10 10 10s10-4.478 10-10c0-5.523-4.477-10-10-10zM58 67.447c0-5.523-4.477-10-10-10s-10 4.477-10 10 4.477 10 10 10 10-4.477 10-10z">
+                    <animatetransform attributename="transform" type="rotate" from="0 67 67" to="-360 67 67" dur="2.5s" repeatcount="indefinite"></animatetransform>
+                </path>
+                <path d="M28.19 40.31c6.627 0 12-5.374 12-12 0-6.628-5.373-12-12-12-6.628 0-12 5.372-12 12 0 6.626 5.372 12 12 12zm30.72-19.825c4.686 4.687 12.284 4.687 16.97 0 4.686-4.686 4.686-12.284 0-16.97-4.686-4.687-12.284-4.687-16.97 0-4.687 4.686-4.687 12.284 0 16.97zm35.74 7.705c0 6.627 5.37 12 12 12 6.626 0 12-5.373 12-12 0-6.628-5.374-12-12-12-6.63 0-12 5.372-12 12zm19.822 30.72c-4.686 4.686-4.686 12.284 0 16.97 4.687 4.686 12.285 4.686 16.97 0 4.687-4.686 4.687-12.284 0-16.97-4.685-4.687-12.283-4.687-16.97 0zm-7.704 35.74c-6.627 0-12 5.37-12 12 0 6.626 5.373 12 12 12s12-5.374 12-12c0-6.63-5.373-12-12-12zm-30.72 19.822c-4.686-4.686-12.284-4.686-16.97 0-4.686 4.687-4.686 12.285 0 16.97 4.686 4.687 12.284 4.687 16.97 0 4.687-4.685 4.687-12.283 0-16.97zm-35.74-7.704c0-6.627-5.372-12-12-12-6.626 0-12 5.373-12 12s5.374 12 12 12c6.628 0 12-5.373 12-12zm-19.823-30.72c4.687-4.686 4.687-12.284 0-16.97-4.686-4.686-12.284-4.686-16.97 0-4.687 4.686-4.687 12.284 0 16.97 4.686 4.687 12.284 4.687 16.97 0z">
+                    <animatetransform attributename="transform" type="rotate" from="0 67 67" to="360 67 67" dur="8s" repeatcount="indefinite"></animatetransform>
+                </path>
+            </svg>
         </div>
 
+        <!-- scroll to top button -->
+        <div class="fixed bottom-6 z-50 ltr:right-6 rtl:left-6" x-data="scrollToTop">
+            <template x-if="showTopButton">
+                <button type="button" class="btn btn-outline-primary animate-pulse rounded-full bg-[#fafafa] p-2 dark:bg-[#060818] dark:hover:bg-primary" @click="goToTop">
+                    <svg width="24" height="24" class="h-4 w-4" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd" d="M12 20.75C12.4142 20.75 12.75 20.4142 12.75 20L12.75 10.75L11.25 10.75L11.25 20C11.25 20.4142 11.5858 20.75 12 20.75Z" fill="currentColor"></path>
+                        <path d="M6.00002 10.75C5.69667 10.75 5.4232 10.5673 5.30711 10.287C5.19103 10.0068 5.25519 9.68417 5.46969 9.46967L11.4697 3.46967C11.6103 3.32902 11.8011 3.25 12 3.25C12.1989 3.25 12.3897 3.32902 12.5304 3.46967L18.5304 9.46967C18.7449 9.68417 18.809 10.0068 18.6929 10.287C18.5768 10.5673 18.3034 10.75 18 10.75L6.00002 10.75Z" fill="currentColor"></path>
+                    </svg>
+                </button>
+            </template>
+        </div>
 
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-inner slimscroll">
-                <div id="sidebar-menu" class="sidebar-menu">
-                    <ul>
-                        <li class="menu-title">
-                            <span>Main Menu</span>
-                        </li>
-                        <li class="submenu active">
-                            <a href="#"><i class="feather-grid"></i> <span> Dashboard</span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="index.html" class="active">Admin Dashboard</a></li>
-                                <li><a href="teacher-dashboard.html">Teacher Dashboard</a></li>
-                                <li><a href="student-dashboard.html">Student Dashboard</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i class="fas fa-graduation-cap"></i> <span> Students</span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="students.html">Student List</a></li>
-                                <li><a href="student-details.html">Student View</a></li>
-                                <li><a href="add-student.html">Student Add</a></li>
-                                <li><a href="edit-student.html">Student Edit</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i class="fas fa-chalkboard-teacher"></i> <span> Teachers</span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="teachers.html">Teacher List</a></li>
-                                <li><a href="teacher-details.html">Teacher View</a></li>
-                                <li><a href="add-teacher.html">Teacher Add</a></li>
-                                <li><a href="edit-teacher.html">Teacher Edit</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i class="fas fa-building"></i> <span> Departments</span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="departments.html">Department List</a></li>
-                                <li><a href="add-department.html">Department Add</a></li>
-                                <li><a href="edit-department.html">Department Edit</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i class="fas fa-book-reader"></i> <span> Subjects</span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="subjects.html">Subject List</a></li>
-                                <li><a href="add-subject.html">Subject Add</a></li>
-                                <li><a href="edit-subject.html">Subject Edit</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i class="fas fa-clipboard"></i> <span> Invoices</span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="invoices.html">Invoices List</a></li>
-                                <li><a href="invoice-grid.html">Invoices Grid</a></li>
-                                <li><a href="add-invoice.html">Add Invoices</a></li>
-                                <li><a href="edit-invoice.html">Edit Invoices</a></li>
-                                <li><a href="view-invoice.html">Invoices Details</a></li>
-                                <li><a href="invoices-settings.html">Invoices Settings</a></li>
-                            </ul>
-                        </li>
-                        <li class="menu-title">
-                            <span>Management</span>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i class="fas fa-file-invoice-dollar"></i> <span> Accounts</span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="fees-collections.html">Fees Collection</a></li>
-                                <li><a href="expenses.html">Expenses</a></li>
-                                <li><a href="salary.html">Salary</a></li>
-                                <li><a href="add-fees-collection.html">Add Fees</a></li>
-                                <li><a href="add-expenses.html">Add Expenses</a></li>
-                                <li><a href="add-salary.html">Add Salary</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <a href="holiday.html"><i class="fas fa-holly-berry"></i> <span>Holiday</span></a>
-                        </li>
-                        <li>
-                            <a href="fees.html"><i class="fas fa-comment-dollar"></i> <span>Fees</span></a>
-                        </li>
-                        <li>
-                            <a href="exam.html"><i class="fas fa-clipboard-list"></i> <span>Exam list</span></a>
-                        </li>
-                        <li>
-                            <a href="event.html"><i class="fas fa-calendar-day"></i> <span>Events</span></a>
-                        </li>
-                        <li>
-                            <a href="time-table.html"><i class="fas fa-table"></i> <span>Time Table</span></a>
-                        </li>
-                        <li>
-                            <a href="library.html"><i class="fas fa-book"></i> <span>Library</span></a>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i class="fa fa-newspaper"></i> <span> Blogs</span>
-                                <span class="menu-arrow"></span>
-                            </a>
-                            <ul>
-                                <li><a href="blog.html">All Blogs</a></li>
-                                <li><a href="add-blog.html">Add Blog</a></li>
-                                <li><a href="edit-blog.html">Edit Blog</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <a href="settings.html"><i class="fas fa-cog"></i> <span>Settings</span></a>
-                        </li>
-                        <li class="menu-title">
-                            <span>Pages</span>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i class="fas fa-shield-alt"></i> <span> Authentication </span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="login.html">Login</a></li>
-                                <li><a href="register.html">Register</a></li>
-                                <li><a href="forgot-password.html">Forgot Password</a></li>
-                                <li><a href="error-404.html">Error Page</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <a href="blank-page.html"><i class="fas fa-file"></i> <span>Blank Page</span></a>
-                        </li>
-                        <li class="menu-title">
-                            <span>Others</span>
-                        </li>
-                        <li>
-                            <a href="sports.html"><i class="fas fa-baseball-ball"></i> <span>Sports</span></a>
-                        </li>
-                        <li>
-                            <a href="hostel.html"><i class="fas fa-hotel"></i> <span>Hostel</span></a>
-                        </li>
-                        <li>
-                            <a href="transport.html"><i class="fas fa-bus"></i> <span>Transport</span></a>
-                        </li>
-                        <li class="menu-title">
-                            <span>UI Interface</span>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i class="fab fa-get-pocket"></i> <span>Base UI </span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="alerts.html">Alerts</a></li>
-                                <li><a href="accordions.html">Accordions</a></li>
-                                <li><a href="avatar.html">Avatar</a></li>
-                                <li><a href="badges.html">Badges</a></li>
-                                <li><a href="buttons.html">Buttons</a></li>
-                                <li><a href="buttongroup.html">Button Group</a></li>
-                                <li><a href="breadcrumbs.html">Breadcrumb</a></li>
-                                <li><a href="cards.html">Cards</a></li>
-                                <li><a href="carousel.html">Carousel</a></li>
-                                <li><a href="dropdowns.html">Dropdowns</a></li>
-                                <li><a href="grid.html">Grid</a></li>
-                                <li><a href="images.html">Images</a></li>
-                                <li><a href="lightbox.html">Lightbox</a></li>
-                                <li><a href="media.html">Media</a></li>
-                                <li><a href="modal.html">Modals</a></li>
-                                <li><a href="offcanvas.html">Offcanvas</a></li>
-                                <li><a href="pagination.html">Pagination</a></li>
-                                <li><a href="popover.html">Popover</a></li>
-                                <li><a href="progress.html">Progress Bars</a></li>
-                                <li><a href="placeholders.html">Placeholders</a></li>
-                                <li><a href="rangeslider.html">Range Slider</a></li>
-                                <li><a href="spinners.html">Spinner</a></li>
-                                <li><a href="sweetalerts.html">Sweet Alerts</a></li>
-                                <li><a href="tab.html">Tabs</a></li>
-                                <li><a href="toastr.html">Toasts</a></li>
-                                <li><a href="tooltip.html">Tooltip</a></li>
-                                <li><a href="typography.html">Typography</a></li>
-                                <li><a href="video.html">Video</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i data-feather="box"></i> <span>Elements </span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="ribbon.html">Ribbon</a></li>
-                                <li><a href="clipboard.html">Clipboard</a></li>
-                                <li><a href="drag-drop.html">Drag & Drop</a></li>
-                                <li><a href="rating.html">Rating</a></li>
-                                <li><a href="text-editor.html">Text Editor</a></li>
-                                <li><a href="counter.html">Counter</a></li>
-                                <li><a href="scrollbar.html">Scrollbar</a></li>
-                                <li><a href="notification.html">Notification</a></li>
-                                <li><a href="stickynote.html">Sticky Note</a></li>
-                                <li><a href="timeline.html">Timeline</a></li>
-                                <li><a href="horizontal-timeline.html">Horizontal Timeline</a></li>
-                                <li><a href="form-wizard.html">Form Wizard</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i data-feather="bar-chart-2"></i> <span> Charts </span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="chart-apex.html">Apex Charts</a></li>
-                                <li><a href="chart-js.html">Chart Js</a></li>
-                                <li><a href="chart-morris.html">Morris Charts</a></li>
-                                <li><a href="chart-flot.html">Flot Charts</a></li>
-                                <li><a href="chart-peity.html">Peity Charts</a></li>
-                                <li><a href="chart-c3.html">C3 Charts</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i data-feather="award"></i> <span> Icons </span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="icon-fontawesome.html">Fontawesome Icons</a></li>
-                                <li><a href="icon-feather.html">Feather Icons</a></li>
-                                <li><a href="icon-ionic.html">Ionic Icons</a></li>
-                                <li><a href="icon-material.html">Material Icons</a></li>
-                                <li><a href="icon-pe7.html">Pe7 Icons</a></li>
-                                <li><a href="icon-simpleline.html">Simpleline Icons</a></li>
-                                <li><a href="icon-themify.html">Themify Icons</a></li>
-                                <li><a href="icon-weather.html">Weather Icons</a></li>
-                                <li><a href="icon-typicon.html">Typicon Icons</a></li>
-                                <li><a href="icon-flag.html">Flag Icons</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i class="fas fa-columns"></i> <span> Forms </span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="form-basic-inputs.html">Basic Inputs </a></li>
-                                <li><a href="form-input-groups.html">Input Groups </a></li>
-                                <li><a href="form-horizontal.html">Horizontal Form </a></li>
-                                <li><a href="form-vertical.html"> Vertical Form </a></li>
-                                <li><a href="form-mask.html"> Form Mask </a></li>
-                                <li><a href="form-validation.html"> Form Validation </a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="#"><i class="fas fa-table"></i> <span> Tables </span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="tables-basic.html">Basic Tables </a></li>
-                                <li><a href="data-tables.html">Data Table </a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="fas fa-code"></i> <span>Multi Level</span> <span
-                                    class="menu-arrow"></span></a>
-                            <ul>
-                                <li class="submenu">
-                                    <a href="javascript:void(0);"> <span>Level 1</span> <span
-                                            class="menu-arrow"></span></a>
-                                    <ul>
-                                        <li><a href="javascript:void(0);"><span>Level 2</span></a></li>
-                                        <li class="submenu">
-                                            <a href="javascript:void(0);"> <span> Level 2</span> <span
-                                                    class="menu-arrow"></span></a>
-                                            <ul>
-                                                <li><a href="javascript:void(0);">Level 3</a></li>
-                                                <li><a href="javascript:void(0);">Level 3</a></li>
-                                            </ul>
-                                        </li>
-                                        <li><a href="javascript:void(0);"> <span>Level 2</span></a></li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);"> <span>Level 1</span></a>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
+        <!-- start theme customizer section -->
+        <div x-data="customizer">
+            <div class="fixed inset-0 z-[51] hidden bg-[black]/60 px-4 transition-[display]" :class="{'!block': showCustomizer}" @click="showCustomizer = false"></div>
+
+            <nav class="fixed bottom-0 top-0 z-[51] w-full max-w-[400px] bg-white p-4 shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] transition-[right] duration-300 ltr:-right-[400px] rtl:-left-[400px] dark:bg-[#0e1726]" :class="{'ltr:!right-0 rtl:!left-0' : showCustomizer}">
+                <a href="javascript:;" class="absolute bottom-0 top-0 my-auto flex h-10 w-12 cursor-pointer items-center justify-center bg-primary text-white ltr:-left-12 ltr:rounded-bl-full ltr:rounded-tl-full rtl:-right-12 rtl:rounded-br-full rtl:rounded-tr-full" @click="showCustomizer = !showCustomizer">
+                    <svg width="24" height="24" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-[spin_3s_linear_infinite]">
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"></circle>
+                        <path opacity="0.5" d="M13.7654 2.15224C13.3978 2 12.9319 2 12 2C11.0681 2 10.6022 2 10.2346 2.15224C9.74457 2.35523 9.35522 2.74458 9.15223 3.23463C9.05957 3.45834 9.0233 3.7185 9.00911 4.09799C8.98826 4.65568 8.70226 5.17189 8.21894 5.45093C7.73564 5.72996 7.14559 5.71954 6.65219 5.45876C6.31645 5.2813 6.07301 5.18262 5.83294 5.15102C5.30704 5.08178 4.77518 5.22429 4.35436 5.5472C4.03874 5.78938 3.80577 6.1929 3.33983 6.99993C2.87389 7.80697 2.64092 8.21048 2.58899 8.60491C2.51976 9.1308 2.66227 9.66266 2.98518 10.0835C3.13256 10.2756 3.3397 10.437 3.66119 10.639C4.1338 10.936 4.43789 11.4419 4.43786 12C4.43783 12.5581 4.13375 13.0639 3.66118 13.3608C3.33965 13.5629 3.13248 13.7244 2.98508 13.9165C2.66217 14.3373 2.51966 14.8691 2.5889 15.395C2.64082 15.7894 2.87379 16.193 3.33973 17C3.80568 17.807 4.03865 18.2106 4.35426 18.4527C4.77508 18.7756 5.30694 18.9181 5.83284 18.8489C6.07289 18.8173 6.31632 18.7186 6.65204 18.5412C7.14547 18.2804 7.73556 18.27 8.2189 18.549C8.70224 18.8281 8.98826 19.3443 9.00911 19.9021C9.02331 20.2815 9.05957 20.5417 9.15223 20.7654C9.35522 21.2554 9.74457 21.6448 10.2346 21.8478C10.6022 22 11.0681 22 12 22C12.9319 22 13.3978 22 13.7654 21.8478C14.2554 21.6448 14.6448 21.2554 14.8477 20.7654C14.9404 20.5417 14.9767 20.2815 14.9909 19.902C15.0117 19.3443 15.2977 18.8281 15.781 18.549C16.2643 18.2699 16.8544 18.2804 17.3479 18.5412C17.6836 18.7186 17.927 18.8172 18.167 18.8488C18.6929 18.9181 19.2248 18.7756 19.6456 18.4527C19.9612 18.2105 20.1942 17.807 20.6601 16.9999C21.1261 16.1929 21.3591 15.7894 21.411 15.395C21.4802 14.8691 21.3377 14.3372 21.0148 13.9164C20.8674 13.7243 20.6602 13.5628 20.3387 13.3608C19.8662 13.0639 19.5621 12.558 19.5621 11.9999C19.5621 11.4418 19.8662 10.9361 20.3387 10.6392C20.6603 10.4371 20.8675 10.2757 21.0149 10.0835C21.3378 9.66273 21.4803 9.13087 21.4111 8.60497C21.3592 8.21055 21.1262 7.80703 20.6602 7C20.1943 6.19297 19.9613 5.78945 19.6457 5.54727C19.2249 5.22436 18.693 5.08185 18.1671 5.15109C17.9271 5.18269 17.6837 5.28136 17.3479 5.4588C16.8545 5.71959 16.2644 5.73002 15.7811 5.45096C15.2977 5.17191 15.0117 4.65566 14.9909 4.09794C14.9767 3.71848 14.9404 3.45833 14.8477 3.23463C14.6448 2.74458 14.2554 2.35523 13.7654 2.15224Z" stroke="currentColor" stroke-width="1.5"></path>
+                    </svg>
+                </a>
+                <div class="perfect-scrollbar h-full overflow-y-auto overflow-x-hidden">
+                    <div class="relative pb-5 text-center">
+                        <a href="javascript:;" class="absolute top-0 opacity-30 hover:opacity-100 ltr:right-0 rtl:left-0 dark:text-white" @click="showCustomizer = false">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </a>
+                        <h4 class="mb-1 dark:text-white">TEMPLATE CUSTOMIZER</h4>
+                        <p class="text-white-dark">Set preferences that will be cookied for your live preview demonstration.</p>
+                    </div>
+                    <div class="mb-3 rounded-md border border-dashed border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+                        <h5 class="mb-1 text-base leading-none dark:text-white">Color Scheme</h5>
+                        <p class="text-xs text-white-dark">Overall light or dark presentation.</p>
+                        <div class="mt-3 grid grid-cols-3 gap-2">
+                            <button type="button" class="btn" :class="[$store.app.theme === 'light' ? 'btn-primary' :'btn-outline-primary']" @click="$store.app.toggleTheme('light')">
+                                <svg width="20" height="20" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 ltr:mr-2 rtl:ml-2">
+                                    <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.5"></circle>
+                                    <path d="M12 2V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                                    <path d="M12 20V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                                    <path d="M4 12L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                                    <path d="M22 12L20 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                                    <path opacity="0.5" d="M19.7778 4.22266L17.5558 6.25424" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                                    <path opacity="0.5" d="M4.22217 4.22266L6.44418 6.25424" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                                    <path opacity="0.5" d="M6.44434 17.5557L4.22211 19.7779" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                                    <path opacity="0.5" d="M19.7778 19.7773L17.5558 17.5551" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                                </svg>
+                                Light
+                            </button>
+                            <button type="button" class="btn" :class="[$store.app.theme === 'dark' ? 'btn-primary' :'btn-outline-primary']" @click="$store.app.toggleTheme('dark')">
+                                <svg width="20" height="20" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 ltr:mr-2 rtl:ml-2">
+                                    <path d="M21.0672 11.8568L20.4253 11.469L21.0672 11.8568ZM12.1432 2.93276L11.7553 2.29085V2.29085L12.1432 2.93276ZM21.25 12C21.25 17.1086 17.1086 21.25 12 21.25V22.75C17.9371 22.75 22.75 17.9371 22.75 12H21.25ZM12 21.25C6.89137 21.25 2.75 17.1086 2.75 12H1.25C1.25 17.9371 6.06294 22.75 12 22.75V21.25ZM2.75 12C2.75 6.89137 6.89137 2.75 12 2.75V1.25C6.06294 1.25 1.25 6.06294 1.25 12H2.75ZM15.5 14.25C12.3244 14.25 9.75 11.6756 9.75 8.5H8.25C8.25 12.5041 11.4959 15.75 15.5 15.75V14.25ZM20.4253 11.469C19.4172 13.1373 17.5882 14.25 15.5 14.25V15.75C18.1349 15.75 20.4407 14.3439 21.7092 12.2447L20.4253 11.469ZM9.75 8.5C9.75 6.41182 10.8627 4.5828 12.531 3.57467L11.7553 2.29085C9.65609 3.5593 8.25 5.86509 8.25 8.5H9.75ZM12 2.75C11.9115 2.75 11.8077 2.71008 11.7324 2.63168C11.6686 2.56527 11.6538 2.50244 11.6503 2.47703C11.6461 2.44587 11.6482 2.35557 11.7553 2.29085L12.531 3.57467C13.0342 3.27065 13.196 2.71398 13.1368 2.27627C13.0754 1.82126 12.7166 1.25 12 1.25V2.75ZM21.7092 12.2447C21.6444 12.3518 21.5541 12.3539 21.523 12.3497C21.4976 12.3462 21.4347 12.3314 21.3683 12.2676C21.2899 12.1923 21.25 12.0885 21.25 12H22.75C22.75 11.2834 22.1787 10.9246 21.7237 10.8632C21.286 10.804 20.7293 10.9658 20.4253 11.469L21.7092 12.2447Z" fill="currentColor"></path>
+                                </svg>
+                                Dark
+                            </button>
+                            <button type="button" class="btn" :class="[$store.app.theme === 'system' ? 'btn-primary' :'btn-outline-primary']" @click="$store.app.toggleTheme('system')">
+                                <svg width="20" height="20" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 ltr:mr-2 rtl:ml-2">
+                                    <path d="M3 9C3 6.17157 3 4.75736 3.87868 3.87868C4.75736 3 6.17157 3 9 3H15C17.8284 3 19.2426 3 20.1213 3.87868C21 4.75736 21 6.17157 21 9V14C21 15.8856 21 16.8284 20.4142 17.4142C19.8284 18 18.8856 18 17 18H7C5.11438 18 4.17157 18 3.58579 17.4142C3 16.8284 3 15.8856 3 14V9Z" stroke="currentColor" stroke-width="1.5"></path>
+                                    <path opacity="0.5" d="M22 21H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                                    <path opacity="0.5" d="M15 15H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                                </svg>
+                                System
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 rounded-md border border-dashed border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+                        <h5 class="mb-1 text-base leading-none dark:text-white">Navigation Position</h5>
+                        <p class="text-xs text-white-dark">Select the primary navigation paradigm for your app.</p>
+                        <div class="mt-3 grid grid-cols-3 gap-2">
+                            <button type="button" class="btn" :class="[$store.app.menu === 'horizontal' ? 'btn-primary' :'btn-outline-primary']" @click="$store.app.toggleMenu('horizontal')">
+                                Horizontal
+                            </button>
+                            <button type="button" class="btn" :class="[$store.app.menu === 'vertical' ? 'btn-primary' :'btn-outline-primary']" @click="$store.app.toggleMenu('vertical')">
+                                Vertical
+                            </button>
+                            <button type="button" class="btn" :class="[$store.app.menu === 'collapsible-vertical' ? 'btn-primary' :'btn-outline-primary']" @click="$store.app.toggleMenu('collapsible-vertical')">
+                                Collapsible
+                            </button>
+                        </div>
+                        <div class="mt-5 text-primary">
+                            <label class="mb-0 inline-flex">
+                                <input x-model="$store.app.semidark" type="checkbox" :value="true" class="form-checkbox" @change="$store.app.toggleSemidark()">
+                                <span>Semi Dark (Sidebar & Header)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3 rounded-md border border-dashed border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+                        <h5 class="mb-1 text-base leading-none dark:text-white">Layout Style</h5>
+                        <p class="text-xs text-white-dark">Select the primary layout style for your app.</p>
+                        <div class="mt-3 flex gap-2">
+                            <button type="button" class="btn flex-auto" :class="[$store.app.layout === 'boxed-layout' ? 'btn-primary' :'btn-outline-primary']" @click="$store.app.toggleLayout('boxed-layout')">
+                                Box
+                            </button>
+                            <button type="button" class="btn flex-auto" :class="[$store.app.layout === 'full' ? 'btn-primary' :'btn-outline-primary']" @click="$store.app.toggleLayout('full')">
+                                Full
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3 rounded-md border border-dashed border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+                        <h5 class="mb-1 text-base leading-none dark:text-white">Direction</h5>
+                        <p class="text-xs text-white-dark">Select the direction for your app.</p>
+                        <div class="mt-3 flex gap-2">
+                            <button type="button" class="btn flex-auto" :class="[$store.app.rtlClass === 'ltr' ? 'btn-primary' :'btn-outline-primary']" @click="$store.app.toggleRTL('ltr')">
+                                LTR
+                            </button>
+                            <button type="button" class="btn flex-auto" :class="[$store.app.rtlClass === 'rtl' ? 'btn-primary' :'btn-outline-primary']" @click="$store.app.toggleRTL('rtl')">
+                                RTL
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 rounded-md border border-dashed border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+                        <h5 class="mb-1 text-base leading-none dark:text-white">Navbar Type</h5>
+                        <p class="text-xs text-white-dark">Sticky or Floating.</p>
+                        <div class="mt-3 flex items-center gap-3 text-primary">
+                            <label class="mb-0 inline-flex">
+                                <input x-model="$store.app.navbar" type="radio" value="navbar-sticky" class="form-radio" @change="$store.app.toggleNavbar()">
+                                <span>Sticky</span>
+                            </label>
+                            <label class="mb-0 inline-flex">
+                                <input x-model="$store.app.navbar" type="radio" value="navbar-floating" class="form-radio" @change="$store.app.toggleNavbar()">
+                                <span>Floating</span>
+                            </label>
+                            <label class="mb-0 inline-flex">
+                                <input x-model="$store.app.navbar" type="radio" value="navbar-static" class="form-radio" @change="$store.app.toggleNavbar()">
+                                <span>Static</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 rounded-md border border-dashed border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+                        <h5 class="mb-1 text-base leading-none dark:text-white">Router Transition</h5>
+                        <p class="text-xs text-white-dark">Animation of main content.</p>
+                        <div class="mt-3">
+                            <select x-model="$store.app.animation" class="form-select border-primary text-primary" @change="$store.app.toggleAnimation()">
+                                <option value="">None</option>
+                                <option value="animate__fadeIn">Fade</option>
+                                <option value="animate__fadeInDown">Fade Down</option>
+                                <option value="animate__fadeInUp">Fade Up</option>
+                                <option value="animate__fadeInLeft">Fade Left</option>
+                                <option value="animate__fadeInRight">Fade Right</option>
+                                <option value="animate__slideInDown">Slide Down</option>
+                                <option value="animate__slideInLeft">Slide Left</option>
+                                <option value="animate__slideInRight">Slide Right</option>
+                                <option value="animate__zoomIn">Zoom In</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
+            </nav>
+        </div>
+        <!-- end theme customizer section -->
+
+        <div class="main-container min-h-screen text-black dark:text-white-dark" :class="[$store.app.navbar]">
+            <!-- start sidebar section -->
+            @include('layouts.sidebar')
+            <!-- end sidebar section -->
+
+            <div class="main-content flex min-h-screen flex-col">
+                <!-- start header section -->
+               @include('layouts.navbar')
+                <!-- end header section -->
+
+                <div class="animate__animated p-6" :class="[$store.app.animation]">
+                    <!-- start main content section -->
+                    <div x-data="sales">
+                        <ul class="flex space-x-2 rtl:space-x-reverse">
+                            <li>
+                                <a href="javascript:;" class="text-primary hover:underline">Dashboard</a>
+                            </li>
+                            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
+                                <span>@yield('judul') Sistem Informasin Sekolah</span>
+                            </li>
+                        </ul>
+
+                        <div class="pt-5">
+                            @yield('content')
+                        </div>
+                    </div>
+                    <!-- end main content section -->
+                </div>
+
+                <!-- start footer section -->
+                <div class="mt-auto p-6 pt-0 text-center dark:text-white-dark ltr:sm:text-left rtl:sm:text-right">
+                    © <span id="footer-year">2022</span>. Sistem Informasi Sekolah
+                </div>
+                <!-- end footer section -->
             </div>
         </div>
 
+        @include('layouts.footer')
 
-        <div class="page-wrapper">
-            <div class="content container-fluid">
-
-                <div class="page-header">
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <div class="page-sub-header">
-                                <h3 class="page-title">Welcome Admin!</h3>
-                                <ul class="breadcrumb">
-                                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                                    <li class="breadcrumb-item active">Admin</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
-                <div class="row">
-                    <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                        <div class="card bg-comman w-100">
-                            <div class="card-body">
-                                <div class="db-widgets d-flex justify-content-between align-items-center">
-                                    <div class="db-info">
-                                        <h6>Students</h6>
-                                        <h3>50055</h3>
-                                    </div>
-                                    <div class="db-icon">
-                                        <img src="assets/img/icons/dash-icon-01.svg" alt="Dashboard Icon">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                        <div class="card bg-comman w-100">
-                            <div class="card-body">
-                                <div class="db-widgets d-flex justify-content-between align-items-center">
-                                    <div class="db-info">
-                                        <h6>Awards</h6>
-                                        <h3>50+</h3>
-                                    </div>
-                                    <div class="db-icon">
-                                        <img src="assets/img/icons/dash-icon-02.svg" alt="Dashboard Icon">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                        <div class="card bg-comman w-100">
-                            <div class="card-body">
-                                <div class="db-widgets d-flex justify-content-between align-items-center">
-                                    <div class="db-info">
-                                        <h6>Department</h6>
-                                        <h3>30+</h3>
-                                    </div>
-                                    <div class="db-icon">
-                                        <img src="assets/img/icons/dash-icon-03.svg" alt="Dashboard Icon">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-sm-6 col-12 d-flex">
-                        <div class="card bg-comman w-100">
-                            <div class="card-body">
-                                <div class="db-widgets d-flex justify-content-between align-items-center">
-                                    <div class="db-info">
-                                        <h6>Revenue</h6>
-                                        <h3>$505</h3>
-                                    </div>
-                                    <div class="db-icon">
-                                        <img src="assets/img/icons/dash-icon-04.svg" alt="Dashboard Icon">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-12 col-lg-6">
-
-                        <div class="card card-chart">
-                            <div class="card-header">
-                                <div class="row align-items-center">
-                                    <div class="col-6">
-                                        <h5 class="card-title">Overview</h5>
-                                    </div>
-                                    <div class="col-6">
-                                        <ul class="chart-list-out">
-                                            <li><span class="circle-blue"></span>Teacher</li>
-                                            <li><span class="circle-green"></span>Student</li>
-                                            <li class="star-menus"><a href="javascript:;"><i
-                                                        class="fas fa-ellipsis-v"></i></a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div id="apexcharts-area"></div>
-                            </div>
-                        </div>
-
-                    </div>
-                    <div class="col-md-12 col-lg-6">
-
-                        <div class="card card-chart">
-                            <div class="card-header">
-                                <div class="row align-items-center">
-                                    <div class="col-6">
-                                        <h5 class="card-title">Number of Students</h5>
-                                    </div>
-                                    <div class="col-6">
-                                        <ul class="chart-list-out">
-                                            <li><span class="circle-blue"></span>Girls</li>
-                                            <li><span class="circle-green"></span>Boys</li>
-                                            <li class="star-menus"><a href="javascript:;"><i
-                                                        class="fas fa-ellipsis-v"></i></a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div id="bar"></div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-xl-6 d-flex">
-
-                        <div class="card flex-fill student-space comman-shadow">
-                            <div class="card-header d-flex align-items-center">
-                                <h5 class="card-title">Star Students</h5>
-                                <ul class="chart-list-out student-ellips">
-                                    <li class="star-menus"><a href="javascript:;"><i class="fas fa-ellipsis-v"></i></a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table
-                                        class="table star-student table-hover table-center table-borderless table-striped">
-                                        <thead class="thead-light">
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Name</th>
-                                                <th class="text-center">Marks</th>
-                                                <th class="text-center">Percentage</th>
-                                                <th class="text-end">Year</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td class="text-nowrap">
-                                                    <div>PRE2209</div>
-                                                </td>
-                                                <td class="text-nowrap">
-                                                    <a href="profile.html">
-                                                        <img class="rounded-circle"
-                                                            src="assets/img/profiles/avatar-02.jpg" width="25"
-                                                            alt="Star Students">
-                                                        John Smith
-                                                    </a>
-                                                </td>
-                                                <td class="text-center">1185</td>
-                                                <td class="text-center">98%</td>
-                                                <td class="text-end">
-                                                    <div>2019</div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-nowrap">
-                                                    <div>PRE1245</div>
-                                                </td>
-                                                <td class="text-nowrap">
-                                                    <a href="profile.html">
-                                                        <img class="rounded-circle"
-                                                            src="assets/img/profiles/avatar-01.jpg" width="25"
-                                                            alt="Star Students">
-                                                        Jolie Hoskins
-                                                    </a>
-                                                </td>
-                                                <td class="text-center">1195</td>
-                                                <td class="text-center">99.5%</td>
-                                                <td class="text-end">
-                                                    <div>2018</div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-nowrap">
-                                                    <div>PRE1625</div>
-                                                </td>
-                                                <td class="text-nowrap">
-                                                    <a href="profile.html">
-                                                        <img class="rounded-circle"
-                                                            src="assets/img/profiles/avatar-03.jpg" width="25"
-                                                            alt="Star Students">
-                                                        Pennington Joy
-                                                    </a>
-                                                </td>
-                                                <td class="text-center">1196</td>
-                                                <td class="text-center">99.6%</td>
-                                                <td class="text-end">
-                                                    <div>2017</div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-nowrap">
-                                                    <div>PRE2516</div>
-                                                </td>
-                                                <td class="text-nowrap">
-                                                    <a href="profile.html">
-                                                        <img class="rounded-circle"
-                                                            src="assets/img/profiles/avatar-04.jpg" width="25"
-                                                            alt="Star Students">
-                                                        Millie Marsden
-                                                    </a>
-                                                </td>
-                                                <td class="text-center">1187</td>
-                                                <td class="text-center">98.2%</td>
-                                                <td class="text-end">
-                                                    <div>2016</div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="text-nowrap">
-                                                    <div>PRE2209</div>
-                                                </td>
-                                                <td class="text-nowrap">
-                                                    <a href="profile.html">
-                                                        <img class="rounded-circle"
-                                                            src="assets/img/profiles/avatar-05.jpg" width="25"
-                                                            alt="Star Students">
-                                                        John Smith
-                                                    </a>
-                                                </td>
-                                                <td class="text-center">1185</td>
-                                                <td class="text-center">98%</td>
-                                                <td class="text-end">
-                                                    <div>2015</div>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                    <div class="col-xl-6 d-flex">
-
-                        <div class="card flex-fill comman-shadow">
-                            <div class="card-header d-flex align-items-center">
-                                <h5 class="card-title ">Student Activity </h5>
-                                <ul class="chart-list-out student-ellips">
-                                    <li class="star-menus"><a href="javascript:;"><i class="fas fa-ellipsis-v"></i></a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="card-body">
-                                <div class="activity-groups">
-                                    <div class="activity-awards">
-                                        <div class="award-boxs">
-                                            <img src="assets/img/icons/award-icon-01.svg" alt="Award">
-                                        </div>
-                                        <div class="award-list-outs">
-                                            <h4>1st place in "Chess”</h4>
-                                            <h5>John Doe won 1st place in "Chess"</h5>
-                                        </div>
-                                        <div class="award-time-list">
-                                            <span>1 Day ago</span>
-                                        </div>
-                                    </div>
-                                    <div class="activity-awards">
-                                        <div class="award-boxs">
-                                            <img src="assets/img/icons/award-icon-02.svg" alt="Award">
-                                        </div>
-                                        <div class="award-list-outs">
-                                            <h4>Participated in "Carrom"</h4>
-                                            <h5>Justin Lee participated in "Carrom"</h5>
-                                        </div>
-                                        <div class="award-time-list">
-                                            <span>2 hours ago</span>
-                                        </div>
-                                    </div>
-                                    <div class="activity-awards">
-                                        <div class="award-boxs">
-                                            <img src="assets/img/icons/award-icon-03.svg" alt="Award">
-                                        </div>
-                                        <div class="award-list-outs">
-                                            <h4>Internation conference in "St.John School"</h4>
-                                            <h5>Justin Leeattended internation conference in "St.John School"</h5>
-                                        </div>
-                                        <div class="award-time-list">
-                                            <span>2 Week ago</span>
-                                        </div>
-                                    </div>
-                                    <div class="activity-awards mb-0">
-                                        <div class="award-boxs">
-                                            <img src="assets/img/icons/award-icon-04.svg" alt="Award">
-                                        </div>
-                                        <div class="award-list-outs">
-                                            <h4>Won 1st place in "Chess"</h4>
-                                            <h5>John Doe won 1st place in "Chess"</h5>
-                                        </div>
-                                        <div class="award-time-list">
-                                            <span>3 Day ago</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-xl-3 col-sm-6 col-12">
-                        <div class="card flex-fill fb sm-box">
-                            <div class="social-likes">
-                                <p>Like us on facebook</p>
-                                <h6>50,095</h6>
-                            </div>
-                            <div class="social-boxs">
-                                <img src="assets/img/icons/social-icon-01.svg" alt="Social Icon">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-sm-6 col-12">
-                        <div class="card flex-fill twitter sm-box">
-                            <div class="social-likes">
-                                <p>Follow us on twitter</p>
-                                <h6>48,596</h6>
-                            </div>
-                            <div class="social-boxs">
-                                <img src="assets/img/icons/social-icon-02.svg" alt="Social Icon">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-sm-6 col-12">
-                        <div class="card flex-fill insta sm-box">
-                            <div class="social-likes">
-                                <p>Follow us on instagram</p>
-                                <h6>52,085</h6>
-                            </div>
-                            <div class="social-boxs">
-                                <img src="assets/img/icons/social-icon-03.svg" alt="Social Icon">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-sm-6 col-12">
-                        <div class="card flex-fill linkedin sm-box">
-                            <div class="social-likes">
-                                <p>Follow us on linkedin</p>
-                                <h6>69,050</h6>
-                            </div>
-                            <div class="social-boxs">
-                                <img src="assets/img/icons/social-icon-04.svg" alt="Social Icon">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <footer>
-                <p>Copyright © 2022 Dreamguys.</p>
-            </footer>
-        </div>
-    </div>
-
-    <script src="assets/js/jquery-3.6.0.min.js"></script>
-    <script src="assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/feather.min.js"></script>
-    <script src="assets/plugins/slimscroll/jquery.slimscroll.min.js"></script>
-    <script src="assets/plugins/apexchart/apexcharts.min.js"></script>
-    <script src="assets/plugins/apexchart/chart-data.js"></script>
-    <script src="assets/js/script.js"></script>
-</body>
-
-</html>

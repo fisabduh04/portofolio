@@ -76,7 +76,7 @@
             <li class="nav-item">
               <a href="mapel" class="nav-link {{ (request()->is('mapel')?'active':'') }}">
                 <i class="far fa-circle nav-icon"></i>
-                <p>Mapel</p>
+                <p>Mata Pelajaran</p>
               </a>
             </li>
             <li class="nav-item">

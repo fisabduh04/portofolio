@@ -25,13 +25,13 @@ class mapelImport implements ToModel, WithHeadingRow
         //     'jurusan_id'=>$row[2],
         //     'ket'=>$row[3],
         // ]);
-
+        $jurusanId=jurusan::where('jurusan',$row['jurusan'])->pluck('id')->first();
         return Mapel::updateOrCreate(
             ['kode' => $row['kode']], // Kolom yang digunakan sebagai kunci unik
             [
-                'mapel' => $row['mapel'],
-                'jurusan_id' => $row['jurusan_id'],
-                'ket' => $row['ket'],
+                'mapel' => $row['mata_pelajaran'],
+                'jurusan_id' => $jurusanId,
+                'ket' => $row['keterangan'],
             ]
         );
     }

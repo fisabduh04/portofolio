@@ -6,10 +6,13 @@ use Livewire\Component;
 use Illuminate\Support\Facades\App;
 use App\Models\mapel;
 use App\Models\jurusan;
-
+use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBag;
 
 class Tambahmapel extends Component
 {
+    use WithPagination;
+
     public $kode = [];
     public $mapel = [];
     public $i = 0;
@@ -23,12 +26,39 @@ class Tambahmapel extends Component
     public $editjurusan;
     public $editket;
     public $mapel_id=[];
+    public $mapel_selected_id=[];
+    public $SelectAll=false;
+    public $perPage = 10;
+    public $search="";
+
+
+    public function search(){
+        $this->resetPage(); // Set halaman kembali ke halaman pertama saat melakukan pencarian
+    // Query pencarian data berdasarkan kondisi tertentu, misalnya nama atau kode mapel
+    $data = mapel::orderBy('jurusan_id', 'asc')
+        ->where('mapel', 'like', '%' . $this->search . '%')
+        ->orWhere('kode', 'like', '%' . $this->search . '%')
+        ->orWhereHas('jurusan', function ($query) {
+            $query->where('jurusan', 'like', '%' . $this->search . '%');
+        })
+        ->paginate($this->perPage);
+
+    return $data;
+
+    }
 
     public function render(){
+        $data=$this->search();
 
+        // $data=mapel::orderBy('jurusan_id','asc')->paginate($this->perPage);
+
+        $mapelIdsOnPage = $data->pluck('id')->toArray();
+        $this->mapel_selected_id = array_intersect($this->mapel_selected_id, $mapelIdsOnPage);
+        // Atur kembali SelectAll ke false saat berpindah halaman\
+        $this->SelectAll=session('SelectAll',false);
         return view('livewire.mapel.tambahmapel',[
             'jurusanlist'=>jurusan::all(),
-            'mapellist'=>mapel::all()
+            'mapellist'=>$data
         ]);
     }
     public function add()
@@ -81,6 +111,8 @@ class Tambahmapel extends Component
         $this->i = 0;
         $this->kepala_table = false;
         $this->mapel_id=[];
+        $this->mapel_selected_id=[];
+        $this->SelectAll=false;
     }
     public function edit($id){
         $this->editmapelindex=$id;
@@ -105,4 +137,26 @@ class Tambahmapel extends Component
         session()->flash('success', 'Data Mapel telah berhasil diperbarui');
         $this->dispatch('warning');
     }
+
+    public function del(){
+        mapel::destroy($this->mapel_selected_id);
+        session()->flash('success','Data Berhasil dihapus');
+        $this->dispatch('error');
+        $this->resetFields();
+
+    }
+
+    public function updatedSelectAll($value){
+        if($value){
+            $this->mapel_selected_id = mapel::orderBy('jurusan_id', 'asc')->paginate($this->perPage)->pluck('id')->toArray();
+        }else{
+            $this->mapel_selected_id=[];
+        }
+        // dd($this->mapel_selected_id);
+        if ($value) {
+            session()->flash('SelectAll', true);
+        }
+    }
+
+
 }

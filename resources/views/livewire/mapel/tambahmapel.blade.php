@@ -1,23 +1,81 @@
 <div>
-    <form wire:submit.prevent="store">
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                @if ($kepala_table)
-                <thead>
+    <div class="d-flex flex-wrap justify-content-start mb-3">
+        @if ($mapel_selected_id)
+        <button class="btn btn-outline-danger mb-2 col-12 col-md-3 col-lg-2 mr-1" wire:confirm="Apakah Anda yakin data akan dihapus?" wire:click.prevent="del()">
+            <i class="fas fa-trash-alt"></i>Hapus {{ count($mapel_selected_id) }} Data
+        </button>
+        @endif
+
+        <button type="button" wire:click="add" class="btn btn-success mb-2 col-12 col-md-3 col-lg-2 mr-1">
+            <i class="fas fa-plus"></i>Tambah
+        </button>
+
+        <button type="submit" class="btn btn-outline-primary mb-2 col-12 col-md-3 col-lg-2 mr-1" wire:click.prevent="store()">
+            <i class="fas fa-cloud-download-alt"></i>Simpan Data
+        </button>
+
+        <button type="button" class="btn btn-outline-success mb-2 col-12 col-md-3 col-lg-2 mr-1" data-toggle="modal" data-target="#modal-default">
+            <i class="fas fa-download"></i>Import Excel
+        </button>
+
+        <a href="{{ route('exportportmapel') }}" class="btn btn-outline-success mb-2 col-12 col-md-3 col-lg-2 mr-1" >
+            <i class="fas fa-file-export"></i>Export Excel</a>
+    </div>
+
+                <div class="row mt-2">
+                    <div class="col-md-6 col-sm-12">
+                        <!-- Dropdown untuk memilih jumlah item per halaman -->
+                        <div class="mb-2">
+                            <label for="perPage" class="col-form-label">Data</label>
+                            <select wire:model.live="perPage" class="custom-select form-control-border col-3 float-left" id="perPage">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="-1">All</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                        <!-- Input search -->
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" wire:model.live="search" placeholder="Search">
+                            <div class="input-group-append">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            </div>
+                        </div>
+                        {{-- {{ $search }} --}}
+                    </div>
+                </div>
+
+      {{--TABEL DATA--}}
+      <div class="table-responsive p-0">
+        <table class="table table-hover tabel-striped">
+            <thead >
+                <tr>
+                    <th style="width: 2%;">
+                        <input type="checkbox" wire:model.live="SelectAll">
+                    </th>
+                    <th style="width: 5%;">ID</th>
+                    <th style="width: 10%;">Aksi</th>
+                    <th style="width: 10%;">Kode</th>
+                    <th style="width: 30%;">Mata Pelajaran</th>
+                    <th style="width: 20%;">Jurusan</th>
+                    <th style="width: 20%;">Keterangan</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($mapel as $index => $val)
                     <tr>
-                        <th>ID</th>
-                        <th>Kode</th>
-                        <th>Mapel</th>
-                        <th>Jurusan</th>
-                        <th>Keterangan</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                @endif
-                <tbody>
-                    @foreach($mapel as $index => $val)
-                    <tr>
+                        <td>#</td>
                         <td>{{ $index }}</td>
+                        <td>
+                            <button type="button" wire:click="remove({{ $index }})" class="btn btn-danger btn-sm"><i
+                                    class="fas fa-trash-alt"></i> </button>
+                        </td>
+
+                        {{-- <td>{{ $index }}</td> --}}
                         <td>
                             <input type="text" wire:model="kode.{{ $index }}" class="form-control">
                         </td>
@@ -36,77 +94,16 @@
                             <input type="text" wire:model="ket.{{ $index }}" class="form-control">
                         </td>
 
-                        <td>
-                            <button type="button" wire:click="remove({{ $index }})" class="btn btn-danger btn-sm"><i
-                                    class="fas fa-trash-alt"></i> </button>
-                        </td>
+
                     </tr>
 
                     @endforeach
-
-                </tbody>
-            </table>
-            <button type="button" wire:click="add" class="btn btn-success">Tambah</button>
-            <button type="submit" class="btn btn-primary">Simpan Data</button>
-
-            <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#modal-default">
-                Import Excel
-             </button>
-            <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#modal-default">
-                Export Excel
-             </button>
-        </div>
-    </form>
-
-
-    <div class="modal fade" id="modal-default">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h4 class="modal-title">Import File Data Mapel</h4>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <form action="{{ route('importmapel') }}" method="POST" enctype="multipart/form-data" >
-                @csrf
-                <div class="form-group mb-3">
-                    <label for="file">Import Mapel</label>
-                    <input type="file" name="file" id="" class="form-control">
-                </div>
-                <button type="submit" class="btn btn-success">Import Excel</button>
-              </form>
-            </div>
-            <div class="modal-footer justify-content-between">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-          </div>
-          <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-      </div>
-      <hr>
-
-
-      {{-- @dd($mapel_id) --}}
-      <div class="card-body table-responsive p-0 mt-1">
-        <table class="table table-hover tabel-striped">
-            <thead >
-                <tr>
-                    <th style="width: 2%;"></th>
-                    <th style="width: 5%;">ID</th>
-                    <th style="width: 10%;">Aksi</th>
-                    <th style="width: 10%;">Kode</th>
-                    <th style="width: 30%;">Mapel</th>
-                    <th style="width: 25%;">Jurusan</th>
-                    <th style="width: 20%;">Keterangan</th>
-                </tr>
-            </thead>
-            <tbody>
                 @foreach ($mapellist as $index => $m)
                     <tr>
-                        <td><input type="checkbox"></td>
+                        <td>
+                            <input type="checkbox" wire:key="{{ $m->id }}" wire:model.live="mapel_selected_id" value="{{ $m->id }}">
+                        </td>
+
                         <td>{{ $m->id }}</td>
                         <td>
                             <form class="d-inline" onclick="return confirm('Apakah anda yakin akan menghapus data ini')" action="mapel/{{ $m->id }}" method="POST">
@@ -138,7 +135,7 @@
                         <td>
 
                             @if ($editmapelindex===$m->id)
-                            <input type="text" wire:model="editmapel" class="form-control" value="{{ $m->mapel }}">
+                            <input type="text" wire:model="editmapel" class="form-control">
                         @else
                         {{ $m->mapel }}
                         @endif
@@ -173,5 +170,45 @@
                 @endforeach
             </tbody>
         </table>
+        {{ $mapellist->links() }}
     </div>
+
+
+
+
+
+
+
+
+
+    <div class="modal fade" id="modal-default">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Import File Data Mapel</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form action="{{ route('importmapel') }}" method="POST" enctype="multipart/form-data" >
+                @csrf
+                <div class="form-group mb-3">
+                    <label for="file">Import Mapel</label>
+                    <input type="file" name="file" id="" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-success"><i class="fas fa-download"></i>Import Excel</button>
+              </form>
+            </div>
+            <div class="modal-footer justify-content-between">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+          <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+
+
+
 </div>
