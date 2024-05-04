@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PegawaiExport;
+use App\Imports\PegawaiImport;
 use App\Models\pegawai;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PegawaiController extends Controller
 {
@@ -15,6 +18,19 @@ class PegawaiController extends Controller
         $pegawai = pegawai::all();
         return view('pegawai.index', compact('pegawai'));
     }
+    public function import(Request $request){
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:2048',
+        ]);
+        $file=$request->file('file')->store('public/import');
+        Excel::import(new PegawaiImport, $file);
+        return redirect('/pegawai')->with('success','Data berhasil di import');
+
+    }
+     public function export(){
+        return Excel::download(new PegawaiExport, 'pegawai.xlsx');
+
+     }
 
     /**
      * Show the form for creating a new resource.
@@ -51,9 +67,11 @@ class PegawaiController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(pegawai $pegawai)
+    public function edit($id)
     {
-        $pegawai = pegawai::all();
+        // dd($id);
+        $pegawai = pegawai::find($id);
+        return view('pegawai.editpegawai');
     }
 
     /**

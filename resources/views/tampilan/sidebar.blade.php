@@ -1,8 +1,8 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
   <!-- Brand Logo -->
   <a href="index3.html" class="brand-link">
-    <img src="img/almiftah.jpg" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-    <span class="brand-text font-weight-light">SMK AL-MIFTAN</span>
+    <img src="{{ asset('img/almiftah.jpg') }}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+    <span class="brand-text font-weight-light"> <strong>SMK AL-MIFTAH</strong></span>
   </a>
 
   <!-- Sidebar -->
@@ -10,7 +10,7 @@
     <!-- Sidebar user panel (optional) -->
     <div class="user-panel mt-3 pb-3 mb-3 d-flex">
       <div class="image">
-        <img src="img\almiftah.jpg" class="img-circle elevation-2" alt="User Image">
+        <img src="{{ asset('img\almiftah.jpg') }}" class="img-circle elevation-2" alt="User Image">
       </div>
       <div class="info">
         <a href="#" class="d-block">Sistem Informasi Terpadu</a>
@@ -63,16 +63,17 @@
             </li>
             <li class="nav-item">
               <a href="pegawai" class="nav-link {{ (request()->is('pegawai')?'active':'') }}">
-                <i class="far fa-circle nav-icon"></i>
+                <i class="far fa-user nav-icon"></i>
                 <p>Pegawai</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="#" class="nav-link {{ (request()->is('tahun')?'active':'') }}">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Tahun</p>
+              <a href="siswa" class="nav-link {{ (request()->is('siswa')?'active':'') }}">
+                <i class="far fa-user nav-icon"></i>
+                <p>Siswa</p>
               </a>
             </li>
+
             <li class="nav-item">
               <a href="mapel" class="nav-link {{ (request()->is('mapel')?'active':'') }}">
                 <i class="far fa-circle nav-icon"></i>
@@ -80,9 +81,9 @@
               </a>
             </li>
             <li class="nav-item">
-              <a href="tabel" class="nav-link {{ (request()->is('tabel')?'active':'') }}">
+              <a href="coba" class="nav-link {{ (request()->is('cobs')?'active':'') }}">
                 <i class="far fa-circle nav-icon"></i>
-                <p>Tabel</p>
+                <p>coba</p>
               </a>
             </li>
 

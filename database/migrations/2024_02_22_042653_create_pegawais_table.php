@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('pegawais', function (Blueprint $table) {
             $table->id();
             $table->string('name')->nullable();
-            $table->string('email')->unique();
+            $table->string('status')->nullable();//sertifikasi atau tidak?
+            $table->string('aktif')->nullable();//aktif, cuti, berhenti dll?
+            $table->string('email')->nullable();
             $table->string('nuptk')->nullable();
             $table->string('jk')->nullable();
             $table->string('kotalahir')->nullable();
@@ -37,6 +39,8 @@ return new class extends Migration
             $table->string('nonik')->nullable();
             $table->string('nokk')->nullable();
             $table->string('foto')->nullable();
+            $table->text('deskripsi')->nullable();
+            $table->string('password')->nullable(); // Updated line for password field
             $table->timestamps();
         });
     }

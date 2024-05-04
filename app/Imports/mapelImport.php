@@ -19,12 +19,6 @@ class mapelImport implements ToModel, WithHeadingRow
     public function model(array $row)
     {
 
-        // return new mapel([
-        //     'kode'=>$row[0],
-        //     'mapel'=>$row[1],
-        //     'jurusan_id'=>$row[2],
-        //     'ket'=>$row[3],
-        // ]);
         $jurusanId=jurusan::where('jurusan',$row['jurusan'])->pluck('id')->first();
         return Mapel::updateOrCreate(
             ['kode' => $row['kode']], // Kolom yang digunakan sebagai kunci unik

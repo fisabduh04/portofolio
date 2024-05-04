@@ -31,11 +31,15 @@ class TahunAjaranController extends Controller
     public function store(Request $request)
     {
         // @dd($request->all());
-        tahun_ajaran::create([
-            'tahun' => $request->tahun . '- Semester ' . $request->semester,
+        tahun_ajaran::updateOrCreate([
+            'tahun' => $request->tahun,
+            'semester' => $request->semester,
+        ], [
+
+
             'tanggalmulai' => $request->tanggalmulai,
             'tanggalakhir' => $request->tanggalakhir,
-            'Aktif' => $request->Aktif,
+            'isActive' => $request->isActive,
         ]);
         return redirect('tahun')->with('success', 'Data Tahun Ajaran Baru Berhasil Diinput');
     }
@@ -59,9 +63,23 @@ class TahunAjaranController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, tahun_ajaran $tahun_ajaran)
+    public function update(Request $request, $id)
     {
-        //
+        $tahun_ajaran = tahun_ajaran::find($id);
+
+        if ($tahun_ajaran) {
+            $tahun_ajaran->tahun = $request->tahun ?? $tahun_ajaran->tahun;
+            $tahun_ajaran->semester = $request->semester ?? $tahun_ajaran->semester;
+            $tahun_ajaran->tanggalmulai = $request->tanggalmulai ?? $tahun_ajaran->tanggalmulai;
+            $tahun_ajaran->tanggalakhir = $request->tanggalakhir ?? $tahun_ajaran->tanggalakhir;
+            $tahun_ajaran->isActive = $request->isActive ?? $tahun_ajaran->isActive;
+
+            $tahun_ajaran->save();
+
+            return redirect('tahun')->with('success', 'Data Tahun Ajaran Berhasil Diperbarui');
+        } else {
+            return redirect('tahun')->with('error', 'Tidak dapat menemukan data Tahun Ajaran yang sesuai');
+        }
     }
 
     /**
@@ -70,7 +88,6 @@ class TahunAjaranController extends Controller
     public function destroy(tahun_ajaran $tahun_ajaran, $id)
     {
         tahun_ajaran::destroy($id);
-        return redirect('tahun')->with('error', 'Data Tahun Ajaran Baru Berhasil dihapus');
-
+        return redirect('tahun')->with('error', 'Data Tahun Ajaran Berhasil dihapus');
     }
 }

@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pegawais', function (Blueprint $table) {
-            $table->string('password')->after('name')->nullable();
+        Schema::create('itempilihans', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('pilihan_id');
+            $table->string('jenis',100);
+            $table->string('ket');
+            $table->timestamps();
         });
     }
 
@@ -21,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pegawais', function (Blueprint $table) {
-            $table->dropColumn('password');
-        });
+        Schema::dropIfExists('itempilihans');
     }
 };

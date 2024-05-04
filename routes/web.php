@@ -19,20 +19,37 @@ use App\Http\Controllers\TahunAjaranController;
 
 Route::get('/', [HomeController::class, 'dashboard']);
 Route::get('/index', [HomeController::class, 'index']);
-Route::resource('pegawai', PegawaiController::class);
 
+
+//route tahun pelajaran
 Route::resource('tahun', TahunAjaranController::class);
 
-Route::resource('kelas', KelasController::class);
 
+//route kelas
+Route::resource('kelas', KelasController::class);
+Route::get('exportkelas', [KelasController::class,'export'])->name('exportkelas');
+Route::post('importkelas', [KelasController::class,'import'])->name('importkelas');
+
+
+// route jurusan
 Route::resource('jurusan', JurusanController::class);
 
+// route mata pelajaran
 Route::resource('mapel', MapelController::class);
 Route::post('importmapel', [MapelController::class,'import'])->name('importmapel');
 Route::get('exporttmapel', [MapelController::class,'export'])->name('exportportmapel');
 
+// route pegawai
+Route::resource('pegawai',PegawaiController::class);
+Route::get('Addpegawai', [PegawaiController::class, 'Addpegawai'])->name('tambahpegawai');
+Route::get('pegawai/{id}', [PegawaiController::class, 'edit'])->name('editpegawai');
+Route::post('importpegawai', [PegawaiController::class,'import'])->name('importpegawai');
+Route::get('exportpegawai', [PegawaiController::class,'export'])->name('exportpegawai');
+
+// route siswa
 Route::resource('siswa', SiswaController::class);
-Route::get('/Addpegawai', [PegawaiController::class, 'Addpegawai']);
+Route::get('exportsiswa', [SiswaController::class,'export'])->name('exportsiswa');
+Route::post('importsiswa', [SiswaController::class,'import'])->name('importsiswa');
 
 
 

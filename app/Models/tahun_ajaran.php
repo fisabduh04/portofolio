@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class tahun_ajaran extends Model
 {
     use HasFactory;
-    protected $fillable = ['tanggalmulai', 'tanggalakhir', 'tahun', 'semester', 'Aktif'];
+    protected $fillable = ['tanggalmulai', 'tanggalakhir', 'tahun', 'semester', 'isActive'];
 }

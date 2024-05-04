@@ -35,12 +35,7 @@
       </div>
     </div>
     <div class="card-body">
-        @livewire('Mapel.tambahmapel')
-
-
-          {{-- @livewire('Mapel.Datamapel') --}}
-
-
+        @livewire('Mapel.datamapel')
     </div>
     <!-- /.card-body -->
 

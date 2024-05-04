@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('tahun_ajarans', function (Blueprint $table) {
             $table->id();
-            $table->string('tahun')->unique();
+            $table->string('tahun')->nullable();
             $table->string('semester')->nullable();
             $table->date('tanggalmulai')->nullable();
             $table->date('tanggalakhir')->nullable();
-            $table->string('Aktif')->nullable();
+            $table->boolean('isActive')->nullable();
+            $table->text('deskripsi')->nullable();
+            $table->unique(['tahun', 'semester']);
             $table->timestamps();
         });
     }

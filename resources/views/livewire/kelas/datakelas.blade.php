@@ -1,8 +1,10 @@
+
+
 <div>
     <div class="d-flex flex-wrap justify-content-start mb-3">
-        @if ($mapel_selected_id)
+        @if ($kelas_selected_id)
         <button class="btn btn-outline-danger mb-2 col-12 col-md-3 col-lg-2 mr-1" wire:confirm="Apakah Anda yakin data akan dihapus?" wire:click.prevent="del()">
-            <i class="fas fa-trash-alt"></i>Hapus {{ count($mapel_selected_id) }} Data
+            <i class="fas fa-trash-alt"></i>Hapus {{ count($kelas_selected_id) }} Data
         </button>
         @endif
 
@@ -10,15 +12,17 @@
             <i class="fas fa-plus"></i>Tambah
         </button>
 
+        @if ($tombol_tambah)
         <button type="submit" class="btn btn-outline-primary mb-2 col-12 col-md-3 col-lg-2 mr-1" wire:click.prevent="store()">
             <i class="fas fa-cloud-download-alt"></i>Simpan Data
         </button>
+        @endif
 
         <button type="button" class="btn btn-outline-success mb-2 col-12 col-md-3 col-lg-2 mr-1" data-toggle="modal" data-target="#modal-default">
             <i class="fas fa-download"></i>Import Excel
         </button>
 
-        <a href="{{ route('exportportmapel') }}" class="btn btn-outline-success mb-2 col-12 col-md-3 col-lg-2 mr-1" >
+        <a href="{{ route('exportkelas') }}" class="btn btn-outline-success mb-2 col-12 col-md-3 col-lg-2 mr-1" >
             <i class="fas fa-file-export"></i>Export Excel</a>
     </div>
 
@@ -57,16 +61,59 @@
                     <th style="width: 2%;">
                         <input type="checkbox" wire:model.live="SelectAll">
                     </th>
-                    <th style="width: 5%;">ID</th>
+                    <th style="width: 5%;" wire:click="sortBy('id')">
+                        ID
+                        @if($sortField === 'id')
+                            @if($sortAsc)
+                                <i class="fas fa-sort-up"></i>
+                            @else
+                                <i class="fas fa-sort-down"></i>
+                            @endif
+                        @else
+                            <i class="fas fa-sort"></i>
+                        @endif
+                    </th>
                     <th style="width: 10%;">Aksi</th>
-                    <th style="width: 10%;">Kode</th>
-                    <th style="width: 30%;">Mata Pelajaran</th>
-                    <th style="width: 20%;">Jurusan</th>
-                    <th style="width: 20%;">Keterangan</th>
+                    <th style="width: 30%;" wire:click="sortBy('kelas')">
+                        Kelas
+                        @if($sortField === 'kelas')
+                            @if($sortAsc)
+                                <i class="fas fa-sort-up"></i>
+                            @else
+                                <i class="fas fa-sort-down"></i>
+                            @endif
+                        @else
+                            <i class="fas fa-sort"></i>
+                        @endif
+                    </th>
+                    <th style="width: 20%;" wire:click="sortBy('jurusan')">
+                        Jurusan
+                        @if($sortField === 'jurusan')
+                            @if($sortAsc)
+                                <i class="fas fa-sort-up"></i>
+                            @else
+                                <i class="fas fa-sort-down"></i>
+                            @endif
+                        @else
+                            <i class="fas fa-sort"></i>
+                        @endif
+                    </th>
+                    <th style="width: 20%;" wire:click="sortBy('ket')">
+                        Keterangan
+                        @if($sortField === 'ket')
+                            @if($sortAsc)
+                                <i class="fas fa-sort-up"></i>
+                            @else
+                                <i class="fas fa-sort-down"></i>
+                            @endif
+                        @else
+                            <i class="fas fa-sort"></i>
+                        @endif
+                    </th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($mapel as $index => $val)
+                @foreach($kelas as $index => $val)
                     <tr>
                         <td>#</td>
                         <td>{{ $index }}</td>
@@ -75,12 +122,8 @@
                                     class="fas fa-trash-alt"></i> </button>
                         </td>
 
-                        {{-- <td>{{ $index }}</td> --}}
                         <td>
-                            <input type="text" wire:model="kode.{{ $index }}" class="form-control">
-                        </td>
-                        <td>
-                            <input type="text" wire:model="mapel.{{ $index }}" class="form-control">
+                            <input type="text" wire:model="kelas.{{ $index }}" class="form-control">
                         </td>
                         <td>
                             <select class="custom-select" wire:model="jurusan.{{ $index }}">
@@ -93,27 +136,26 @@
                         <td>
                             <input type="text" wire:model="ket.{{ $index }}" class="form-control">
                         </td>
-
-
                     </tr>
+                @endforeach
 
-                    @endforeach
-                @foreach ($mapellist as $index => $m)
+
+                @foreach ($kelaslist as $index => $m)
                     <tr>
                         <td>
-                            <input type="checkbox" wire:key="{{ $m->id }}" wire:model.live="mapel_selected_id" value="{{ $m->id }}">
+                            <input type="checkbox" wire:key="{{ $m->id }}" wire:model.live="kelas_selected_id" value="{{ $m->id }}">
                         </td>
 
                         <td>{{ $m->id }}</td>
                         <td>
-                            <form class="d-inline" onclick="return confirm('Apakah anda yakin akan menghapus data ini')" action="mapel/{{ $m->id }}" method="POST">
+                            <form class="d-inline" onclick="return confirm('Apakah anda yakin akan menghapus data ini')" action="kelas/{{ $m->id }}" method="POST">
                                 @csrf
                                 @method('delete')
                                 <button type="submit" class="btn btn-outline-danger btn-sm">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
-                            @if ($editmapelindex === $m->id)
+                            @if ($editkelasindex === $m->id)
                                 <button wire:click="update({{ $m->id }})" class="btn btn-outline-success btn-sm">
                                     <i class="fas fa-save"></i>
                                 </button>
@@ -125,23 +167,17 @@
 
 
                         </td>
-                        <td>
-                            @if ($editmapelindex===$m->id)
-                                <input type="text" wire:model="editkode" class="form-control" value="{{ $m->kode }}">
-                            @else
-                            {{ $m->kode }}
-                            @endif
-                        </td>
+
                         <td>
 
-                            @if ($editmapelindex===$m->id)
-                            <input type="text" wire:model="editmapel" class="form-control">
+                            @if ($editkelasindex===$m->id)
+                            <input type="text" wire:model="editkelas" class="form-control">
                         @else
-                        {{ $m->mapel }}
+                        {{ $m->kelas }}
                         @endif
                         </td>
                         <td>
-                            @if ($editmapelindex===$m->id)
+                            @if ($editkelasindex===$m->id)
                             <select class="custom-select col-md-8" wire:model="editjurusan" >
                                 @foreach ($jurusanlist as $item)
                                     <option value="{{ $item->id }}" {{ $item->id == $m->jurusan_id ? 'selected' : '' }}>{{ $item->jurusan}}</option>
@@ -158,7 +194,7 @@
                         </td>
 
                         <td>
-                            @if ($editmapelindex===$m->id)
+                            @if ($editkelasindex===$m->id)
                                 <input type="text" wire:model="editket" class="form-control" value="{{ $m->ket }}">
                             @else
                             {{ $m->ket }}
@@ -170,13 +206,8 @@
                 @endforeach
             </tbody>
         </table>
-        {{ $mapellist->links() }}
+        {{-- {{ $kelaslist->links() }} --}}
     </div>
-
-
-
-
-
 
 
 
@@ -185,16 +216,16 @@
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h4 class="modal-title">Import File Data Mapel</h4>
+              <h4 class="modal-title">Import File Data kelas</h4>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <div class="modal-body">
-              <form action="{{ route('importmapel') }}" method="POST" enctype="multipart/form-data" >
+              <form action="{{ route('importkelas') }}" method="POST" enctype="multipart/form-data" >
                 @csrf
                 <div class="form-group mb-3">
-                    <label for="file">Import Mapel</label>
+                    <label for="file">Import kelas</label>
                     <input type="file" name="file" id="" class="form-control">
                 </div>
                 <button type="submit" class="btn btn-success"><i class="fas fa-download"></i>Import Excel</button>
@@ -208,7 +239,6 @@
         </div>
         <!-- /.modal-dialog -->
     </div>
-
-
-
 </div>
+
+

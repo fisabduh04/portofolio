@@ -36,7 +36,7 @@
       </div>
     </div>
     <div class="card-body">
-      @livewire('kelas')
+      @livewire('kelas.Datakelas')
 
     </div>
     <!-- /.card-body -->

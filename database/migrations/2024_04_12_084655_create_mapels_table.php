@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('mapel');
             $table->foreignId('jurusan_id')->nullable();
             $table->string('ket')->nullable();
+            $table->text('deskripsi')->nullable();
             $table->timestamps();
         });
     }
