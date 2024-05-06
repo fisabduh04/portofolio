@@ -20,7 +20,7 @@
 @endif
 
 <div class="container mt-4">
-    @livewire('tahun.Datatahun')
+    @livewire('tahun.data')
 </div>
 
 @endsection

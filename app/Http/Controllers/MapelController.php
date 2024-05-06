@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Exports\MapelExport;
+use App\Imports\ImportMapel;
 use App\Models\mapel;
-use App\Imports\mapelImport;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Maatwebsite\Excel\Facades\Excel;
+
 
 class MapelController extends Controller
 {
@@ -16,23 +16,18 @@ class MapelController extends Controller
      */
     public function index()
     {
-        $mapel=mapel::all();
-        return view('mapel.index',compact('mapel'));
+        return view('mapel.index');
     }
-
-    public function import(Request $request){
-        $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:2048',
-        ]);
-        $file=$request->file('file')->store('public/import');
-        Excel::import(new mapelImport, $file);
-        return redirect('/mapel')->with('success','Data berhasil di import');
-
-    }
-     public function export(){
+    public function export()
+    {
         return Excel::download(new MapelExport, 'mapel.xlsx');
-
-     }
+        return redirect()->route('mapel.index')->with('success', 'Data Mata Pelajaran berhasil dieksport');
+    }
+    public function import()
+    {
+        Excel::import(new ImportMapel, request()->file('file'));
+        return redirect()->route('mapel.index')->with('success', 'Data Mata Pelajaran berhasil diimport');
+    }
 
     /**
      * Show the form for creating a new resource.
@@ -77,9 +72,8 @@ class MapelController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy(mapel $mapel)
     {
-        mapel::destroy($id);
-        return redirect('mapel')->with('success','Data Berhasil Dihapus');
+        //
     }
 }

@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\siswa;
 use Illuminate\Http\Request;
-use App\Exports\SiswaExport;
+use App\Exports\Siswaexport;
 use App\Imports\SiswaImport;
+use App\Models\jurusan;
+use App\Models\tahun;
 use Maatwebsite\Excel\Facades\Excel;
 
 class SiswaController extends Controller
@@ -17,7 +19,7 @@ class SiswaController extends Controller
     {
         $siswa=siswa::all();
         return view('siswa.index',compact('siswa'));
-        
+
     }
 
     /**
@@ -27,7 +29,7 @@ class SiswaController extends Controller
     {
         return Excel::download(new SiswaExport, 'siswa.xlsx');
         return redirect()->route('siswa.index')->with('success', 'Data siswa berhasil dieksport');
-    } 
+    }
     public function import()
     {
         Excel::import(new SiswaImport, request()->file('file'));
@@ -76,6 +78,20 @@ class SiswaController extends Controller
      */
     public function destroy(siswa $siswa)
     {
-        //
+        // dd($siswa);
+        $siswa->delete();
+        return redirect('siswa')->with('success','Data Berhasil Dihapus');
     }
+
+    public function kelassiswa(){
+        $siswa=siswa::where('aktif','aktif')
+        ->get();
+        $jurusan=jurusan::all();
+        $tahun=tahun::all();
+        return view('kelas.kelassiswa',compact('siswa','jurusan','tahun'));
+    }
+
+
+
+
 }

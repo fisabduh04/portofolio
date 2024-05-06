@@ -15,7 +15,7 @@ class PegawaiController extends Controller
      */
     public function index()
     {
-        $pegawai = pegawai::all();
+        $pegawai = pegawai::orderBy('name','asc')->get();
         return view('pegawai.index', compact('pegawai'));
     }
     public function import(Request $request){

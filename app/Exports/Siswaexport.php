@@ -8,8 +8,9 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class Siswaexport implements FromQuery, ShouldAutoSize, WithHeadings
+class Siswaexport implements FromQuery, ShouldAutoSize, WithMapping, WithHeadings
 {
     use Exportable;
     /**
@@ -18,6 +19,7 @@ class Siswaexport implements FromQuery, ShouldAutoSize, WithHeadings
     public function query()
     {
         return siswa::query();
+
     }
     public function map($siswa):array
     {
@@ -26,6 +28,8 @@ class Siswaexport implements FromQuery, ShouldAutoSize, WithHeadings
             $siswa->nipd,
             $siswa->jk,
             $siswa->nisn,
+            $siswa->status,
+            $siswa->aktif,
             $siswa->tempatlahir,
             $siswa->tanggallahir,
             $siswa->nik,
@@ -85,7 +89,7 @@ class Siswaexport implements FromQuery, ShouldAutoSize, WithHeadings
         $siswa->beratbadan,
         $siswa->tinggibadan,
         $siswa->lingkarkepala,
-        $siswa->jmlsaudara,            
+        $siswa->jmlsaudara,
         ];
     }
     public function headings():array
@@ -94,7 +98,9 @@ class Siswaexport implements FromQuery, ShouldAutoSize, WithHeadings
             'nama',
             'nipd',
             'jenis_kelamin',
-            'nisn',            
+            'nisn',
+            'status',
+            'aktif',
             'tempat_lahir',
             'tanggallahir',
             'nik',

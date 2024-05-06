@@ -26,6 +26,8 @@ class PegawaiImport implements ToModel, WithHeadingRow
                 ['nuptk' => $row['nuptk']], // Kolom yang digunakan sebagai kunci unik
                 [
                    'name'=>$row['name'],
+                   'status'=>$row['status'],
+                   'aktif'=>$row['aktif'],
                    'email'=>$row['email'],
                    'jk'=>$row['jk'],
                    'kotalahir'=>$row['kota_lahir'],
@@ -41,7 +43,7 @@ class PegawaiImport implements ToModel, WithHeadingRow
                    'PangkatGolongan'=>$row['pangkat'],
                    'sumbergaji'=>$row['sumber_gaji'],
                    'ibukandung'=>$row['ibu_kandung'],
-                   'statusPerkawinan'=>$row['status'],
+                   'kawin'=>$row['kawin'],
                    'suamiistri'=>$row['suami_istri'],
                    'pekerjaansuamiIstri'=>$row['kerjaistri'],
                    'npwp'=>$row['npwp'],

@@ -20,7 +20,8 @@ class SiswaImport implements ToModel, WithHeadingRow
     */
     public function model(array $row){
 
-        $tanggalLahir = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['tanggallahir'])->format('Y-m-d');
+        // $tanggalLahir = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['tanggallahir'])->format('Y-m-d');
+
         return siswa::updateOrCreate(
             ['nipd' => $row['nipd']], // Kunci untuk mencari dan memutuskan apakah akan update atau insert
             [
@@ -28,8 +29,10 @@ class SiswaImport implements ToModel, WithHeadingRow
                 'alamat' => $row['alamat'],
                 'jk' => $row['jenis_kelamin'],
                 'nisn'=>$row['nisn'],
+                'status'=>$row['status'],
+                'aktif'=>$row['aktif'],
                 'tempatlahir'=>$row['tempat_lahir'],
-                'tanggallahir'=>$tanggalLahir,
+                'tanggallahir'=>$row['tanggallahir'],
                 'nik'=>$row['nik'],
                 'agama'=>$row['agama'],
                 'alamat'=>$row['alamat'],
@@ -74,7 +77,7 @@ class SiswaImport implements ToModel, WithHeadingRow
                 'nomorkks'=>$row['nomorkks'],
                 'noaktalahir'=>$row['noaktalahir'],
                 'bank'=>$row['bank'],
-                'nomor_rekening_bank'=>$row['nomor_rekening_bank'],                    
+                'nomor_rekening_bank'=>$row['nomor_rekening_bank'],
                 'rekening_atas_nama'=>$row['rekening_atas_nama'],
                 'layakpip'=>$row['layakpip'],
                 'alasanlayakpip'=>$row['alasanlayakpip'],
@@ -87,8 +90,8 @@ class SiswaImport implements ToModel, WithHeadingRow
                 'beratbadan'=>$row['beratbadan'],
                 'tinggibadan'=>$row['tinggibadan'],
                 'lingkarkepala'=>$row['lingkarkepala'],
-                'jmlsaudara'=>$row['jmlsaudara'],             
-                'jarakrumah'=>$row['jarakrumah'],             
+                'jmlsaudara'=>$row['jmlsaudara'],
+                'jarakrumah'=>$row['jarakrumah'],
             ]
             );
     }

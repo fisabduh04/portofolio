@@ -1,28 +1,19 @@
 <?php
 
-use app\Livewire\Home;
-use Livewire\Livewire;
-use app\Livewire\About;
-use App\Livewire\Kelas;
-use App\Livewire\Tutorial;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CobaController;
-use App\Http\Controllers\HomeController;
 use App\Http\Controllers\KelasController;
-use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\TahunController;
 use App\Http\Controllers\JurusanController;
 use App\Http\Controllers\MapelController;
 use App\Http\Controllers\PegawaiController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\TahunAjaranController;
+use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\CobaController;
 
+Route::get('/', function () {
+    return view('tampilan.main');
+});
 
-Route::get('/', [HomeController::class, 'dashboard']);
-Route::get('/index', [HomeController::class, 'index']);
-
-
-//route tahun pelajaran
-Route::resource('tahun', TahunAjaranController::class);
+Route::resource('tahun', TahunController::class);
 
 
 //route kelas
@@ -48,8 +39,10 @@ Route::get('exportpegawai', [PegawaiController::class,'export'])->name('exportpe
 
 // route siswa
 Route::resource('siswa', SiswaController::class);
+Route::delete('/siswa/{siswa}', [SiswaController::class,'destroy'])->name('siswa.destroy');
 Route::get('exportsiswa', [SiswaController::class,'export'])->name('exportsiswa');
 Route::post('importsiswa', [SiswaController::class,'import'])->name('importsiswa');
+Route::get('kelassiswa', [SiswaController::class,'kelassiswa'])->name('kelassiswa');
 
 
 
@@ -60,9 +53,6 @@ Route::post('importsiswa', [SiswaController::class,'import'])->name('importsiswa
 Route::get('/coba', [CobaController::class, 'index']);
 Route::get('/tabel', [CobaController::class, 'tabel']);
 
-Route::get('product', [ProductController::class, 'index'])->name('product.index');
-Route::post('product', [ProductController::class, 'update'])->name('product.update');
-Route::post('product/delete/{id}', [ProductController::class, 'delete'])->name('product.delete');
 
 
 
@@ -78,6 +68,4 @@ Route::get('/employe', function () {
     return view('welcome');
   });
 
-Route::get('tutorial', Tutorial::class);
-// Route::get('/', action: \App\Livewire\Home::class)->name('home');
-// Route::get('/about', action: \App\Livewire\About::class)->name('home');
+// Route::get('tutorial', Tutorial::class);

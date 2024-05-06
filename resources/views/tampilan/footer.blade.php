@@ -1,5 +1,3 @@
-
-
 <!-- jQuery -->
 <script src="{{ asset('lte/plugins/jquery/jquery.min.js')}}"></script>
 <!-- Bootstrap 4 -->
@@ -17,7 +15,9 @@
 <script src="{{ asset('lte/plugins/sweetalert2/sweetalert2.min.js')}}"></script>
 <!-- Toastr -->
 <script src="{{ asset('lte/plugins/toastr/toastr.min.js')}}"></script>
-{{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> --}}
+{{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"
+    integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script> --}}
 
 
 <!-- DataTables  & Plugins -->
@@ -32,6 +32,3 @@
 
 @stack('js')
 <!-- Page specific script -->
-
-
-

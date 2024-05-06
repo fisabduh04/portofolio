@@ -10,4 +10,3 @@ class siswa extends Model
     use HasFactory;
     protected $guarded=[];
 }
-

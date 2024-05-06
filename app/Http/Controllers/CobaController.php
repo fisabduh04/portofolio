@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 
 class CobaController extends Controller
 {
@@ -13,17 +11,7 @@ class CobaController extends Controller
      */
     public function index()
     {
-        return view('coba.index');
-    }
-
-    public function tabel()
-    {
-        $user = User::all();
-        return view('coba.tabel', compact('user'));
-    }
-
-    public function product()
-    {
+        //
     }
 
     /**

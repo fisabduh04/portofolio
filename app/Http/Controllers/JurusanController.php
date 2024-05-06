@@ -12,7 +12,8 @@ class JurusanController extends Controller
      */
     public function index()
     {
-        return view('jurusan.index');
+        $jurusan=jurusan::all();
+        return view('jurusan.index',compact('jurusan'));
     }
 
     /**
