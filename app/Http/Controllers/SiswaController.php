@@ -82,16 +82,4 @@ class SiswaController extends Controller
         $siswa->delete();
         return redirect('siswa')->with('success','Data Berhasil Dihapus');
     }
-
-    public function kelassiswa(){
-        $siswa=siswa::where('aktif','aktif')
-        ->get();
-        $jurusan=jurusan::all();
-        $tahun=tahun::all();
-        return view('kelas.kelassiswa',compact('siswa','jurusan','tahun'));
-    }
-
-
-
-
 }

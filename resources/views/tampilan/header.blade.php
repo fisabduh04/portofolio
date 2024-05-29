@@ -22,6 +22,5 @@
     <link rel="stylesheet" href="{{ asset('DataTables\Buttons-3.0.0\css\buttons.bootstrap4.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
-
-
+    @stack('cs')
 </head>

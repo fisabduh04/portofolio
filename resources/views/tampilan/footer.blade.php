@@ -29,6 +29,8 @@
 <script src="{{ asset('DataTables/Buttons-3.0.0/js/dataTables.buttons.js')}}"></script>
 <script src="{{ asset('DataTables/Buttons-3.0.0/js/buttons.bootstrap4.js')}}"></script>
 <script src="{{ asset('DataTables/Buttons-3.0.0/js/buttons.colVis.min.js')}}"></script>
+<!-- Select2 -->
+<script src="lte/plugins/select2/js/select2.full.min.js"></script>
 
 @stack('js')
 <!-- Page specific script -->

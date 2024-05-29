@@ -45,10 +45,10 @@ class Data extends Component
     }
 
     // Reset halaman kembali ke halaman pertama
-    $this->resetPage();
+    // $this->resetPage();
     }
     public function search(){
-        $this->resetPage(); // Set halaman kembali ke halaman pertama saat melakukan pencarian
+        // $this->resetPage(); // Set halaman kembali ke halaman pertama saat melakukan pencarian
     // Query pencarian data berdasarkan kondisi tertentu, misalnya nama atau kode mapel
 
     $data = mapel::orderBy('jurusan_id', 'asc')

@@ -63,7 +63,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="kelassiswa" class="nav-link {{ (request()->is('kelassiswa')?'active':'') }}">
+                            <a href="/kelassiswa" class="nav-link {{ (request()->is('kelassiswa')?'active':'') }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Kelas Siswa</p>
                             </a>
