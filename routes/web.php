@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AbsensiController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KelasController;
 use App\Http\Controllers\TahunController;
@@ -8,13 +9,15 @@ use App\Http\Controllers\MapelController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\CobaController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KelasSiswaController;
 
 Route::get('/', function () {
-    return view('tampilan.main');
+    return view('welcome');
 });
 
 Route::resource('tahun', TahunController::class);
+Route::resource('dashboard',DashboardController::class);
 
 
 //route kelas
@@ -33,8 +36,6 @@ Route::get('exporttmapel', [MapelController::class,'export'])->name('exportportm
 
 // route pegawai
 Route::resource('pegawai',PegawaiController::class);
-Route::get('Addpegawai', [PegawaiController::class, 'Addpegawai'])->name('tambahpegawai');
-Route::get('pegawai/{id}', [PegawaiController::class, 'edit'])->name('editpegawai');
 Route::post('importpegawai', [PegawaiController::class,'import'])->name('importpegawai');
 Route::get('exportpegawai', [PegawaiController::class,'export'])->name('exportpegawai');
 
@@ -45,23 +46,19 @@ Route::get('exportsiswa', [SiswaController::class,'export'])->name('exportsiswa'
 Route::post('importsiswa', [SiswaController::class,'import'])->name('importsiswa');
 
 //Route Kelas Siswa
-// Route::get('kelassiswa',KelasSiswaController::class);
-Route::get('kelassiswa',[KelasSiswaController::class,'index'])->name('kelassiswa.index');
-Route::post('kelassiswa',[KelasSiswaController::class,'store'])->name('siswa_kelas.store');
-// Route::get('kelassiswa',[KelasSiswaController::class,'filter'])->name('siswa_kelas.filtered');
-
-
-Route::get('/siswa-kelas', [KelasSiswaController::class, 'index'])->name('siswa_kelas.index');
-Route::post('/siswa-kelas/store', [KelasSiswaController::class, 'store'])->name('siswa_kelas.store');
-Route::get('/siswa-kelas/edit/{id}', [KelasSiswaController::class, 'edit'])->name('siswa_kelas.edit');
-Route::put('/siswa-kelas/update/{id}', [KelasSiswaController::class, 'update'])->name('siswa_kelas.update');
-Route::delete('/siswa-kelas/destroy/{id}', [KelasSiswaController::class, 'destroy'])->name('siswa_kelas.destroy');
-Route::get('/siswa-kelas/filtered', [KelasSiswaController::class, 'filtered'])->name('siswa_kelas.filtered');
+Route::resource('kelassiswa',KelasSiswaController::class);
 Route::get('/kelas-siswa-export', [KelasSiswaController::class, 'export'])->name('kelas-siswa-export');
 Route::post('kelas-siswa-import', [KelasSiswaController::class, 'import'])->name('kelas-siswa-import');
 
+// Route::get('/siswa-kelas', [KelasSiswaController::class, 'index'])->name('siswa_kelas.index');
+// Route::post('/siswa-kelas/store', [KelasSiswaController::class, 'store'])->name('siswa_kelas.store');
+// Route::get('/siswa-kelas/edit/{id}', [KelasSiswaController::class, 'edit'])->name('siswa_kelas.edit');
+// Route::put('/siswa-kelas/update/{id}', [KelasSiswaController::class, 'update'])->name('siswa_kelas.update');
+// Route::delete('/siswa-kelas/destroy/{id}', [KelasSiswaController::class, 'destroy'])->name('siswa_kelas.destroy');
+// Route::get('/siswa-kelas/filtered', [KelasSiswaController::class, 'filtered'])->name('siswa_kelas.filtered');
 
-
+// Daftar Hadir Siswa
+Route::resource('absensi',AbsensiController::class);
 
 
 

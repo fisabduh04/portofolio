@@ -1,31 +1,13 @@
-@extends('tampilan.main')
+<x-layout.layout>
+    <x-breadcrumb :breadcrumbs="[
+        ['name' => 'Home', 'href' => ''],
+        ['name' => 'Users', 'href' => ''],
+        ['name' => 'Jurusan', 'href' => '']
+    ]" />
 
-@section('judul','uji coba')
-@section('content')
-
-<div class="col-12">
-    <!-- Default box -->
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Daftar Jurusan SMK AL-MIFTAH Pamekasan</h3>
-            <div class="card-tools">
-                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-                    <i class="fas fa-minus"></i>
-                </button>
-                <button type="button" class="btn btn-tool" data-card-widget="remove" title="Remove">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-        <div class="card-body">
-            @livewire('jurusan.data')
-        </div>
-        <!-- /.card-body -->
-
+    <div class="p-4 mt-5 border-2 border-gray-200 rounded-lg dark:border-gray-700">
+        <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Jurusan</h1>
+        @livewire('jurusan.data')
     </div>
-    <!-- /.card -->
-</div>
 
-
-
-@endsection
+</x-layout.layout>

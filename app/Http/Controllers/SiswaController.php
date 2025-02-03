@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\siswa;
-use Illuminate\Http\Request;
+use App\Models\tahun;
+use App\Models\jurusan;
 use App\Exports\Siswaexport;
 use App\Imports\SiswaImport;
-use App\Models\jurusan;
-use App\Models\tahun;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+
 
 class SiswaController extends Controller
 {
@@ -18,6 +21,7 @@ class SiswaController extends Controller
     public function index()
     {
         $siswa=siswa::all();
+        // dd($siswa);
         return view('siswa.index',compact('siswa'));
 
     }
@@ -28,17 +32,17 @@ class SiswaController extends Controller
     public function export()
     {
         return Excel::download(new SiswaExport, 'siswa.xlsx');
-        return redirect()->route('siswa.index')->with('success', 'Data siswa berhasil dieksport');
+        return redirect()->route('siswa.index')->with('message', 'Data siswa berhasil dieksport')->with('type', 'success');
     }
     public function import()
     {
         Excel::import(new SiswaImport, request()->file('file'));
-        return redirect()->route('siswa.index')->with('success', 'Data siswa berhasil diimport');
+        return redirect()->route('siswa.index')->with('message', 'Data siswa berhasil diimport')->with('type', 'success');
 
     }
      public function create()
     {
-        //
+        return view('siswa.input-siswa');
     }
 
     /**
@@ -46,7 +50,19 @@ class SiswaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // @dd($request->all());
+        $request->validate([
+            'nama'=>'required',
+            'nipd'=>'required',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png,gif,png|max:2048',
+        ]);
+        $data=$request->all();
+
+        if($request->hasFile('foto')){
+            $data['foto']=$request->file('foto')->store('uploads/foto','public');
+        }
+        Siswa::create($data);
+        return redirect('siswa')->with('message','Data telah disimpan')->with('type','success');
     }
 
     /**
@@ -62,7 +78,8 @@ class SiswaController extends Controller
      */
     public function edit(siswa $siswa)
     {
-        //
+        $siswa=siswa::find($siswa->id);
+        return view('siswa.input-siswa',compact('siswa'));
     }
 
     /**
@@ -70,8 +87,27 @@ class SiswaController extends Controller
      */
     public function update(Request $request, siswa $siswa)
     {
-        //
+        // dd($request->all());
+        $request->validate([
+            'nama'=>'required',
+            'nipd'=>'required',
+        ]);
+
+        $data = $request->all();
+
+        if ($request->hasFile('foto')) {
+            // Hapus foto lama jika ada
+            if ($siswa->foto) {
+                Storage::disk('public')->delete($siswa->foto);
+            }
+            $data['foto'] = $request->file('foto')->store('uploads/foto', 'public');
+        }
+
+        $siswa->update($data);
+
+        return redirect()->route('siswa.index')->with('message', 'Data berhasil diperbarui')->with('type', 'success');
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -79,7 +115,12 @@ class SiswaController extends Controller
     public function destroy(siswa $siswa)
     {
         // dd($siswa);
+        if ($siswa->foto) {
+            Storage::disk('public')->delete($siswa->foto);
+        }
         $siswa->delete();
-        return redirect('siswa')->with('success','Data Berhasil Dihapus');
+        return redirect('siswa')->with('message','Data Berhasil Dihapus')->with('type','error');
+
     }
+
 }

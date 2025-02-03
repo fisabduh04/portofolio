@@ -11,7 +11,7 @@ class CobaController extends Controller
      */
     public function index()
     {
-        //
+        return view('coba.coba');
     }
 
     /**
@@ -27,7 +27,7 @@ class CobaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        @dd($request->all());
     }
 
     /**

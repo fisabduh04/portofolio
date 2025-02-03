@@ -7,6 +7,7 @@ use App\Imports\PegawaiImport;
 use App\Models\pegawai;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
 
 class PegawaiController extends Controller
 {
@@ -18,26 +19,14 @@ class PegawaiController extends Controller
         $pegawai = pegawai::orderBy('name','asc')->get();
         return view('pegawai.index', compact('pegawai'));
     }
-    public function import(Request $request){
-        $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:2048',
-        ]);
-        $file=$request->file('file')->store('public/import');
-        Excel::import(new PegawaiImport, $file);
-        return redirect('/pegawai')->with('success','Data berhasil di import');
 
-    }
-     public function export(){
-        return Excel::download(new PegawaiExport, 'pegawai.xlsx');
-
-     }
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        //
+        return view('pegawai.input-pegawai');
     }
 
     /**
@@ -53,7 +42,9 @@ class PegawaiController extends Controller
         ]);
 
         pegawai::create($request->all());
-        return redirect('pegawai')->with('success', 'Data Pegawai telah diinput');
+        return redirect('pegawai')->with('message', 'Data Pegawai telah diinput')->with('type', 'success');
+        // session()->flash('message', 'Data berhasil disimpan!');
+        // session()->flash('type', 'success');
     }
 
     /**
@@ -71,16 +62,23 @@ class PegawaiController extends Controller
     {
         // dd($id);
         $pegawai = pegawai::find($id);
-        return view('pegawai.editpegawai');
+        return view('pegawai.input-pegawai', compact('pegawai'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, pegawai $pegawai)
-    {
-        //
-    }
+        public function update(Request $request, pegawai $pegawai)
+        {
+            // dd($pegawai);
+            $request->validate([
+                'name' => 'required',
+                'nuptk' => 'required',
+            ]);
+
+            $pegawai->update($request->all());
+            return redirect('/pegawai')->with('message', 'Data Berhasil Diupdate')->with('type', 'success');
+        }
 
     /**
      * Remove the specified resource from storage.
@@ -88,12 +86,33 @@ class PegawaiController extends Controller
     public function destroy($id)
     {
         // @dd($id);
-        pegawai::destroy($id);
+        // pegawai::destroy($id);
+        $peg=pegawai::findOrFail($id);
+        $peg->delete();
 
-        return redirect('pegawai')->with('error', 'Data Berhasil Dihapus');
+        // return redirect('pegawai')->with('error', 'Data Berhasil Dihapus');
+        // session()->flash('message', 'Data berhasil dihapus!');
+        // session()->flash('type', 'error');
+        // return redirect('pegawai');
+        // Di controller
+return redirect('pegawai')->with('message', 'Data Berhasil Dihapus')->with('type', 'error');
     }
     public function Addpegawai()
     {
         return view('pegawai.Addpegawai');
     }
+    public function import(Request $request){
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:2048',
+        ]);
+        $file=$request->file('file')->store('public/import');
+        Excel::import(new PegawaiImport, $file);
+        // return redirect('/pegawai')->with('success','Data berhasil di import');
+        return redirect('/pegawai')->with('message','Data berhasil di import')->with('type','success');
+
+    }
+     public function export(){
+        return Excel::download(new PegawaiExport, 'pegawai.xlsx');
+
+     }
 }

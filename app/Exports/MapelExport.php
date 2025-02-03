@@ -25,8 +25,8 @@ class MapelExport implements FromQuery,WithMapping, ShouldAutoSize, WithHeadings
         return[
             $mapel->kode,
             $mapel->mapel,
-            $mapel->jurusan->jurusan,
-            $mapel->ket
+            $mapel->jurusan->jurusan??'',
+            $mapel->ket??''
         ];
     }
     public function headings():array

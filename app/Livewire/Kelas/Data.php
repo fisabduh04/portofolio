@@ -6,11 +6,15 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Kelas;
 use App\Models\Jurusan;
+use Livewire\WithFileUploads;
+use App\Imports\KelasImport;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 class Data extends Component
 {
     use WithPagination;
-    protected $paginationTheme = 'bootstrap';
+    use WithFileUploads;
 
     public $kelas = [];
     public $i = 0;
@@ -26,6 +30,7 @@ class Data extends Component
     public $perPage = 10;
     public $search = "";
     public $tombol_tambah = false;
+    public $file;
     public $sortField = 'kelas'; // Default sorting column
     public $sortAsc = true; // Default sorting order
 
@@ -100,8 +105,11 @@ class Data extends Component
             ]);
         }
 
-        $this->resetFields();
-        session()->flash('success', 'Data berhasil disimpan');
+    //
+        $this->dispatch('showToast', message: 'Data berhasil disimpan!', type: 'success');
+
+
+       $this->resetFields();
     }
 
     private function resetFields()
@@ -116,6 +124,7 @@ class Data extends Component
 
     public function edit($id)
     {
+        // @dd($id);
         $this->editkelasindex = $id;
         $kelas = Kelas::find($id);
         $this->editkelas = $kelas->kelas;
@@ -133,13 +142,22 @@ class Data extends Component
         ]);
 
         $this->editkelasindex = null;
-        session()->flash('success', 'Data kelas berhasil diperbarui');
+
+
+        $this->dispatch('showToast', message: 'Data berhasil diupdate!', type: 'warning');
+
+
+
+
     }
 
     public function del()
     {
         Kelas::destroy($this->kelas_selected_id);
-        session()->flash('success', 'Data berhasil dihapus');
+
+        $this->dispatch('showToast', message: 'Data berhasil dihapus!', type: 'error');
+
+
         $this->resetFields();
     }
 
@@ -157,6 +175,34 @@ class Data extends Component
         $this->sortField = $field;
         $this->sortAsc = !$this->sortAsc;
         $this->resetPage();
+    }
+
+    public function updatedFile()
+    {
+        $this->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:10240', // Max 10MB
+        ]);
+
+    }
+    public function import()
+    {
+        // Pastikan file ada dan valid
+        if ($this->file) {
+            // Menggunakan Maatwebsite Excel untuk mengimpor file
+            Excel::import(new KelasImport, $this->file);
+            // Excel::import(new KelasImport, $this->file->getRealPath());
+
+
+            // Mengirimkan pesan sukses
+
+        $this->dispatch('showToast', message: 'Data berhasil diimport!', type: 'success');
+
+        } else {
+            // Menampilkan pesan error jika tidak ada file
+        $this->dispatch('showToast', message: 'Data gagal diimport!', type: 'error');
+
+        }
+        $this->reset('file');
     }
 
 }

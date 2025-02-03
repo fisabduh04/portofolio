@@ -36,6 +36,7 @@ class Data extends Component
 
     public function store()
     {
+        // @dd($this->all());
         $this->validate([
             'kode.*' => 'required',
             'jurusan.*' => 'required',
@@ -50,8 +51,6 @@ class Data extends Component
 
         $this->resetFields();
         session()->flash('success','data berhasil di simpan');
-        // $this->dispatch('notification', ['success', 'Operasi berhasil!']);
-        $this->dispatch('success');
 
     }
 
@@ -65,10 +64,8 @@ class Data extends Component
     public function del($id)
     {
         jurusan::destroy($id);
-        // $this->dispatch('error',['message'=>'Data jurusan berhasil ditambahkan'] );
-        $this->dispatch('error');
 
-        session()->flash('delete', 'Data Jurusan behasil dihapus.');
+        session()->flash('error', 'Data Jurusan behasil dihapus.');
     }
     public function editStudent($id)
     {
@@ -86,12 +83,10 @@ class Data extends Component
         $data->update([
             'kode'=>$this->editkode,
             'jurusan'=>$this->editjurusan,
-            'deskripsi'=>$this->deskripsi
         ]);
 
         $this->editStudentIndex = null;
 
-        $this->dispatch('warning');
         session()->flash('success','Data berhasi diupdate');
     }
 }

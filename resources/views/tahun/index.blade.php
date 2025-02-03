@@ -1,26 +1,14 @@
-@extends('tampilan.main')
-@section('content')
+<x-layout.layout>
+    <x-breadcrumb :breadcrumbs="[
+        ['name' => 'Home', 'href' => ''],
+        ['name' => 'Users', 'href' => ''],
+        ['name' => 'Jurusan', 'href' => '']
+    ]" />
 
-@if (session('success'))
-<div class="alert alert-info alert-dismissible fade show" role="alert">
-    {{ session('success') }}
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-    </button>
-</div>
-@endif
+    <div class="p-4 border-2 border-gray-200 rounded-lg dark:border-gray-700 mt-5">
+        {{--
+        <livewire:jurusan.data1 /> --}}
+        @livewire('tahun.data')
+    </div>
 
-@if (session('error'))
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    {{ session('error') }}
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-    </button>
-</div>
-@endif
-
-<div class="container mt-4">
-    @livewire('tahun.data')
-</div>
-
-@endsection
+</x-layout.layout>

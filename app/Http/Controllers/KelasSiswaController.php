@@ -17,18 +17,27 @@ class KelasSiswaController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $kelas = Kelas::all();
-        $pemetaans = siswa::with(['kelas','tahun']);
-        $tahun = Tahun::all();
-        $pemetaans = KelasSiswa::with(['kelas', 'siswa', 'tahun'])->get();
+        $kelas = kelas::all();
+        $tahun = tahun::aktif()->get();
+        $siswa=siswa::all(['id','nipd','nama']);
+        $query = KelasSiswa::with(['siswa','kelas','tahun']);
 
-        return view('kelassiswa.index', compact( 'pemetaans'));
+        // Sorting
+        if ($request->has('sort') && $request->has('direction')) {
+            $query->orderBy($request->sort, $request->direction);
+        }
+
+        $perpage=$request->input('per_page',10);
+        $pemetaans = $query->paginate($perpage);
+
+        return view('kelassiswa.index', compact('pemetaans','tahun','siswa','kelas'));
     }
 
     public function store(Request $request)
     {
+        @dd($request);
         $pemetaan=KelasSiswa::all();
         $validatedData = $request->validate([
             'kelas' => 'required',
@@ -49,24 +58,38 @@ class KelasSiswaController extends Controller
         return redirect()->route('siswa_kelas.index')->with('success', 'Siswa berhasil ditambahkan ke kelas.');
     }
 
-    public function edit($id)
+    public function edit(Request $request,$id)
     {
         $pemetaan = KelasSiswa::findOrFail($id);
-        $kelas = Kelas::all();
-        // $siswa = Siswa::all();
-        $tahun = Tahun::all();
+        $kelas = Kelas::all(['id','kelas']);
+        $tahun = Tahun::aktif()->get();
+        $siswa=siswa::all(['id','nama','nipd']);
+        $pemetaans=KelasSiswa::all();
 
-        return view('kelassiswa.index', compact('pemetaan', 'kelas', 'siswa', 'tahun'));
+        $query = KelasSiswa::with(['siswa','kelas','tahun']);
+
+
+        // Sorting
+        if ($request->has('sort') && $request->has('direction')) {
+            $query->orderBy($request->sort, $request->direction);
+        }
+
+        $perpage=$request->input('per_page',10);
+        $pemetaans = $query->paginate($perpage);
+
+        return view('kelassiswa.index', compact('pemetaans','pemetaan', 'kelas', 'siswa', 'tahun'));
     }
 
     public function update(Request $request, $id)
     {
+
         $validatedData = $request->validate([
             'kelas' => 'required',
             'siswa' => 'required|array',
-            'siswa.*' => 'exists:siswa,id',
+            // 'siswa.*' => 'exists:siswa,id',
             'tahun' => 'required'
         ]);
+
 
         $pemetaan = KelasSiswa::findOrFail($id);
         $pemetaan->update([
@@ -78,15 +101,30 @@ class KelasSiswaController extends Controller
         // Update siswa
         $pemetaan->siswa()->sync($validatedData['siswa']);
 
-        return redirect()->route('siswa_kelas.index')->with('success', 'Data berhasil diupdate.');
+        return redirect()->route('siswa_kelas.index')->with('message', 'Data berhasil diupdate.')->with('type','success');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request)
     {
-        $pemetaan = KelasSiswa::findOrFail($id);
-        $pemetaan->delete();
+        $ids = $request->input('id');
 
-        return redirect()->route('siswa_kelas.index')->with('success', 'Data berhasil dihapus.');
+        if (empty($ids)) {
+            return redirect()->route('siswa_kelas.index')
+                ->with('message', 'Tidak Ada Data yang Dipilih')
+                ->with('type', 'error');
+        }
+
+        if (!is_array($ids)) {
+            return redirect()->route('kelassiswa.index')
+                ->with('message', 'Data tidak valid')
+                ->with('type', 'error');
+        }
+
+        KelasSiswa::whereIn('id', $ids)->delete();
+
+        return redirect()->route('kelassiswa.index')
+            ->with('message', 'Data berhasil dihapus')
+            ->with('type', 'success');
     }
 
     public function filtered(Request $request)
@@ -109,12 +147,12 @@ class KelasSiswaController extends Controller
     public function export()
     {
         return Excel::download(new KelasSiswaExport, 'KelasSiswa.xlsx');
-        return redirect()->route('kelassiswa.index')->with('success', 'Data Kelas-Siswa berhasil dieksport');
+        return redirect()->route('kelassiswa.index')->with('message', 'Data Kelas-Siswa berhasil dieksport')->with('type','success');
     }
     public function import()
     {
         Excel::import(new KelasSiswaImport, request()->file('file'));
-        return redirect()->route('kelassiswa.index')->with('success', 'Data Kelas-Siswa berhasil diimport');
+        return redirect()->route('kelassiswa.index')->with('message', 'Data Kelas-Siswa berhasil diimport')->with('type','success');
 
     }
 }

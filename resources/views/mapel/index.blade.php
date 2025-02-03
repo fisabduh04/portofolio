@@ -1,49 +1,12 @@
-@extends('tampilan.main')
+<x-layout.layout>
+    <x-breadcrumb :breadcrumbs="[
+        ['name' => 'Home', 'href' => ''],
+        ['name' => 'Users', 'href' => ''],
+        ['name' => 'Mata Pelajaran', 'href' => '']
+    ]" />
 
-@section('Judul','Mata Pelajaran')
-@section('content')
-
-{{-- session berhasil --}}
-@if (session('success'))
-<div class="alert alert-success">
-    {{ session('success')}}
-</div>
-@endif
-{{-- session error atau data gagal --}}
-
-@if ($errors->any())
-<div class="alert alert-danger">
-    @foreach ($errors->all() as $error)
-    {{ $error }}
-    @endforeach
-</div>
-@endif
-
-
-<div class="col-12">
-    <!-- Default box -->
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Daftar Seluruh Mata Pelajaran SMK AL-MIFTAH Pamekasan</h3>
-            <div class="card-tools">
-                <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-                    <i class="fas fa-minus"></i>
-                </button>
-                <button type="button" class="btn btn-tool" data-card-widget="remove" title="Remove">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-        <div class="card-body">
-            @livewire('Mapel.data')
-        </div>
-        <!-- /.card-body -->
-
+    <div class="p-4 mt-5 border-2 border-gray-200 rounded-lg dark:border-gray-700">
+        @livewire('mapel.data')
     </div>
-    <!-- /.card -->
-</div>
 
-
-@endsection
-
-{{-- ModalImport Excel --}}
+</x-layout.layout>

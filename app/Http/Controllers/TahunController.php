@@ -12,9 +12,7 @@ class TahunController extends Controller
      */
     public function index()
     {
-        return view('tahun.index',[
-            'tahunlist'=>tahun::all()
-        ]);
+        return view('tahun.index');
     }
 
     /**

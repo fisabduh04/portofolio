@@ -21,12 +21,12 @@ class MapelController extends Controller
     public function export()
     {
         return Excel::download(new MapelExport, 'mapel.xlsx');
-        return redirect()->route('mapel.index')->with('success', 'Data Mata Pelajaran berhasil dieksport');
+        return redirect()->route('mapel.index')->with('message', 'Data Mata Pelajaran berhasil dieksport')->with('type','success');
     }
     public function import()
     {
         Excel::import(new ImportMapel, request()->file('file'));
-        return redirect()->route('mapel.index')->with('success', 'Data Mata Pelajaran berhasil diimport');
+        return redirect()->route('mapel.index')->with('message', 'Data Mata Pelajaran berhasil diimport')->with('type','success');
     }
 
     /**

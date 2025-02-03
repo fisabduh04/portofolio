@@ -3,16 +3,16 @@
 namespace App\Livewire\Mapel;
 
 use Livewire\Component;
-use Illuminate\Support\Facades\App;
 use App\Models\mapel;
 use App\Models\jurusan;
 use Livewire\WithPagination;
-use Symfony\Component\HttpFoundation\Session\Flash\FlashBag;
+use Livewire\WithFileUploads;
+use App\Imports\KelasImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Data extends Component
 {
     use WithPagination;
-    protected $paginationTheme = 'bootstrap';
 
     public $kode = [];
     public $mapel = [];
@@ -32,6 +32,7 @@ class Data extends Component
     public $perPage = 10;
     public $search="";
     public $tombol_simpan=false;
+    public $file=false;
 
 
     public function updatedPerPage($value)
@@ -68,7 +69,7 @@ class Data extends Component
         $this->mapel_selected_id = array_intersect($this->mapel_selected_id, $mapelIdsOnPage);
         // Atur kembali SelectAll ke false saat berpindah halaman\
         $this->SelectAll=session('SelectAll',false);
-        return view('livewire.mapel.datamapel',[
+        return view('livewire.mapel.data',[
             'jurusanlist'=>jurusan::all(),
             'mapellist'=>$data
         ]);
@@ -110,9 +111,9 @@ class Data extends Component
         }
 
         $this->resetFields();
-        session()->flash('success','data berhasil di simpan');
-        // $this->dispatch('notification', ['success', 'Operasi berhasil!']);
-        $this->dispatch('success');
+        $this->dispatch('showToast', message: 'Data berhasil disimpan!', type: 'success');
+
+
     }
 
     private function resetFields()
@@ -148,14 +149,15 @@ class Data extends Component
         ]);
 
         $this->editmapelindex=null;
-        session()->flash('success', 'Data Mapel telah berhasil diperbarui');
-        $this->dispatch('warning');
+        $this->dispatch('showToast', message: 'Data berhasil Diperbarui!', type: 'success');
+
     }
 
     public function del(){
         mapel::destroy($this->mapel_selected_id);
-        session()->flash('success','Data Berhasil dihapus');
-        $this->dispatch('error');
+        // session()->flash('success','Data Berhasil dihapus');
+        $this->dispatch('showToast', message: 'Data berhasil dihapus!', type: 'error');
+
         $this->resetFields();
 
     }
@@ -170,5 +172,25 @@ class Data extends Component
         if ($value) {
             session()->flash('SelectAll', true);
         }
+    }
+    public function import()
+    {
+        // Pastikan file ada dan valid
+        if ($this->file) {
+            // Menggunakan Maatwebsite Excel untuk mengimpor file
+            Excel::import(new KelasImport, $this->file);
+            // Excel::import(new KelasImport, $this->file->getRealPath());
+
+
+            // Mengirimkan pesan sukses
+
+        $this->dispatch('showToast', message: 'Data berhasil diimport!', type: 'success');
+
+        } else {
+            // Menampilkan pesan error jika tidak ada file
+        $this->dispatch('showToast', message: 'Data gagal diimport!', type: 'error');
+
+        }
+        $this->reset('file');
     }
 }

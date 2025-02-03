@@ -37,4 +37,9 @@ class tahun extends Model
         ->withTimestamps();
     }
 
+    public function scopeAktif($query)
+    {
+        return $query->where('isActive', 1);
+    }
+
 }
