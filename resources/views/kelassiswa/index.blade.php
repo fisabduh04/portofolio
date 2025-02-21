@@ -12,7 +12,7 @@
 
         {{-- Kumpulan Tombol --}}
         <div class="inline-flex rounded-md shadow-sm" role="group">
-            <a type="button" href=""
+            <a type="button" id="tambah" onclick="toggleModal('InputSiswa')"
                 class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-s-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
                 <svg class="w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                     viewBox="0 0 20 20">
@@ -90,7 +90,7 @@
         </div>
 
         <hr class="h-px my-3 bg-gray-200 border-0 dark:bg-gray-700">
-        <form action="{{ isset($pemetaan) ? route('kelassiswa.update', $pemetaan->id) : route('kelassiswa.create') }}"
+        <form action="{{ isset($pemetaan) ? route('kelassiswa.update', $pemetaan->id) : route('kelassiswa.store') }}"
             id="InputSiswa" method="POST">
             @csrf
             @isset($pemetaan)
@@ -142,6 +142,7 @@
                         @endforeach
                     </select>
                 </div>
+                <x-form.input name="ket" label="Keterangan" value="{{ $pemetaan->ket ??''}}" />
 
             </div>
 
@@ -305,6 +306,7 @@
                             </td>
                             <td class="px-6 py-4">
                                 {{ $pemetaan->ket}}
+                            </td>
 
                         </tr>
                         @endforeach
@@ -402,6 +404,47 @@
             const checkboxes = document.querySelectorAll('input[type="checkbox"][name="id[]"]');
             checkboxes.forEach(checkbox => checkbox.checked = this.checked);
         });
+
+
+        // Handle Form
+        // Toggle form visibility
+        // Initially hide the form
+        document.getElementById('InputSiswa').classList.add('hidden');
+
+        function toggleForm(formId) {
+            const form = document.getElementById(formId);
+            form.classList.toggle('hidden');
+        }
+        // Function to toggle form visibility
+        function toggleForm(formId) {
+            const form = document.getElementById(formId);
+            form.classList.toggle('hidden');
+        }
+
+        // Function to attach toggle event to any button
+        function attachToggleEvent(buttonId, formId) {
+            document.getElementById(buttonId).addEventListener('click', function(event) {
+            event.preventDefault();
+            toggleForm(formId);
+            });
+        }
+
+        // Attach event listener to 'tambah' button
+        attachToggleEvent('tambah', 'InputSiswa');
+
+        // Attach event listener to 'tambah' button
+        // document.getElementById('tambah').addEventListener('click', function(event) {
+        //     event.preventDefault();
+        //     toggleForm('InputSiswa');
+        // });
+
+
+
+
     </script>
+
+
+
+
 
 </x-layout.layout>

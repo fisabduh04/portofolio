@@ -37,16 +37,17 @@ class KelasSiswaController extends Controller
 
     public function store(Request $request)
     {
-        @dd($request);
-        $pemetaan=KelasSiswa::all();
+        // @dd($request->all());
         $validatedData = $request->validate([
             'kelas' => 'required',
-            'siswa' => 'required|array',
+            'siswa' => 'required',
             'tahun' => 'required'
         ]);
 
-        foreach ($validatedData['siswa'] as $siswaId) {
-            KelasSiswa::UpdateOrcreate([
+        $siswaIds = is_array($validatedData['siswa']) ? $validatedData['siswa'] : [$validatedData['siswa']];
+
+        foreach ($siswaIds as $siswaId) {
+            KelasSiswa::updateOrCreate([
                 'siswa_id' => $siswaId],[
                 'kelas_id' => $validatedData['kelas'],
                 'tahun_id' => $validatedData['tahun'],
@@ -54,8 +55,7 @@ class KelasSiswaController extends Controller
             ]);
         }
 
-
-        return redirect()->route('siswa_kelas.index')->with('success', 'Siswa berhasil ditambahkan ke kelas.');
+        return redirect('kelassiswa')->with('message', 'Siswa berhasil ditambahkan ke kelas.')->with('type','success');
     }
 
     public function edit(Request $request,$id)
@@ -67,6 +67,7 @@ class KelasSiswaController extends Controller
         $pemetaans=KelasSiswa::all();
 
         $query = KelasSiswa::with(['siswa','kelas','tahun']);
+        // @dd($siswa->pluck('nama')->toArray());
 
 
         // Sorting
@@ -85,7 +86,7 @@ class KelasSiswaController extends Controller
 
         $validatedData = $request->validate([
             'kelas' => 'required',
-            'siswa' => 'required|array',
+            'siswa' => 'required',
             // 'siswa.*' => 'exists:siswa,id',
             'tahun' => 'required'
         ]);
@@ -98,10 +99,9 @@ class KelasSiswaController extends Controller
             'ket' => $request->ket
         ]);
 
-        // Update siswa
-        $pemetaan->siswa()->sync($validatedData['siswa']);
 
-        return redirect()->route('siswa_kelas.index')->with('message', 'Data berhasil diupdate.')->with('type','success');
+
+        return redirect('kelassiswa')->with('message', 'Data berhasil diupdate.')->with('type','success');
     }
 
     public function destroy(Request $request)

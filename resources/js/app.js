@@ -7,17 +7,17 @@ import ImageKit from "imagekit-javascript";
 
 
 // simple DataTable
-function initDataTable(id) {
-    const dataTable = new DataTable(id, {
-        searchable: true,
-        sortable: true,
-    });
-}
+// function initDataTable(id) {
+//     const dataTable = new DataTable(id, {
+//         searchable: true,
+//         sortable: true,
+//     });
+// }
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("masuk 2");
-    initDataTable("#search-table");
-});
+// document.addEventListener('DOMContentLoaded', function() {
+//     console.log("masuk 2");
+//     initDataTable("#search-table");
+// });
 
 
 // upload image
