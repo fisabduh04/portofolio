@@ -3,62 +3,76 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class CobaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function tableView()
     {
         return view('coba.coba');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function index(Request $req)
     {
-        //
+        $q = User::query();
+
+        if ($req->has('search')) {
+            $term = $req->search;
+            $q->where(fn($w) =>
+                $w->where('name', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%")
+            );
+        }
+
+        if ($req->has('sort') && in_array($req->sort, ['name','email','created_at'])) {
+            $order = $req->order === 'desc' ? 'desc' : 'asc';
+            $q->orderBy($req->sort, $order);
+        }
+
+        $perPage = $req->per_page ?? 10;
+        $u = $q->paginate($perPage);
+
+        return response()->json([
+            'data' => $u->items(),
+            'current_page' => $u->currentPage(),
+            'last_page' => $u->lastPage(),
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        @dd($request->all());
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:8'
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password)
+        ]);
+
+        return response()->json($user);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->update($request->only('name', 'email'));
+
+        return response()->json($user);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function destroy($id)
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        User::destroy($id);
+        return response()->json(['message' => 'User deleted successfully']);
     }
 }

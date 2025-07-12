@@ -96,11 +96,11 @@
                         <td>
                             <input type="text" wire:model="ket.{{ $index }}" class="form-control">
                         </td>
-
-
                     </tr>
+                @endforeach
 
-                    @endforeach
+
+
                 @foreach ($mapellist as $index => $m)
                     <tr>
                         <td>

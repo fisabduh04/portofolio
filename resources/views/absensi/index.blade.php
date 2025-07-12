@@ -1,261 +1,324 @@
-<x-layout>
-    <x-page-title title="Daftar Hadir Siswa" subtitle="" :breadcrumbs="[
-        ['label' => 'Dashboard', 'url' => '#'],
-        ['label' => 'Daftar Hadir Siswa']
+<x-layout.layout>
+    <x-breadcrumb :breadcrumbs="[
+        ['name' => 'Home', 'href' => ''],
+        ['name' => 'Users', 'href' => ''],
+        ['name' => 'Presensi', 'href' => ''],
     ]" />
 
-    <section class="section">
-        <x-card title="Daftar Hadir Siswa">
+    {{-- <div class="p-4 border-2 border-gray-200 rounded-lg dark:border-gray-700 mt-5">
+        <h1 class="text-2xl font-semibold text-gray-900  mb-4">Daftar Presensi</h1>
+        <div class="flex justify-end mb-4">
 
-            @if (session('success'))
-            <div class="alert alert-info alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            @endif
 
-            @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            @endif
+            <button type="button"
+                class="text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                onclick="document.getElementById('form-presensi').classList.toggle('hidden')">
+                Tambah Presensi
+            </button>
 
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <h6>Hari</h6>
-                    <select class="choices form-select" id="hari" name="hari">
-                        <option>Hari</option>
-                        <option value="senin">Senin</option>
-                        <option value="selasa">Selasa</option>
-                        <option value="rabu">Rabu</option>
-                        <option value="kamis">Kamis</option>
-                        <option value="jumat">Jumat</option>
-                        <option value="sabtu">Sabtu</option>
-                        <option value="ahad">Ahad</option>
+        </div>
+
+        <div id="form-presensi" class="mb-4 p-4 bg-gray-200 dark:bg-gray-800 rounded-lg shadow hidden">
+            <form action="{{ route('absensi.store') }}" method="POST" class="space-y-4">
+                @csrf
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-900 ">Nama
+                        User</label>
+                    <input type="text" name="name" id="name" required
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-yellow-100 text-gray-900 dark:bg-gray-700 dark:border-gray-600 " />
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-900 ">Email</label>
+                    <input type="email" name="email" id="email" required
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-yellow-100 text-gray-900 dark:bg-gray-700 dark:border-gray-600 " />
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit"
+                        class="text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <div
+                class="flex flex-column sm:flex-row flex-wrap space-y-4 sm:space-y-0 items-center justify-between pb-4">
+                <div class="flex items-center space-x-2">
+                    <label for="entries-per-page" class="text-sm text-gray-700 dark:text-gray-200">Show</label>
+                    <select id="entries-per-page" name="entries-per-page"
+                        class="block w-20 px-2 py-1 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-700  dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
                     </select>
+                    <span class="text-sm text-gray-700 dark:text-gray-200">entries</span>
                 </div>
 
-                <div class="col-md-6 mb-4">
-                    <h6>Kelas</h6>
-                    <select class="choices form-select" id="kelas" name="kelas" datalist>
-                        @foreach ($kelas as $k)
-                        <option value="{{ $k->id }}">{{ $k->kelas }}</option>
 
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-6 mb-4">
-                    <h6>Jam</h6>
-                    <select class="form-select" id="jam" name="jam" datalist>
-                        @for ($i = 1; $i <= 4; $i++) { <option value="{{ $i}}">{{ $i }}</option>
-                            }
-                            @endfor
-                    </select>
-                </div>
-                <div class="col-md-6 mb-4 d-flex align-items-end">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked"
-                            checked>
-                        <label class="form-check-label" for="flexSwitchCheckChecked">Masuk Semua</label>
+                <label for="table-search" class="sr-only">Search</label>
+                <div class="relative">
+                    <div
+                        class="absolute inset-y-0 left-0 rtl:inset-r-0 rtl:right-0 flex items-center ps-3 pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" fill="currentColor"
+                            viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                clip-rule="evenodd"></path>
+                        </svg>
                     </div>
+                    <input type="text" id="table-search"
+                        class="block p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400  dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="Search for items">
                 </div>
             </div>
-            <hr>
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" class="p-4">
+                            <div class="flex items-center">
+                                <input id="checkbox-all-search" type="checkbox"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <label for="checkbox-all-search" class="sr-only">checkbox</label>
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Action
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Nama User
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Email
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Tanggal
+                        </th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($users as $user)
+                        <tr
+                            class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <td class="w-4 p-4">
+                                <div class="flex items-center">
+                                    <input id="checkbox-table-search-1" type="checkbox"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <button type="button"
+                                    class="px-3 py-2 text-xs font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
 
 
-            <div class="table-responsive mx-1">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Nama & NRP</th>
-                            <th class="d-none d-sm-table-cell">M</th>
-                            <th class="d-none d-sm-table-cell">S</th>
-                            <th class="d-none d-sm-table-cell">I</th>
-                            <th class="d-none d-sm-table-cell">P</th>
-                            <th class="d-none d-sm-table-cell">A</th>
+                                    <svg class="w-4 h-4 text-white me-2" aria-hidden="true"
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                        viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z" />
+                                    </svg>
+
+                                    Edit
+                                </button>
+                            </td>
+                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap ">
+                                {{ $user->name }}
+                            </th>
+                            <td class="px-6 py-4">
+                                {{ $user->email }}
+                            </td>
+                            <td class="px-6 py-4">
+                                {{ $user->created_at->format('d-m-Y') }}
+                            </td>
+
+
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($siswa as $s)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>
-                                <strong>{{ $s->nama }}</strong><br>
-                                <small>{{ $s->nipd }}</small>
+                    @endforeach
+                </tbody>
+            </table>
+            @if ($users->hasPages())
+                <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
+                    {{ $users->links() }}
+                </div>
+            @endif
+        </div>
+    </div> --}}
 
-                                <!-- Radio Buttons for Small Screens -->
-                                <div class="d-block d-sm-none mt-2">
-                                    <div class="d-flex justify-content-start">
-                                        <div class="form-check mr-3">
-                                            <input class="form-check-input" type="radio" name="status_{{ $s->nipd }}"
-                                                value="masuk" id="masuk_{{ $s->nipd }}">
-                                            <label class="form-check-label" for="masuk_{{ $s->nipd }}">M</label>
-                                        </div>
-                                        <div class="form-check mr-3">
-                                            <input class="form-check-input" type="radio" name="status_{{ $s->nipd }}"
-                                                value="sakit" id="sakit_{{ $s->nipd }}">
-                                            <label class="form-check-label" for="sakit_{{ $s->nipd }}">S</label>
-                                        </div>
-                                        <div class="form-check mr-3">
-                                            <input class="form-check-input" type="radio" name="status_{{ $s->nipd }}"
-                                                value="izin" id="izin_{{ $s->nipd }}">
-                                            <label class="form-check-label" for="izin_{{ $s->nipd }}">I</label>
-                                        </div>
-                                        <div class="form-check mr-3">
-                                            <input class="form-check-input" type="radio" name="status_{{ $s->nipd }}"
-                                                value="pulang" id="pulang_{{ $s->nipd }}">
-                                            <label class="form-check-label" for="pulang_{{ $s->nipd }}">P</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="status_{{ $s->nipd }}"
-                                                value="alpha" id="alpha_{{ $s->nipd }}">
-                                            <label class="form-check-label" for="alpha_{{ $s->nipd }}">A</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
 
-                            <!-- Radio Buttons for Larger Screens -->
-                            <td class="d-none d-sm-table-cell">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="status_{{ $s->nipd }}"
-                                        value="masuk" id="masuk_{{ $s->nipd }}">
-                                    <label class="form-check-label" for="masuk_{{ $s->nipd }}"></label>
-                                </div>
-                            </td>
-                            <td class="d-none d-sm-table-cell">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="status_{{ $s->nipd }}"
-                                        value="sakit" id="sakit_{{ $s->nipd }}">
-                                    <label class="form-check-label" for="sakit_{{ $s->nipd }}"></label>
-                                </div>
-                            </td>
-                            <td class="d-none d-sm-table-cell">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="status_{{ $s->nipd }}"
-                                        value="izin" id="izin_{{ $s->nipd }}">
-                                    <label class="form-check-label" for="izin_{{ $s->nipd }}"></label>
-                                </div>
-                            </td>
-                            <td class="d-none d-sm-table-cell">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="status_{{ $s->nipd }}"
-                                        value="pulang" id="pulang_{{ $s->nipd }}">
-                                    <label class="form-check-label" for="pulang_{{ $s->nipd }}"></label>
-                                </div>
-                            </td>
-                            <td class="d-none d-sm-table-cell">
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="status_{{ $s->nipd }}"
-                                        value="alpha" id="alpha_{{ $s->nipd }}">
-                                    <label class="form-check-label" for="alpha_{{ $s->nipd }}"></label>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-                {{-- {{ $siswa->links() }} --}}
+    <div class="p-4 border-2 border-gray-200 rounded-lg dark:border-gray-700 mt-5">
+        <h1 class="text-2xl font-semibold text-gray-900  mb-4">Daftar User</h1>
+        <button type="button"
+            class="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">Tambah
+            Data
+        </button>
+
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div class="flex items-center gap-2">
+                <label for="entries-per-page" class="text-sm text-gray-700 dark:text-gray-200">Show</label>
+                <select name="per_page" id="entries-per-page" name="entries-per-page"
+                    class="block w-20 px-2 py-1 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <span class="text-sm text-gray-700 dark:text-gray-200">entries</span>
             </div>
+            <div class="pb-4 bg-white dark:bg-gray-900">
+                <label for="table-search" class="sr-only">Search</label>
+                <div class="relative mt-1">
+                    <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="table-search"
+                        class="block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="Search for items">
+                </div>
+            </div>
+        </div>
+
+        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <tr>
+                    <th scope="col" class="p-4">
+                        <div class="flex items-center">
+                            <input id="checkbox-all-search" type="checkbox"
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                            <label for="checkbox-all-search" class="sr-only">checkbox</label>
+                        </div>
+                    </th>
+                    <th scope="col" class="px-6 py-3">
+                        No
+                    </th>
+                    <th scope="col" class="px-6 py-3">
+                        Action
+                    </th>
+                    <th scope="col" class="px-6 py-3">
+                        Nama User
+                    </th>
+                    <th scope="col" class="px-6 py-3">
+                        Email
+                    </th>
+                    <th scope="col" class="px-6 py-3">
+                        Tanggal
+                    </th>
+
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+
+    </div>
+
+
+    <script>
+        document.getElementById('entries-per-page').addEventListener('change', (event) => {
+            const perPage = event.target.value;
+            init(perPage); // fetch ulang data sesuai pilihan
+        });
+
+        async function getData(perPage = 10) {
+            const response = await fetch(`/coba?per_page=${perPage}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch data');
+            }
+            return await response.json();
+        }
+
+        // getData();
+        async function init(perPage = 10) {
+            const result = await getData(perPage);
+            const users = result.is_all ? result.data : result.data;
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.className =
+                    'bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600';
+                row.innerHTML = `
+                    <td class="w-4 p-4">
+                        <div class="flex items-center">
+                            <input id="checkbox-table-search-1" type="checkbox"
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                            <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
+                        </div>
+                    </td>
+                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap ">
+                        ${user.id}
+                    </th>
+                    <td class="px-6 py-4">
+                        <button type="button"
+                            class="px-3 py-2 text-xs font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                            <svg class="w-4 h-4 text-white me-2" aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg"   
+                                width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1                     
+                                    1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z" />
+                            </svg>
+                            Edit
+                        </button>
+                    </td>
+                   
+                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap ">
+                        ${user.name}
+                    </th>
+                    <td class="px-6 py-4">
+                        ${user.email}
+                    </td>
+                    <td class="px-6 py-4">
+                        ${new Date(user.created_at).toLocaleDateString('id-ID')}
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        init();
+
+        // Optional: Add event listeners for pagination, search, etc.
+        document.getElementById('entries-per-page').addEventListener('change', (event) => {
+            const entriesPerPage = event.target.value;
+            // Implement logic to handle entries per page change
+            console.log(`Entries per page changed to: ${entriesPerPage}`);
+        });
+        document.getElementById('table-search').addEventListener('input', (event) => {
+            const searchTerm = event.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#table-body tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td, th');
+                const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+                row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+            });
+        });
 
 
 
-
-        </x-card>
-    </section>
-</x-layout>
-<script src="assets/static/js/initTheme.js"></script>
-
-<style>
-    /* Styling radio buttons */
-    .form-check-input {
-        position: relative;
-        appearance: none;
-        -webkit-appearance: none;
-        border: 2px solid #ddd;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        outline: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .form-check-input:checked::before {
-        content: '';
-        position: absolute;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-
-    .form-check-input[value="masuk"]:checked {
-        border-color: blue;
-        box-shadow: 0 0 0 4px rgba(0, 0, 255, 0.5);
-    }
-
-    .form-check-input[value="masuk"]:checked::before {
-        background-color: blue;
-    }
-
-    .form-check-input[value="sakit"]:checked {
-        border-color: yellow;
-        box-shadow: 0 0 0 4px rgba(255, 255, 0, 0.5);
-    }
-
-    .form-check-input[value="sakit"]:checked::before {
-        background-color: yellow;
-    }
-
-    .form-check-input[value="pulang"]:checked {
-        border-color: orange;
-        box-shadow: 0 0 0 4px rgba(255, 165, 0, 0.5);
-    }
-
-    .form-check-input[value="pulang"]:checked::before {
-        background-color: orange;
-    }
-
-    .form-check-input[value="izin"]:checked {
-        border-color: green;
-        box-shadow: 0 0 0 4px rgba(0, 255, 0, 0.5);
-    }
-
-    .form-check-input[value="izin"]:checked::before {
-        background-color: green;
-    }
-
-    .form-check-input[value="alpha"]:checked {
-        border-color: red;
-        box-shadow: 0 0 0 4px rgba(255, 0, 0, 0.5);
-    }
-
-    .form-check-input[value="alpha"]:checked::before {
-        background-color: red;
-    }
-</style>
-
-@push('css')
-<link rel="stylesheet" href="{{ asset('assets/compiled/css/table-datatable.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/extensions/simple-datatables/style.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/extensions/simple-datatables/style.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/compiled/css/table-datatable.css') }}">
-@endpush
-
-@push('js')
-<script src="{{ asset('assets/extensions/simple-datatables/umd/simple-datatables.js') }}"></script>
-<script src="{{ asset('assets/static/js/pages/simple-datatables.js') }}"></script>
-<script src="{{ asset('assets/extensions/simple-datatables/umd/simple-datatables.js') }}"></script>
-<script src="{{ asset('assets/static/js/pages/simple-datatables.js') }}"></script>
-
-@endpush
+        // Optional: Add event listeners for checkbox selection
+        document.getElementById('checkbox-all-search').addEventListener('change', (event) => {
+            const isChecked = event.target.checked;
+            const checkboxes = document.querySelectorAll('#table-body input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+        });
+        document.querySelectorAll('#table-body input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const allCheckboxes = document.querySelectorAll('#table-body input[type="checkbox"]');
+                const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+                document.getElementById('checkbox-all-search').checked = allChecked;
+            });
+        });
+    </script>
+</x-layout.layout>

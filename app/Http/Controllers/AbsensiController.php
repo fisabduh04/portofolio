@@ -9,6 +9,8 @@ use App\Models\siswa;
 use App\Models\jadwal;
 use App\Models\kelas;
 use App\Models\KelasSiswa;
+use App\Models\User;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AbsensiController extends Controller
 {
@@ -17,22 +19,8 @@ class AbsensiController extends Controller
      */
     public function index()
     {
-        $kelas = kelas::all();
-        $jadwal = jadwal::all();
-
-        $siswa = siswa::all();
-        // dd($siswa['alamat']);
-
-
-
-
-        // $siswa = Siswa::whereHas('kelas', function ($query) use ($idKelas) {
-        //     $query->where('id', $idKelas);
-        // })
-        // ->get();
-
-
-        return view('absensi.index', compact('siswa', 'jadwal', 'kelas'));
+        $users = User::paginate(10);
+        return view('absensi.index',compact('users'));       
     }
 
     /**

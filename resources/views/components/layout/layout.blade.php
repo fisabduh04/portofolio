@@ -18,9 +18,10 @@
     </div>
 
 
-
+    @livewireScripts
     <x-layout.footer />
-
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3"></script>
 </body>
 
 </html>

@@ -3,77 +3,72 @@
 namespace App\Livewire\Mapel;
 
 use Livewire\Component;
-use App\Models\mapel;
-use App\Models\jurusan;
+use App\Models\Mapel; // Pastikan menggunakan Model yang benar (Mapel, bukan mapel)
+use App\Models\Jurusan;
 use Livewire\WithPagination;
-use Livewire\WithFileUploads;
+use Livewire\WithFileUploads; // Tambahkan trait ini
 use App\Imports\KelasImport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\View\View; // Import untuk tipe data View
+use Illuminate\Support\Facades\Session;
 
 class Data extends Component
 {
     use WithPagination;
+    use WithFileUploads; // Gunakan trait WithFileUploads
 
     public $kode = [];
     public $mapel = [];
     public $i = 0;
     public $kepala_table = false;
-    public $jurusan=[];
-    public $ket=[];
-    public $editmapelindex=null;
+    public $jurusan = [];
+    public $ket = [];
+    public $editmapelindex = null;
     public $data;
     public $editkode;
     public $editmapel;
     public $editjurusan;
     public $editket;
-    public $mapel_id=[];
-    public $mapel_selected_id=[];
-    public $SelectAll=false;
+    public $mapel_id = [];
+    public $mapel_selected_id = [];
+    public $selectAll = false; // Gunakan camelCase
     public $perPage = 10;
-    public $search="";
-    public $tombol_simpan=false;
-    public $file=false;
+    public $search = "";
+    public $tombol_simpan = false;
+    public $file; // Property untuk file upload
 
+    protected $paginationTheme = 'tailwind'; // Jika Anda menggunakan Tailwind untuk paginasi
 
     public function updatedPerPage($value)
     {
-    // Jika opsi yang dipilih adalah "All", atur $perPage ke nilai yang besar
-    // agar tidak ada pembatasan dalam jumlah data yang ditampilkan
-    if ($value == '-1') {
-        $this->perPage = 10000; // Nilai besar, misalnya 9999
-    } else {
-        $this->perPage = $value;
+        $this->perPage = ($value == '-1') ? 10000 : $value;
+        $this->resetPage(); // Reset ke halaman 1 ketika perPage berubah
     }
 
-    // Reset halaman kembali ke halaman pertama
-    // $this->resetPage();
-    }
-    public function search(){
-        // $this->resetPage(); // Set halaman kembali ke halaman pertama saat melakukan pencarian
-    // Query pencarian data berdasarkan kondisi tertentu, misalnya nama atau kode mapel
-
-    $data = mapel::orderBy('jurusan_id', 'asc')
-        ->where('mapel', 'like', '%' . $this->search . '%')
-        ->orWhere('kode', 'like', '%' . $this->search . '%')
-        ->orWhereHas('jurusan', function ($query) {
-            $query->where('jurusan', 'like', '%' . $this->search . '%');
-        })
-        ->paginate($this->perPage);
-    return $data;
+    public function search()
+    {
+        $data = Mapel::orderBy('jurusan_id', 'asc') // Gunakan Mapel
+            ->where('mapel', 'like', '%' . $this->search . '%')
+            ->orWhere('kode', 'like', '%' . $this->search . '%')
+            ->orWhereHas('jurusan', function ($query) {
+                $query->where('jurusan', 'like', '%' . $this->search . '%');
+            })
+            ->paginate($this->perPage);
+        return $data;
     }
 
-    public function render(){
-
-        $data=$this->search();
+    public function render(): View // Tambahkan return type View
+    {
+        $data = $this->search();
         $mapelIdsOnPage = $data->pluck('id')->toArray();
         $this->mapel_selected_id = array_intersect($this->mapel_selected_id, $mapelIdsOnPage);
-        // Atur kembali SelectAll ke false saat berpindah halaman\
-        $this->SelectAll=session('SelectAll',false);
-        return view('livewire.mapel.data',[
-            'jurusanlist'=>jurusan::all(),
-            'mapellist'=>$data
+        $this->selectAll = Session::get('selectAll', false); // Mengambil dari session
+        return view('livewire.mapel.data', [
+            'jurusanlist' => Jurusan::all(),
+            'mapellist' => $data,
         ]);
     }
+
     public function add()
     {
         $this->kepala_table = true;
@@ -82,27 +77,29 @@ class Data extends Component
         $this->mapel[$this->i] = '';
         $this->jurusan[$this->i] = '';
         $this->ket[$this->i] = '';
-        $this->tombol_simpan=true;
+        $this->tombol_simpan = true;
     }
+
     public function remove($index)
     {
         unset($this->kode[$index]);
         unset($this->mapel[$index]);
         unset($this->jurusan[$index]);
         unset($this->ket[$index]);
-        $this->tombol_simpan=false;
-
+        $this->tombol_simpan = false;
     }
-    public function store()
-    {
-        $this->validate([
-            'kode.*' => 'required',
-            'mapel.*' => 'required',
-            'jurusan.*' => 'required',
-        ]);
 
+    public function store()
+{
+    $this->validate([
+        'kode.*' => 'required',
+        'mapel.*' => 'required',
+        'jurusan.*' => 'required',
+    ]);
+
+    try {
         foreach ($this->mapel as $key => $value) {
-            mapel::create([
+            Mapel::create([
                 'mapel' => $value,
                 'kode' => $this->kode[$key],
                 'jurusan_id' => $this->jurusan[$key],
@@ -112,9 +109,11 @@ class Data extends Component
 
         $this->resetFields();
         $this->dispatch('showToast', message: 'Data berhasil disimpan!', type: 'success');
-
-
+    } catch (\Exception $e) {
+        dd($e->getMessage()); // DEBUG di sini
     }
+}
+
 
     private function resetFields()
     {
@@ -122,25 +121,27 @@ class Data extends Component
         $this->mapel = [];
         $this->i = 0;
         $this->kepala_table = false;
-        $this->mapel_id=[];
-        $this->mapel_selected_id=[];
-        $this->SelectAll=false;
-        $this->tombol_simpan=false;
+        $this->mapel_id = [];
+        $this->mapel_selected_id = [];
+        $this->selectAll = false;
+        $this->tombol_simpan = false;
+        $this->resetPage(); // Reset ke halaman 1 setelah reset
     }
 
 
-    public function edit($id){
-        $this->editmapelindex=$id;
-        $data=mapel::find($id);
-        $this->editkode=$data->kode;
-        $this->editmapel=$data->mapel;
-        $this->editjurusan= $data->jurusan_id;
-        $this->editket= $data->ket;
-
+    public function edit($id)
+    {
+        $this->editmapelindex = $id;
+        $data = Mapel::find($id); // Gunakan Mapel
+        $this->editkode = $data->kode;
+        $this->editmapel = $data->mapel;
+        $this->editjurusan = $data->jurusan_id;
+        $this->editket = $data->ket;
     }
 
-    public function update($id){
-        $data=mapel::find($id);
+    public function update($id)
+    {
+        $data = Mapel::find($id); // Gunakan Mapel
         $data->update([
             'kode' => $this->editkode,
             'mapel' => $this->editmapel,
@@ -148,49 +149,44 @@ class Data extends Component
             'ket' => $this->editket,
         ]);
 
-        $this->editmapelindex=null;
+        $this->editmapelindex = null;
         $this->dispatch('showToast', message: 'Data berhasil Diperbarui!', type: 'success');
-
+        $this->resetPage(); // Reset ke halaman 1 setelah update
     }
 
-    public function del(){
-        mapel::destroy($this->mapel_selected_id);
-        // session()->flash('success','Data Berhasil dihapus');
+    public function del()
+    {
+        Mapel::destroy($this->mapel_selected_id); // Gunakan Mapel
         $this->dispatch('showToast', message: 'Data berhasil dihapus!', type: 'error');
-
         $this->resetFields();
-
     }
 
-    public function updatedSelectAll($value){
-        if($value){
-            $this->mapel_selected_id = mapel::orderBy('jurusan_id', 'asc')->paginate($this->perPage)->pluck('id')->toArray();
-        }else{
-            $this->mapel_selected_id=[];
-        }
-        // dd($this->mapel_selected_id);
+    public function updatedSelectAll($value)
+    {
         if ($value) {
-            session()->flash('SelectAll', true);
+            
+            $this->mapel_selected_id = Mapel::orderBy('jurusan_id', 'asc')->paginate($this->perPage)->pluck('id')->toArray(); // Gunakan Mapel
+        } else {
+            $this->mapel_selected_id = [];
         }
+        Session::put('selectAll', $value); // Menyimpan ke session
     }
+
     public function import()
     {
-        // Pastikan file ada dan valid
-        if ($this->file) {
-            // Menggunakan Maatwebsite Excel untuk mengimpor file
-            Excel::import(new KelasImport, $this->file);
-            // Excel::import(new KelasImport, $this->file->getRealPath());
+        $this->validate([
+            'file' => 'required|file|mimes:xlsx,xls', // Validasi file
+        ]);
 
-
-            // Mengirimkan pesan sukses
-
-        $this->dispatch('showToast', message: 'Data berhasil diimport!', type: 'success');
-
-        } else {
-            // Menampilkan pesan error jika tidak ada file
-        $this->dispatch('showToast', message: 'Data gagal diimport!', type: 'error');
-
+        try {
+            Excel::import(new KelasImport, $this->file); // Gunakan $this->file
+            $this->dispatch('showToast', message: 'Data berhasil diimport!', type: 'success');
+        } catch (\Exception $e) {
+            $this->dispatch('showToast', message: 'Import Gagal: ' . $e->getMessage(), type: 'error');
         }
-        $this->reset('file');
+
+        $this->reset('file'); // Reset setelah import
+        $this->resetPage(); // Reset ke halaman 1 setelah import
+
     }
 }

@@ -18,10 +18,19 @@ class SiswaController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $siswa=siswa::all();
-        // dd($siswa);
+        
+        $perPage = $request->get('per_page', 10); // Ambil jumlah data per halaman dari request, default 10
+        $search = $request->get('search', ''); // Ambil nilai pencarian
+        $query = siswa::query();
+        if ($search) {
+            $query->where('nama', 'like', '%' . $search . '%')
+                  ->orWhere('nipd', 'like', '%' . $search . '%')
+                  ->orWhere('nisn', 'like', '%' . $search . '%');
+        }
+        // dd($perPage);
+        $siswa = $query->orderBy('id', 'desc')->paginate($perPage);
         return view('siswa.index',compact('siswa'));
 
     }

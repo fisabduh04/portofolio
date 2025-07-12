@@ -50,35 +50,15 @@ Route::resource('kelassiswa',KelasSiswaController::class);
 Route::get('/kelas-siswa-export', [KelasSiswaController::class, 'export'])->name('kelas-siswa-export');
 Route::post('kelas-siswa-import', [KelasSiswaController::class, 'import'])->name('kelas-siswa-import');
 
-// Route::get('/siswa-kelas', [KelasSiswaController::class, 'index'])->name('siswa_kelas.index');
-// Route::post('/siswa-kelas/store', [KelasSiswaController::class, 'store'])->name('siswa_kelas.store');
-// Route::get('/siswa-kelas/edit/{id}', [KelasSiswaController::class, 'edit'])->name('siswa_kelas.edit');
-// Route::put('/siswa-kelas/update/{id}', [KelasSiswaController::class, 'update'])->name('siswa_kelas.update');
-// Route::delete('/siswa-kelas/destroy/{id}', [KelasSiswaController::class, 'destroy'])->name('siswa_kelas.destroy');
-// Route::get('/siswa-kelas/filtered', [KelasSiswaController::class, 'filtered'])->name('siswa_kelas.filtered');
-
 // Daftar Hadir Siswa
-Route::resource('absensi',AbsensiController::class);
+Route::resource('absensi', AbsensiController::class);
 
 
 
 // Route uji coba
-Route::get('/coba', [CobaController::class, 'index']);
-Route::get('/tabel', [CobaController::class, 'tabel']);
 
-
-
-
-Route::get('/tutorial', function () {
-  return view('coba.tutorial');
-});
-
-Route::get('/tampilan', function () {
-  return view('coba.tabel');
-});
-
-Route::get('/employe', function () {
-    return view('welcome');
-  });
-
-// Route::get('tutorial', Tutorial::class);
+Route::get('/users', [CobaController::class, 'tableView']); // Tampilkan halaman Blade
+Route::get('/coba', [CobaController::class, 'index']);       // Untuk fetch data JSON
+Route::post('/users', [CobaController::class, 'store']);     // Tambah user
+Route::put('/users/{id}', [CobaController::class, 'update']); // Edit user
+Route::delete('/users/{id}', [CobaController::class, 'destroy']); // Hapus user

@@ -1,4 +1,4 @@
-<div class="mb-3 mt-12 col-span-full xl:mb-2">
+<div class="mb-3 mt-14 col-span-full xl:mb-2">
     <nav class="flex mb-5" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 text-sm font-medium md:space-x-2">
             @foreach ($breadcrumbs as $breadcrumb)

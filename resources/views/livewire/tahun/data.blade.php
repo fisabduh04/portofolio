@@ -39,7 +39,7 @@
                 @enderror
             </div>
         </div>
-        <hr>
+        
         <button type="submit"
             class="px-5 py-2.5 text-sm font-medium text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
             <svg class="w-3.5 h-3.5 text-white me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
@@ -74,7 +74,6 @@
         Tambah
     </button>
     @endif
-    <hr>
 
 
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -106,43 +105,29 @@
             </thead>
             <tbody>
                 @foreach ($tahunlist as $t)
-
-
                 <tr
-                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                    class="bg-white dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                     <td class="px-6 py-4">
                         {{ $loop->iteration }}
                     </td>
                     <td class="px-6 py-4">
-
-                        <button type="button" wire:click="edit({{ $t->id }})">
-                            <span
-                                class="inline-flex items-center justify-center p-2 text-sm font-semibold text-blue-800 hover:bg-blue-500 hover:text-white hover:border rounded-lg dark:bg-blue-700 dark:text-blue-300 group">
-                                <svg class="w-4 h-4 text-blue-800 group-hover:text-white dark:text-white"
-                                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                    fill="none" viewBox="0 0 24 24">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z" />
+                        <div class="flex items-center space-x-1">
+                            <!-- Tombol Edit -->
+                            <button type="button" wire:click="edit({{ $t->id }})" class="inline-flex items-center justify-center p-2 text-sm font-semibold text-blue-800 hover:bg-blue-500 hover:text-white rounded-lg hover:border dark:bg-blue-700 dark:text-blue-300 group">
+                                <svg class="w-4 h-4 text-blue-800 group-hover:text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z"/>
                                 </svg>
-
-                                <span class="sr-only">Icon description</span>
-                            </span>
-                        </button>
-
-                        <button wire:click="del({{ $t->id }})"
-                            wire:confirm="Apakah Anda Yakin akan menghapus? Jika data ini dihapus maka semua data ynag berhubungan dengan data ini akan terhapus juga"
-                            class="relative inline-flex items-center justify-center p-2 text-sm font-medium text-red-500 rounded-lg hover:bg-red-500 hover:text-white hover:border border-red-500 group">
-                            <svg class="w-4 h-4 text-red-500 group-hover:text-white" aria-hidden="true"
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
-                                viewBox="0 0 24 24">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z" />
-                            </svg>
-                        </button>
-
-
+                                <span class="sr-only">Edit</span>
+                            </button>
+                        
+                            <!-- Tombol Delete -->
+                            <button wire:click="del({{ $t->id }})" wire:confirm="Apakah Anda Yakin akan menghapus? Jika data ini dihapus maka semua data yang berhubungan dengan data ini akan terhapus juga" class="inline-flex items-center justify-center p-2 text-sm font-medium text-red-500 hover:bg-red-500 hover:text-white rounded-lg hover:border border-red-500 group">
+                                <svg class="w-4 h-4 text-red-500 group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
+                                </svg>
+                                <span class="sr-only">Delete</span>
+                            </button>
+                        </div>                       
 
                     </td>
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
