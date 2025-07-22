@@ -6,6 +6,9 @@
     ]" />
 
     <div class="p-4 mt-5 border-2 border-gray-200 rounded-lg dark:border-gray-700">
+
+        {{-- <x-btn text="Tambah Data" icon="plus" color="blue" href="siswa/create" /> --}}
+
         <div class="inline-flex rounded-md shadow-sm" role="group">
             <a type="button" href="siswa/create"
                 class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-s-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
@@ -76,20 +79,23 @@
 
 
                 <label for="table-search" class="sr-only">Search</label>
-                <div class="relative">
-                    <div
-                        class="absolute inset-y-0 left-0 rtl:inset-r-0 rtl:right-0 flex items-center ps-3 pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" fill="currentColor"
-                            viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd"
-                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                clip-rule="evenodd"></path>
-                        </svg>
+                <form method="GET" action="siswa">
+                    <label for="table-search" class="sr-only">Search</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center ps-3 pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" fill="currentColor"
+                                viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="table-search" name="search" value="{{ request('search') }}"
+                            class="block p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Search for items">
                     </div>
-                    <input type="text" id="table-search" name="search" value="{{ request('search') }}"
-                        class="block p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        placeholder="Search for items">
-                </div>
+                </form>
+
             </div>
 
 
@@ -296,18 +302,6 @@
                 {{ $siswa->firstItem() }} sampai {{ $siswa->lastItem() }} dari total
                 {{ $siswa->total() }} data siswa.
             </div>
-            {{-- <div>
-                <button
-                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800">
-                    Hapus Terpilih
-                </button>
-            </div> --}}
-
-
-
-
-
-
         </div>
 
 
@@ -378,13 +372,23 @@
                     if (this.value.trim() !== '') {
                         this.form.submit(); // submit form induk langsung
                     }
-                }, 400);
+                }, 500);
+                console.log('Searching for:', this.value);
             });
 
             document.getElementById('perPage').addEventListener('change', function() {
                 const urlParams = new URLSearchParams(window.location.search);
                 urlParams.set('per_page', this.value); // Update per_page query parameter
                 window.location.search = urlParams.toString(); // Reload with new parameters
+            });
+
+
+
+            document.getElementById('checkAll').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('input[name="id[]"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
             });
         </script>
 

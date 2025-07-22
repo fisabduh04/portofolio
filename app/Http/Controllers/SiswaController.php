@@ -20,17 +20,21 @@ class SiswaController extends Controller
      */
     public function index(Request $request)
     {
+        // dd($request->search);
         
         $perPage = $request->get('per_page', 10); // Ambil jumlah data per halaman dari request, default 10
         $search = $request->get('search', ''); // Ambil nilai pencarian
         $query = siswa::query();
         if ($search) {
+            // dd($search);
             $query->where('nama', 'like', '%' . $search . '%')
                   ->orWhere('nipd', 'like', '%' . $search . '%')
                   ->orWhere('nisn', 'like', '%' . $search . '%');
+                  
         }
-        // dd($perPage);
+        
         $siswa = $query->orderBy('id', 'desc')->paginate($perPage);
+
         return view('siswa.index',compact('siswa'));
 
     }
