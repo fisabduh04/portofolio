@@ -120,13 +120,13 @@
             <td class="p-2 flex gap-2">
                 ${isEditing
                     ? `
-                                        <button onclick="saveUser(${u.id})" class="text-green-600">Simpan</button>
-                                        <button onclick="cancelEdit()" class="text-gray-600">Batal</button>
-                                    `
+                                                <button onclick="saveUser(${u.id})" class="text-green-600">Simpan</button>
+                                                <button onclick="cancelEdit()" class="text-gray-600">Batal</button>
+                                            `
                     : `
-                                        <button onclick="editUser(${u.id})" class="text-blue-600">Edit</button>
-                                        <button onclick="deleteUser(${u.id})" class="text-red-600">Hapus</button>
-                                    `}
+                                                <button onclick="editUser(${u.id})" class="text-blue-600">Edit</button>
+                                                <button onclick="deleteUser(${u.id})" class="text-red-600">Hapus</button>
+                                            `}
             </td>
         </tr>
         `;

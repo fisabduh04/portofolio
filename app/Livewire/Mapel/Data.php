@@ -7,10 +7,11 @@ use App\Models\Mapel; // Pastikan menggunakan Model yang benar (Mapel, bukan map
 use App\Models\Jurusan;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads; // Tambahkan trait ini
-use App\Imports\KelasImport;
+use App\Imports\ImportMapel;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\View\View; // Import untuk tipe data View
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log; // Import untuk logging
 
 class Data extends Component
 {
@@ -36,6 +37,8 @@ class Data extends Component
     public $search = "";
     public $tombol_simpan = false;
     public $file; // Property untuk file upload
+    public $sortField = 'Mapel'; // Default sorting column
+    public $sortAsc = true; // Default sorting order
 
     protected $paginationTheme = 'tailwind'; // Jika Anda menggunakan Tailwind untuk paginasi
 
@@ -46,23 +49,37 @@ class Data extends Component
     }
 
     public function search()
-    {
-        $data = Mapel::orderBy('jurusan_id', 'asc') // Gunakan Mapel
-            ->where('mapel', 'like', '%' . $this->search . '%')
-            ->orWhere('kode', 'like', '%' . $this->search . '%')
-            ->orWhereHas('jurusan', function ($query) {
-                $query->where('jurusan', 'like', '%' . $this->search . '%');
-            })
-            ->paginate($this->perPage);
-        return $data;
+{
+    $query = Mapel::query(); // Mulai query
+
+    if ($this->search) {
+        $query->where('mapel', 'like', '%' . $this->search . '%')
+              ->orWhere('kode', 'like', '%' . $this->search . '%')
+              ->orWhereHas('jurusan', function ($q) {
+                  $q->where('jurusan', 'like', '%' . $this->search . '%');
+              });
     }
 
-    public function render(): View // Tambahkan return type View
+    // Terapkan sorting
+    if ($this->sortField) {
+        $query->orderBy($this->sortField, $this->sortAsc ? 'asc' : 'desc');
+    } else {
+        // Default sorting jika tidak ada sortField yang ditentukan
+        $query->orderBy('jurusan_id', 'asc');
+    }
+
+    return $query->paginate($this->perPage);
+}
+
+    public function render(): View
     {
         $data = $this->search();
         $mapelIdsOnPage = $data->pluck('id')->toArray();
-        $this->mapel_selected_id = array_intersect($this->mapel_selected_id, $mapelIdsOnPage);
-        $this->selectAll = Session::get('selectAll', false); // Mengambil dari session
+
+        // Pastikan checkbox "Select All" tidak dicentang jika ada ID yang tidak terpilih di halaman saat ini
+        // dan semua ID di halaman saat ini sudah dipilih
+        $this->selectAll = count(array_intersect($this->mapel_selected_id, $mapelIdsOnPage)) === count($mapelIdsOnPage) && count($mapelIdsOnPage) > 0;
+
         return view('livewire.mapel.data', [
             'jurusanlist' => Jurusan::all(),
             'mapellist' => $data,
@@ -164,14 +181,14 @@ class Data extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            
-            $this->mapel_selected_id = Mapel::orderBy('jurusan_id', 'asc')->paginate($this->perPage)->pluck('id')->toArray(); // Gunakan Mapel
+            // Hanya pilih ID dari halaman saat ini
+            $this->mapel_selected_id = $this->search()->pluck('id')->toArray();
         } else {
             $this->mapel_selected_id = [];
         }
-        Session::put('selectAll', $value); // Menyimpan ke session
     }
 
+   
     public function import()
     {
         $this->validate([
@@ -179,7 +196,7 @@ class Data extends Component
         ]);
 
         try {
-            Excel::import(new KelasImport, $this->file); // Gunakan $this->file
+            Excel::import(new ImportMapel, $this->file); // Gunakan $this->file
             $this->dispatch('showToast', message: 'Data berhasil diimport!', type: 'success');
         } catch (\Exception $e) {
             $this->dispatch('showToast', message: 'Import Gagal: ' . $e->getMessage(), type: 'error');
@@ -189,4 +206,20 @@ class Data extends Component
         $this->resetPage(); // Reset ke halaman 1 setelah import
 
     }
+
+    public function sortBy($field)
+    {
+        $this->sortField = $field;
+        $this->sortAsc = !$this->sortAsc;
+        $this->resetPage();
+    }
+
+    public function updatedMapelSelectedId()
+    {
+        // Jika user mencentang/membatalkan centang satu per satu, sesuaikan state SelectAll
+        $mapelIdsOnPage = $this->search()->pluck('id')->toArray();
+        $this->selectAll = count(array_intersect($this->mapel_selected_id, $mapelIdsOnPage)) === count($mapelIdsOnPage) && count($mapelIdsOnPage) > 0;
+    }
+
+    
 }

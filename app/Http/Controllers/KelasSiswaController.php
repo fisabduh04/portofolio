@@ -67,8 +67,8 @@ class KelasSiswaController extends Controller
                   ->select('kelas_siswas.*');
             break;
         case 'kelas':
-            $query->join('kelases', 'kelases.id', '=', 'kelas_siswas.kelas_id')
-                  ->orderBy('kelases.kelas', $direction)
+            $query->join('kelas', 'kelas.id', '=', 'kelas_siswas.kelas_id')
+                  ->orderBy('kelas.kelas', $direction)
                   ->select('kelas_siswas.*');
             break;
         case 'tahun':

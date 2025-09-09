@@ -147,8 +147,6 @@ class Data extends Component
         $this->dispatch('showToast', message: 'Data berhasil diupdate!', type: 'warning');
 
 
-
-
     }
 
     public function del()
@@ -156,7 +154,6 @@ class Data extends Component
         Kelas::destroy($this->kelas_selected_id);
 
         $this->dispatch('showToast', message: 'Data berhasil dihapus!', type: 'error');
-
 
         $this->resetFields();
     }

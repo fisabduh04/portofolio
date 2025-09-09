@@ -91,81 +91,94 @@
 
         <hr class="h-px my-3 bg-gray-200 border-0 dark:bg-gray-700">
         <form action="{{ isset($pemetaan) ? route('kelassiswa.update', $pemetaan->id) : route('kelassiswa.store') }}"
-            id="InputSiswa" method="POST">
+            id="InputSiswa" method="POST" class="hidden">
             @csrf
             @isset($pemetaan)
                 @method('PUT')
             @endisset
+
             <div class="grid gap-6 mb-6 md:grid-cols-2">
+                <!-- Tahun Ajaran -->
                 <div>
                     <label for="tahun" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tahun
                         Ajaran</label>
                     <select id="tahun" name="tahun"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         <option value="" disabled
-                            {{ old('tahun', isset($pemetaan) ? $pemetaan->tahun_id : '') == '' ? 'selected' : '' }}>
-                            Tahun
-                            Ajaran</option>
-                        @foreach ($tahun as $key => $t)
+                            {{ old('tahun', $pemetaan->tahun_id ?? '') == '' ? 'selected' : '' }}>Tahun Ajaran</option>
+                        @foreach ($tahun as $t)
                             <option value="{{ $t->id }}"
-                                {{ old('tahun', isset($pemetaan) ? $pemetaan->tahun_id : '') == $t->id ? 'selected' : '' }}>
-                                {{ $t->tahun }}-{{ $t->semester }}</option>
+                                {{ old('tahun', $pemetaan->tahun_id ?? '') == $t->id ? 'selected' : '' }}>
+                                {{ $t->tahun }} - {{ $t->semester }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
+
+                <!-- Kelas -->
                 <div>
                     <label for="kelas"
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Kelas</label>
                     <select id="kelas" name="kelas"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         <option value="" disabled
-                            {{ old('kelas', isset($pemetaan) ? $pemetaan->kelas_id : '') == '' ? 'selected' : '' }}>
-                            Kelas
-                        </option>
-                        @foreach ($kelas as $key => $k)
+                            {{ old('kelas', $pemetaan->kelas_id ?? '') == '' ? 'selected' : '' }}>Kelas</option>
+                        @foreach ($kelas as $k)
                             <option value="{{ $k->id }}"
-                                {{ old('kelas', isset($pemetaan) ? $pemetaan->kelas_id : '') == $k->id ? 'selected' : '' }}>
-                                {{ $k->kelas }}</option>
+                                {{ old('kelas', $pemetaan->kelas_id ?? '') == $k->id ? 'selected' : '' }}>
+                                {{ $k->kelas }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
+
+                <!-- Siswa -->
                 <div>
                     <label for="siswa"
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Siswa</label>
-                    <select id="kelas" name="siswa"
+                    <select id="siswa" name="siswa"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         <option value="" disabled
-                            {{ old('siswa', isset($pemetaan) ? $pemetaan->siswa_id : '') == '' ? 'selected' : '' }}>
-                            Siswa
-                        </option>
-                        @foreach ($siswa as $key => $s)
+                            {{ old('siswa', $pemetaan->siswa_id ?? '') == '' ? 'selected' : '' }}>Siswa</option>
+                        @foreach ($siswa as $s)
                             <option value="{{ $s->id }}"
-                                {{ old('siswa', isset($pemetaan) ? $pemetaan->siswa_id : '') == $s->id ? 'selected' : '' }}>
-                                {{ $s->nama }}-{{ $s->nipd }}</option>
+                                {{ old('siswa', $pemetaan->siswa_id ?? '') == $s->id ? 'selected' : '' }}>
+                                {{ $s->nama }} - {{ $s->nipd }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
+
+                <!-- Keterangan -->
                 <div>
                     <label for="keterangan"
                         class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Keterangan</label>
                     <select id="keterangan" name="ket"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option>Pilih</option>
-                        <option value="aktif">Aktif</option>
-                        <option value="do">Berhenti</option>
-                        <option value="naik">Naik Kelas</option>
-                        <option value="tinggal">Tidak Naik Kelas</option>
+                        <option disabled {{ old('ket', $pemetaan->ket ?? '') == '' ? 'selected' : '' }}>Pilih</option>
+                        <option value="aktif" {{ old('ket', $pemetaan->ket ?? '') == 'aktif' ? 'selected' : '' }}>
+                            Aktif</option>
+                        <option value="do" {{ old('ket', $pemetaan->ket ?? '') == 'do' ? 'selected' : '' }}>
+                            Berhenti</option>
+                        <option value="naik" {{ old('ket', $pemetaan->ket ?? '') == 'naik' ? 'selected' : '' }}>Naik
+                            Kelas</option>
+                        <option value="tinggal" {{ old('ket', $pemetaan->ket ?? '') == 'tinggal' ? 'selected' : '' }}>
+                            Tidak Naik Kelas</option>
                     </select>
                 </div>
-                <div>
 
-                    <!-- Tombol Submit -->
+                <!-- Tombol -->
+                <div class="flex flex-row items-center gap-3 mt-2">
+                    <button type="submit" id="submitButton"
+                        class="text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 shadow-lg shadow-purple-500/50 dark:shadow-lg dark:shadow-purple-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
+                        {{ isset($pemetaan) ? 'Update' : 'Simpan' }}
+                    </button>
 
-                    <button type="submit"
-                        class="text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 shadow-lg shadow-purple-500/50 dark:shadow-lg dark:shadow-purple-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">{{ isset($pemetaan) ? 'Update' : 'Simpan' }}</button>
+                    <x-btn text="Tutup" color="red" onclick="tutup()" />
                 </div>
             </div>
         </form>
+
 
 
         <hr class="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700">
@@ -174,11 +187,12 @@
 
         <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
             <div
-                class="flex flex-wrap items-center justify-between pb-4 space-y-4 flex-column sm:flex-row sm:space-y-0 me-6 ms-6">
+                class="flex flex-wrap items-center justify-between pb-4 space-y-2 flex-column sm:flex-row sm:space-y-0 me-1 ms-2">
                 <div class="flex items-center space-x-2">
                     <label for="items-per-page" class="sr-only">Items per page</label>
                     <select id="perPage" name="per_page"
-                        class="block py-2 px-4 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 min-w-[90px]">
+                        class="block py-2 px-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 min-w-[90px]">
+
                         <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
                         <option value="15" {{ request('per_page') == 15 ? 'selected' : '' }}>15</option>
                         <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
@@ -368,8 +382,8 @@
                                     {{ $loop->iteration }}
                                 </td>
                                 <td class="px-4 py-4">
-                                    <a type="button" href="{{ route('kelassiswa.edit', $pemetaan->id) }}"
-                                        onclick="edit()"
+                                    <a type="button"
+                                        onclick="edit({{ $pemetaan->id }}, {{ $pemetaan->siswa_id }}, {{ $pemetaan->kelas_id }}, {{ $pemetaan->tahun_id }}, '{{ $pemetaan->ket }}')"
                                         class="p-2 text-xs font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                         <svg class="w-4 h-4 text-white dark:text-white" aria-hidden="true"
                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -501,34 +515,71 @@
                 checkboxes.forEach(checkbox => checkbox.checked = this.checked);
             });
 
-
-            function muncul() {
-                const form = document.getElementById('InputSiswa');
-                form.classList.toggle('hidden'); // Toggle visibility of the form
-                form.reset(); // Reset form fields
-                form.querySelectorAll('select').forEach(select => {
-                    select.selectedIndex = 0; // Reset select elements to default
-                });
-                form.querySelectorAll('input[type="text"]').forEach(input => {
-                    input.value = ''; // Clear text inputs
-                });
-                form.query
-            }
-
-            function edit(params) {
-                const form = document.getElementById('InputSiswa');
-                form.classList.remove('hidden'); // Show the form
-
-            }
-
             document.getElementById('table-search').addEventListener('input', function() {
                 clearTimeout(window.delay);
                 window.delay = setTimeout(() => {
                     if (this.value.trim() !== '') {
                         this.form.submit(); // submit form induk langsung
                     }
-                }, 400);
+                }, 1000);
             });
+
+            function tutup() {
+                const form = document.getElementById('InputSiswa');
+                form.classList.toggle('hidden'); // Toggle visibility of the form
+                form.reset();
+                form.querySelectorAll('select').forEach(pilihan => {
+                    pilihan.selectedIndex = 0
+                })
+
+            }
+
+
+            function muncul() {
+                const form = document.getElementById('InputSiswa');
+                const submitBtn = document.getElementById('submitButton');
+
+                form.reset();
+                form.classList.toggle('hidden');
+
+                form.removeAttribute('action'); // reset action agar tidak konflik
+                form.setAttribute('action', "{{ route('kelassiswa.store') }}");
+                form.querySelector('input[name="_method"]')?.remove(); // remove _method PUT
+                form.querySelectorAll('select').forEach(select => {
+                    select.selectedIndex = 0
+                })
+
+                submitBtn.textContent = 'Simpan';
+            }
+
+            function edit(id, siswa_id, kelas_id, tahun_id, ket) {
+                const form = document.getElementById('InputSiswa');
+                const submitBtn = document.getElementById('submitButton');
+
+                form.classList.remove('hidden');
+                form.setAttribute('action', `/kelassiswa/${id}`);
+
+                // Tambahkan method PUT jika belum ada
+                if (!form.querySelector('input[name="_method"]')) {
+                    const methodInput = document.createElement('input');
+                    methodInput.setAttribute('type', 'hidden');
+                    methodInput.setAttribute('name', '_method');
+                    methodInput.setAttribute('value', 'PUT');
+                    form.appendChild(methodInput);
+                }
+
+                // Set nilai input form
+                form.querySelector('select[name="siswa"]').value = siswa_id;
+                form.querySelector('select[name="kelas"]').value = kelas_id;
+                form.querySelector('select[name="tahun"]').value = tahun_id;
+                form.querySelector('select[name="ket"]').value = ket;
+
+                // Ganti teks tombol submit
+                submitBtn.textContent = 'Update';
+            }
+        </script>
+
+
         </script>
 
 

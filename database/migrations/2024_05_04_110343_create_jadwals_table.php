@@ -17,12 +17,12 @@ return new class extends Migration
             $table->foreignId('kelas_id');
             $table->foreignId('pegawai_id');
             $table->foreignId('mapel_id');
-            $table->string('hari', 10);
+            $table->string('hari', 10)->nullable();
             $table->integer('jam');
             $table->time('mulai');
             $table->time('akhir');
-            $table->string('status', 100);
-            $table->string('ket');
+            $table->string('status', 100)->nullable();
+            $table->string('ket')->nullable();
             $table->timestamps();
         });
     }

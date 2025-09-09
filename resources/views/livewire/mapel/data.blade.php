@@ -111,19 +111,20 @@
                 <tr>
                     <th scope="col" class="p-4">
                         <div class="flex items-center">
-                            <input id="checkbox-all-search" type="checkbox" wire:model.live="SelectAll"
+                            <input id="checkbox-all-search" type="checkbox" wire:model.live="selectAll"
                                 class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                             <label for="checkbox-all-search" class="sr-only">checkbox</label>
                         </div>
                     </th>
                     <th scope="col" class="px-6 py-3">
                         <div class="flex items-center">
-                            ID Kelas
-                            <a href="#"><svg class="w-3 h-3 ms-1.5" aria-hidden="true"
-                                    xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                                    <path
-                                        d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
-                                </svg></a>
+                            No
+                            <a href="#" wire:click="sortBy('id')><svg class="w-3 h-3 ms-1.5" aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
+                                </svg>
+                            </a>
                         </div>
                     </th>
                     <th scope="col" class="px-3 py-3">
@@ -132,18 +133,20 @@
                     <th scope="col" class="w-1/12 px-3 py-3">
                         <div class="flex items-center">
                             Kode
-                            <a href="#"><svg class="w-3 h-3 ms-1.5" aria-hidden="true"
-                                    xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <a href="#" wire:click="sortBy('kode')"><svg class="w-3 h-3 ms-1.5"
+                                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                    viewBox="0 0 24 24">
                                     <path
                                         d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
                                 </svg></a>
                         </div>
                     </th>
-                    <th scope="col" class="w-2/3 px-3 py-3">
+                    <th scope="col" class="px-3 py-3">
                         <div class="flex items-center justify-center">
                             Mata Pelajaran
-                            <a href="#"><svg class="w-3 h-3 ms-1.5" aria-hidden="true"
-                                    xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <a wire:click="sortBy('mapel')" href="#"><svg class="w-3 h-3 ms-1.5"
+                                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                    viewBox="0 0 24 24">
                                     <path
                                         d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
                                 </svg></a>
@@ -152,8 +155,9 @@
                     <th scope="col" class="w-1/5 px-3 py-3">
                         <div class="flex items-center">
                             Jurusan
-                            <a href="#"><svg class="w-3 h-3 ms-1.5" aria-hidden="true"
-                                    xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <a wire:click="sortBy('jurusan_id')" href="#"><svg class="w-3 h-3 ms-1.5"
+                                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                    viewBox="0 0 24 24">
                                     <path
                                         d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
                                 </svg></a>
@@ -162,8 +166,9 @@
                     <th scope="col" class="px-3 py-3">
                         <div class="flex items-center">
                             Keterangan
-                            <a href="#"><svg class="w-3 h-3 ms-1.5" aria-hidden="true"
-                                    xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <a wire:click="sortBy('ket')" href="#"><svg class="w-3 h-3 ms-1.5"
+                                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                    viewBox="0 0 24 24">
                                     <path
                                         d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
                                 </svg></a>
@@ -190,12 +195,18 @@
                                 Del
                             </button>
                         </td>
-                        <td>
+                        <td class="p-2">
                             <input type="text" wire:model="kode.{{ $index }}"
                                 class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         </td>
-                        <td>
-                            <select wire:model="mapel.{{ $index }}"
+
+                        <td class="p-2">
+                            <input type="text" wire:model="mapel.{{ $index }}"
+                                class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        </td>
+
+                        <td class="p-2">
+                            <select wire:model="jurusan.{{ $index }}"
                                 class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option value="">Pilih Jurusan</option>
                                 @foreach ($jurusanlist as $j)
@@ -203,7 +214,7 @@
                                 @endforeach
                             </select>
                         </td>
-                        <td>
+                        <td class="p-2">
                             <input type="text" wire:model="ket.{{ $index }}"
                                 class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         </td>
@@ -224,7 +235,7 @@
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            {{ $m->id }}
+                            {{ $loop->iteration + ($mapellist->currentPage() - 1) * $mapellist->perPage() }}
                         </td>
                         <td class="px-2 py-4">
                             @if ($editmapelindex === $m->id)
@@ -253,7 +264,7 @@
                                 </button>
                             @endif
                         </td>
-                        <td class="px-3 py-4 text-base">
+                        <td class="px-4 py-3 text-base text-center">
                             @if ($editmapelindex === $m->id)
                                 <input type="text" wire:model="editkode"
                                     class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -261,7 +272,7 @@
                                 {{ $m->kode }}
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-base">
+                        <td class="px-6 py-4 text-base text-center">
                             @if ($editmapelindex === $m->id)
                                 <input type="text" wire:model="editmapel"
                                     class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -281,7 +292,28 @@
                                         </option>
                                     @endforeach
                                 @else
-                                    {{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}
+                                    @if ($m->jurusan->id == 1)
+                                        <x-badge color="blue"
+                                            text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
+                                    @elseif($m->jurusan->id == 2)
+                                        <x-badge color="green"
+                                            text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
+                                    @elseif($m->jurusan->id == 3)
+                                        <x-badge color="yellow"
+                                            text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
+                                    @elseif($m->jurusan->id == 4)
+                                        <x-badge color="purple"
+                                            text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
+                                    @elseif($m->jurusan->id == 5)
+                                        <x-badge color="red"
+                                            text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
+                                    @elseif($m->jurusan->id == 6)
+                                        <x-badge color="indigo"
+                                            text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
+                                    @else
+                                        <x-badge color="gray"
+                                            text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
+                                    @endif
                             @endif
                         </th>
                         <td class="px-3 py-4 text-base">
@@ -297,7 +329,7 @@
             </tbody>
         </table>
         <div class="">
-            {{ $mapellist->links() }}
+            {{ $mapellist->appends(request()->query())->links() }}
         </div>
 
 

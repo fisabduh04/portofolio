@@ -13,6 +13,8 @@ class CobaController extends Controller
         return view('coba.coba');
     }
 
+    
+
     public function index(Request $req)
     {
         $q = User::query();
@@ -74,5 +76,20 @@ class CobaController extends Controller
     {
         User::destroy($id);
         return response()->json(['message' => 'User deleted successfully']);
+    }
+
+
+
+
+
+    public function tampil3()
+    {
+        $users= User::all();
+        return view('coba.coba3',compact('users'));
+    }
+
+    public function tampil2()
+    {
+        return view('coba.coba2');
     }
 }
