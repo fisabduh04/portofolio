@@ -11,7 +11,7 @@
 
 
         {{-- Kumpulan Tombol --}}
-        <div class="inline-flex rounded-md shadow-sm" role="group">
+        <div class="flex flex-col md:flex-row rounded-md shadow-sm" role="group">
             <a type="button" id="tambah" onclick="muncul()"
                 class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-s-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
                 <svg class="w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
@@ -188,24 +188,25 @@
         <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
             <div
                 class="flex flex-wrap items-center justify-between pb-4 space-y-2 flex-column sm:flex-row sm:space-y-0 me-1 ms-2">
-                <div class="flex items-center space-x-2">
-                    <label for="items-per-page" class="sr-only">Items per page</label>
-                    <select id="perPage" name="per_page"
-                        class="block py-2 px-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 min-w-[90px]">
-
-                        <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
-                        <option value="15" {{ request('per_page') == 15 ? 'selected' : '' }}>15</option>
-                        <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
-                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
-                        <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
-                        <option value="10000000">All</option>
-                    </select>
-                    <small class="inline-block text-gray-500 dark:text-gray-400">Items</small>
-                </div>
-
-
-                {{-- Filter  --}}
                 <form action="{{ route('kelassiswa.index') }}" method="GET" class="flex items-center space-x-4">
+
+                    <div class="flex items-center space-x-2">
+                        <label for="items-per-page" class="sr-only">Items per page</label>
+                        <select id="perPage" name="per_page"
+                            class="block py-2 px-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 min-w-[90px]">
+
+                            <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                            <option value="15" {{ request('per_page') == 15 ? 'selected' : '' }}>15</option>
+                            <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                            <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                            <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                            <option value="10000000">All</option>
+                        </select>
+                        <small class="inline-block text-gray-500 dark:text-gray-400">Items</small>
+                    </div>
+
+
+                    {{-- Filter  --}}
 
                     <div class="flex items-center space-x-2">
                         <label for="filter-tahun"
@@ -379,7 +380,8 @@
                                     </div>
                                 </td>
                                 <td class="px-2 py-4">
-                                    {{ $loop->iteration }}
+                                    {{-- Use paginator firstItem() so numbering continues across pages --}}
+                                    {{ ($pemetaans->firstItem() ?? 0) + $loop->index }}
                                 </td>
                                 <td class="px-4 py-4">
                                     <a type="button"

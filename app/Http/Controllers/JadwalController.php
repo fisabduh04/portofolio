@@ -2,271 +2,279 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\jadwal;
+use App\Models\Jadwal;
 use App\Models\Kelas;
-use App\Models\tahun;
-use App\Models\mapel;
+use App\Models\Tahun;
+use App\Models\Mapel;
 use App\Models\Pegawai;
-use App\Models\pegawai as ModelsPegawai;
-use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class JadwalController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-   public function index(Request $request)
-{
-    $sort = $request->input('sort', 'hari');
-    $direction = $request->input('direction', 'desc');
-    $perpage = $request->input('per_Page',10);
-    $search = $request->input('search', '');
-    $filter_tahun = $request->input('filter_tahun', null);
-    $filter_kelas = $request->input('filter_kelas', null);
-
-    // Data pendukung untuk filter
-    $tahun   = Tahun::aktif()->get();
-    $kelas   = Kelas::all();
-    $mapel   = Mapel::all();
-    $pegawai = Pegawai::select('id', 'name')->get();
-    $hari    = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
-
-    // Query utama
-    $query = Jadwal::with(['kelas', 'mapel', 'pegawai']);
-
-    // Pencarian
-    if (!empty($search)) {
-        $query->where(function($q) use ($search) {
-            $q->whereHas('kelas', function($sub) use ($search) {
-                $sub->where('kelas', 'like', "%{$search}%");
-            })
-            ->orWhereHas('mapel', function($sub) use ($search) {
-                $sub->where('mapel', 'like', "%{$search}%");
-            })
-            ->orWhereHas('pegawai', function($sub) use ($search) {
-                $sub->where('name', 'like', "%{$search}%");
-            });
-        });
-    }
-    // Filter berdasarkan tahun
-    if (!empty($filter_tahun) && $filter_tahun !== 'all') {
-        $query->where('tahun_id', $filter_tahun);
-    }
-    // Filter berdasarkan kelas
-    if (!empty($filter_kelas) && $filter_kelas !== 'all') {
-        $query->where('kelas_id', $filter_kelas);
-    }
-    
-    // Sorting kolom relasi
-    if ($sort === 'kelas') {
-        $query->join('kelas', 'kelas.id', '=', 'jadwals.kelas_id')
-              ->orderBy('kelas.kelas', $direction)
-              ->select('jadwals.*');
-    } elseif ($sort === 'pegawai') {
-        $query->join('pegawais', 'pegawais.id', '=', 'jadwals.pegawai_id')
-              ->orderBy('pegawais.name', $direction)
-              ->select('jadwals.*');
-    } elseif ($sort === 'mapel') {
-        $query->join('mapels', 'mapels.id', '=', 'jadwals.mapel_id')
-              ->orderBy('mapels.mapel', $direction)
-              ->select('jadwals.*');
-    } 
-    else {
-        $query->orderBy($sort, $direction);
-    }
-
-    $jadwals = $query->paginate($perpage);
-
-    return view('jadwal.index', compact('tahun','kelas','filter_kelas','filter_tahun','mapel','hari','pegawai','jadwals', 'sort', 'direction', 'perpage', 'search'));
-}
-
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    private function validateJadwal(Request $request)
     {
-        //
+        return $request->validate([
+            'tahun_id'   => 'required|exists:tahuns,id',
+            'kelas_id'   => 'required|exists:kelas,id',
+            'mapel_id'   => 'required|exists:mapels,id',
+            'pegawai_id' => 'required|exists:pegawais,id',
+            'hari'       => 'required|string',
+            'jam'        => 'required|string',
+            'mulai'      => 'required|date_format:H:i',
+            'akhir'      => 'required|date_format:H:i|after:mulai',
+            'ket'        => 'nullable|string',
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-   public function store(Request $request)
-{
-    // dd($request->all());
-    $validated = $request->validate([
-        'tahun_id'   => 'required',
-        'kelas_id'=> 'required',
-        'mapel_id'   => 'required',
-        'pegawai_id' => 'required',
-        'hari'       => 'required',
-        'jam'        => 'required',
-        'mulai'      => 'required',
-        'akhir'      => 'required',
-        'ket'        => 'nullable',
-    ]);
-    // Cek apakah jadwal sudah ada untuk kelas, mapel, dan hari yang sama
-    $existingJadwal = Jadwal::where('tahun_id', $validated['tahun_id'])
-        ->where('pegawai_id', $validated['pegawai_id'])
-        ->where('hari', $validated['hari'])
-        ->first(); 
-    if ($existingJadwal) {
-        // dd('jadwal sudah ada');
-        return redirect()->back()
-            ->with('type', 'error')
-            ->with('message', 'Jadwal untuk kelas, mapel, dan hari ini sudah ada');            
-    }     
-
-    $jadwal = Jadwal::create($validated);
-
-    return redirect()->route('jadwal.index')
-        ->with('type', 'success')
-        ->with('message', 'Jadwal berhasil ditambahkan');   
-}
-
-    
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(jadwal $jadwal)
+    public function index(Request $request)
     {
-        //
+        try {
+            $sort = $request->input('sort', 'hari');
+            $direction = $request->input('direction', 'desc');
+            $perpage = $request->input('per_Page', 10);
+            $search = $request->input('search', '');
+            $filter_tahun = $request->input('filter_tahun', null);
+            $filter_kelas = $request->input('filter_kelas', null);
+
+            $tahun   = Tahun::aktif()->get();
+            $kelas   = Kelas::all();
+            $mapel   = Mapel::all();
+            $pegawai = Pegawai::select('id', 'name')->get();
+            $hari    = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+            // --- 1. LOGIKA PENENTUAN TAHUN ID YANG BERLAKU ---
+            
+            $tahunIDUntukProses = $filter_tahun;
+
+            // Jika tidak ada filter_tahun dari request, gunakan tahun aktif yang pertama sebagai default.
+            if (empty($tahunIDUntukProses)) {
+                // Karena $tahun sudah hanya berisi tahun aktif, kita ambil yang pertama.
+                $tahunIDUntukProses = $tahun->first()->id ?? null;
+                
+                // Perbarui $filter_tahun untuk memastikan dropdown menampilkan default
+                $filter_tahun = $tahunIDUntukProses;
+            }
+
+
+            $query = Jadwal::with(['kelas', 'mapel', 'pegawai']);
+
+            if (!empty($search)) {
+                $query->where(function($q) use ($search) {
+                    $q->whereHas('kelas', fn($sub) => $sub->where('kelas', 'like', "%{$search}%"))
+                      ->orWhereHas('mapel', fn($sub) => $sub->where('mapel', 'like', "%{$search}%"))
+                      ->orWhereHas('pegawai', fn($sub) => $sub->where('name', 'like', "%{$search}%"));
+                });
+            }
+
+            if (!empty($filter_tahun) && $filter_tahun !== 'all') {
+                $query->where('tahun_id', $filter_tahun);
+            }
+
+            if (!empty($filter_kelas) && $filter_kelas !== 'all') {
+                $query->where('kelas_id', $filter_kelas);
+            }
+
+            if ($sort === 'kelas') {
+                $query->join('kelas', 'kelas.id', '=', 'jadwals.kelas_id')
+                      ->orderBy('kelas.kelas', $direction)
+                      ->select('jadwals.*');
+            } elseif ($sort === 'pegawai') {
+                $query->join('pegawais', 'pegawais.id', '=', 'jadwals.pegawai_id')
+                      ->orderBy('pegawais.name', $direction)
+                      ->select('jadwals.*');
+            } elseif ($sort === 'mapel') {
+                $query->join('mapels', 'mapels.id', '=', 'jadwals.mapel_id')
+                      ->orderBy('mapels.mapel', $direction)
+                      ->select('jadwals.*');
+            } else {
+                $query->orderBy($sort, $direction);
+            }
+
+            $jadwals = $query->paginate($perpage)->appends($request->query());
+
+            // --- 2. DETEKSI BENTROKAN MASSAL (Hanya pada tahun yang sedang ditampilkan) ---
+            $jadwalBentrokIds = [];
+            $bentrokJadwalList = collect();
+
+            if (!empty($tahunIDUntukProses)) {
+            // Deteksi bentrokan hanya pada tahun yang ID-nya saat ini digunakan
+            $bentrokJadwalList = Jadwal::bentrokSaatIni($tahunIDUntukProses)
+                ->with(['kelas', 'mapel', 'pegawai'])
+                ->get();
+            $jadwalBentrokIds = $bentrokJadwalList->pluck('id')->all();
+        }
+        // --------------------------------------------------
+
+        return view('jadwal.index', compact(
+            'tahun','kelas','filter_kelas','filter_tahun',
+            'mapel','hari','pegawai','jadwals',
+            'sort','direction','perpage','search',
+            'jadwalBentrokIds', 
+            'bentrokJadwalList' 
+        ));
+        } catch (\Exception $e) {
+            Log::error('Error loading jadwal index: ' . $e->getMessage());
+            return redirect()->back()->with('type', 'error')->with('message', 'Gagal memuat jadwal: ' . $e->getMessage());
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(jadwal $jadwal)
+    public function store(Request $request)
     {
-        //
-    }
+        try {
+            $validated = $this->validateJadwal($request);
 
-    /**
-     * Update the specified resource in storage.
-     */
+            if (Jadwal::conflict($validated)->exists()) {
+                return redirect()->back()
+                    ->with('type', 'error')
+                    ->with('message', 'Pegawai sudah memiliki jadwal lain yang bentrok pada waktu tersebut.');
+            }
+
+            Jadwal::create($validated);
+
+            return redirect()->route('jadwal.index')
+                ->with('type', 'success')
+                ->with('message', 'Jadwal berhasil ditambahkan');
+        } catch (\Exception $e) {
+            Log::error('Error storing jadwal: ' . $e->getMessage());
+            return redirect()->back()->with('type', 'error')->with('message', 'Gagal menambahkan jadwal: ' . $e->getMessage());
+        }
+    }
 
     public function update(Request $request, $id)
-{
-    try {
-        $jadwal = Jadwal::findOrFail($id);
+    {
+        // dd($request->all());
+        try {
+            $jadwal = Jadwal::findOrFail($id);
+            $validated = $this->validateJadwal($request);
 
-        $validated = $request->validate([
-            'tahun_id'   => 'required',
-            'kelas_id'   => 'required',
-            'mapel_id'   => 'required',
-            'pegawai_id' => 'required',
-            'hari'       => 'required',
-            'jam'        => 'required',
-            'mulai'      => 'required',
-            'akhir'      => 'required',
-            'ket'        => 'nullable',
-        ]);
+            if (Jadwal::conflict($validated, $jadwal->id)->exists()) {
+                return redirect()->back()
+                ->with('type', 'error')
+                ->with('message', 'Pegawai sudah memiliki jadwal lain yang bentrok pada waktu tersebut.');
+            }
 
-        $jadwal->update($validated);
+            $jadwal->update($validated);
 
-        return redirect()->route('jadwal.index',[
-            'filter_kelas'=>$request->filter_kelas,
-            'filer_tahun'=>$request->filter_tahun,
-            'sort'=>$request->sort,
-            'direction'=>$request->direction
-        ])
-            ->with('type', 'success')
-            ->with('message', 'Jadwal berhasil diperbarui');
-    } catch (\Exception $e) {
-        return redirect()->back()
-            ->with('type', 'error')
-            ->with('message', 'Gagal memperbarui jadwal: ' . $e->getMessage());
+            return redirect()->route('jadwal.index', $request->query())
+                ->with('type', 'success')
+                ->with('message', 'Jadwal berhasil diperbarui');
+        } catch (\Exception $e) {
+            Log::error('Error updating jadwal: ' . $e->getMessage());
+            return redirect()->back()->with('type', 'error')->with('message', 'Gagal memperbarui jadwal: ' . $e->getMessage());
+        }
     }
-}
 
-    
-
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($id)
     {
-        // dd($id);
-        $jadwal = Jadwal::findOrFail($id);
-        // dd($jadwal);
-        $jadwal->delete();  
-        return redirect()->route('jadwal.index',[
-            'filter_tahun' => request('filter_tahun'),
-            'filter_kelas' => request('filter_kelas')            
-        ])->with('type','success')->with('message', 'Jadwal berhasil dihapus');
-        
+        try {
+            $jadwal = Jadwal::findOrFail($id);
+            $jadwal->delete();
+
+            return redirect()->route('jadwal.index', request()->query())
+                ->with('type', 'success')
+                ->with('message', 'Jadwal berhasil dihapus');
+        } catch (\Exception $e) {
+            Log::error('Error deleting jadwal: ' . $e->getMessage());
+            return redirect()->back()->with('type', 'error')->with('message', 'Gagal menghapus jadwal: ' . $e->getMessage());
+        }
     }
 
     public function getJadwalJson()
-{
-    try {
-        $jadwal = Jadwal::with(['mapel','kelas','pegawai'])->get();
-        return response()->json(['data' => $jadwal], 200);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-}
-
-public function bulkDelete(Request $request)
-{
-    $ids = $request->input('ids');
-
-    if (empty($ids)) {
-        return response()->json(['message' => 'No IDs provided'], 400);
+    {
+        try {
+            $jadwal = Jadwal::with(['mapel','kelas','pegawai'])->get();
+            return response()->json(['data' => $jadwal], 200);
+        } catch (\Exception $e) {
+            Log::error('Error fetching jadwal JSON: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
-    try {
-        Jadwal::whereIn('id', $ids)->delete();
-        return response()->json(['message' => 'Jadwal deleted successfully'], 200);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }}
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids');
+
+        if (empty($ids)) {
+            return response()->json(['message' => 'Tidak ada ID yang dikirim'], 400);
+        }
+
+        try {
+            Jadwal::whereIn('id', $ids)->delete();
+            return response()->json(['message' => 'Jadwal berhasil dihapus'], 200);
+        } catch (\Exception $e) {
+            Log::error('Error bulk deleting jadwal: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 
     public function updateAll(Request $request)
-    {
-        // dd($request->all());
-            $ids         = $request->input('id', []); 
-            $kelas_ids   = $request->input('kelas_id', []);
-            $haris       = $request->input('hari', []);
-            $mapel_ids   = $request->input('mapel_id', []);
-            $pegawai_ids = $request->input('pegawai_id', []);
-            $jams        = $request->input('jam', []);
-            $mulais      = $request->input('mulai', []);
-            $akhirs      = $request->input('akhir', []);
-            $kets        = $request->input('ket', []);
-        // array keterangan
+{
+    try {
+        $ids         = $request->input('id', []);
+        $kelas_ids   = $request->input('kelas_id', []);
+        $haris       = $request->input('hari', []);
+        $mapel_ids   = $request->input('mapel_id', []);
+        $pegawai_ids = $request->input('pegawai_id', []);
+        $jams        = $request->input('jam', []);
+        $mulais      = $request->input('mulai', []);
+        $akhirs      = $request->input('akhir', []);
+        $kets        = $request->input('ket', []);
+
+        $bentrokList = [];
 
         foreach ($ids as $index => $id) {
             $data = [
-                'kelas_id'   => $kelas_ids[$index],
-                'hari'       => $haris[$index],
-                'mapel_id'   => $mapel_ids[$index],
-                'pegawai_id' => $pegawai_ids[$index],
-                'jam'        => $jams[$index],
-                'mulai'      => $mulais[$index],
-                'akhir'      => $akhirs[$index],
-                'ket'        => $kets[$index],
+                'kelas_id'   => $kelas_ids[$index] ?? null,
+                'hari'       => $haris[$index] ?? null,
+                'mapel_id'   => $mapel_ids[$index] ?? null,
+                'pegawai_id' => $pegawai_ids[$index] ?? null,
+                'jam'        => $jams[$index] ?? null,
+                'mulai'      => $mulais[$index] ?? null,
+                'akhir'      => $akhirs[$index] ?? null,
+                'ket'        => $kets[$index] ?? null,
+                'tahun_id'   => $request->input('tahun_id'), // pastikan tahun_id tersedia
             ];
 
+            // Validasi minimal data wajib
+            if (!$data['kelas_id'] || !$data['mapel_id'] || !$data['pegawai_id'] || !$data['hari']) {
+                Log::warning("Data tidak lengkap untuk index $index: " . json_encode($data));
+                continue;
+            }
+
+            // Validasi bentrok jadwal
+            if (Jadwal::conflict($data, $id)->exists()) {
+                $bentrokList[] = $data;
+                continue;
+            }
+
             if (!empty($id)) {
-                // Update data lama
                 Jadwal::where('id', $id)->update($data);
             } else {
-                // Insert data baru
                 Jadwal::create($data);
             }
         }
 
-        return redirect()->back()->with('type','success')->with('message', 'Data jadwal berhasil diperbarui.');
+        if (count($bentrokList) > 0) {
+    $pesanBentrok = "Beberapa jadwal tidak diperbarui karena bentrok:\n";
+
+    foreach ($bentrokList as $jadwal) {
+        $pesanBentrok .= "- Pegawai ID {$jadwal['pegawai_id']} bentrok di hari {$jadwal['hari']} jam {$jadwal['mulai']}–{$jadwal['akhir']} kelas ID {$jadwal['kelas_id']}\n";
     }
 
-
-
+    return redirect()->back()
+        ->with('type', 'warning')
+        ->with('message', nl2br($pesanBentrok)); // nl2br agar newline tampil di HTML
 }
+
+        return redirect()->back()
+            ->with('type', 'success')
+            ->with('message', 'Data jadwal berhasil diperbarui.');
+    } catch (\Exception $e) {
+        Log::error('Error bulk updating jadwal: ' . $e->getMessage());
+        return redirect()->back()
+            ->with('type', 'error')
+            ->with('message', 'Gagal memperbarui data jadwal: ' . $e->getMessage());
+    }
+}
+}
+

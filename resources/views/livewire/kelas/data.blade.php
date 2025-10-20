@@ -1,12 +1,12 @@
 <div class="flex flex-col sm:flex-row flex-wrap gap-2">
-    <x-btn text="Tambah Data" icon="plus" color="blue" wireClick="add" />
+    <x-btn text="Tambah Data" icon="plus" wireClick="add" />
     <x-btn text="Export Excel" color="cyan" icon="export" href="{{ route('exportkelas') }}" />
     <form wire:submit.prevent="import" method="POST" enctype="multipart/form-data">
         <!-- Tombol trigger input file -->
         <x-btn text="Import File" color="green" icon="import" for="file" />
 
         <!-- Input file tersembunyi -->
-        <input type="file" id="file" wire:model="file" class="hidden">
+        <input type="file" id="file" wire:model="file" class="hidden" accept=".xlsx,.xls">
 
         <!-- Tampilkan tombol submit jika file sudah dipilih -->
         @if ($file)
@@ -33,6 +33,7 @@
                     <option value="25">25</option>
                     <option value="50">50</option>
                     <option value="100">100</option>
+                    <option value="-1">All</option>
                 </select>
                 <span class="text-gray-700 dark:text-gray-400">entries</span>
             </div>
@@ -47,7 +48,7 @@
                             clip-rule="evenodd"></path>
                     </svg>
                 </div>
-                <input type="text" id="table-search" wire:model.live="search"
+                <input type="text" id="table-search" wire:model.live.debounce.500ms="search"
                     class="block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg ps-10 w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="Search for items">
             </div>
@@ -65,7 +66,7 @@
                     </th>
                     <th scope="col" class="px-6 py-3" wire:click="sortBy('id')">
                         <div class="flex items-center">
-                            ID Kelas
+                            No
                             <a href="#"><svg class="w-3 h-3 ms-1.5" aria-hidden="true"
                                     xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
                                     <path
@@ -109,12 +110,18 @@
                 </tr>
             </thead>
             <tbody>
+                {{-- continuous counter (respect paginator offset) --}}
+                @php
+                    // If $kelaslist is a paginator, firstItem() returns the global index of the first item on the page.
+                    // We subtract 1 so that ++$counter in the rows yields the correct 1-based numbering.
+                    $counter = ($kelaslist->firstItem() ?? 1) - 1;
+                @endphp
                 {{-- Form input --}}
                 @foreach ($kelas as $index => $val)
                     <tr>
                         <td></td>
-                        <td>{{ $index }}</td>
-                        <td>
+                        <td>{{ ++$counter }}</td>
+                        <td class="px-6 py-4">
                             <button type="button" wire:click="remove({{ $index }})"
                                 class="px-2.5 py-2 text-xs font-medium text-center inline-flex items-center justify-center text-red-700 hover:text-white rounded-lg hover:bg-red-600 focus:ring-4 focus:outline focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800 group">
                                 <svg class="w-5 h-5 text-red-700 group-hover:text-white dark:text-white"
@@ -127,11 +134,11 @@
                                 Del
                             </button>
                         </td>
-                        <td>
+                        <td class="px-2 py-4 text-base">
                             <input type="text" wire:model="kelas.{{ $index }}"
                                 class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         </td>
-                        <td>
+                        <td class="px-2 py-4 text-base">
                             <select wire:model="jurusan.{{ $index }}"
                                 class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option value="">Pilih Jurusan</option>
@@ -140,7 +147,7 @@
                                 @endforeach
                             </select>
                         </td>
-                        <td>
+                        <td class="px-2 py-4 text-base">
                             <input type="text" wire:model="ket.{{ $index }}"
                                 class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         </td>
@@ -151,18 +158,21 @@
 
                 {{-- Data Kelas --}}
                 @foreach ($kelaslist as $index => $m)
-                    <tr class="bg-white dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                    <tr wire:key="kelas-{{ $m->id }}"
+                        class="bg-white dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                         <td class="w-4 p-4">
                             <div class="flex items-center">
-                                <input id="checkbox-table-search-1" type="checkbox" wire:key="{{ $m->id }}"
-                                    wire:model.live="kelas_selected_id" value="{{ $m->id }}"
+                                <input id="checkbox-table-search-{{ $m->id }}" type="checkbox"
+                                    wire:key="{{ $m->id }}" wire:model.live="kelas_selected_id"
+                                    value="{{ $m->id }}"
                                     class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
+                                <label for="checkbox-table-search-{{ $m->id }}"
+                                    class="sr-only">checkbox</label>
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            {{ $m->id }}
-                        </td>
+                            {{ ++$counter }}
+            </td>
                         <td class="px-2 py-4">
                             @if ($editkelasindex === $m->id)
                                 <button type="button" wire:click="update({{ $m->id }})"
@@ -190,7 +200,7 @@
                                 </button>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-base">
+                        <td class="px-1 py-4 text-base">
                             @if ($editkelasindex === $m->id)
                                 <input type="text" wire:model="editkelas"
                                     class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -199,7 +209,7 @@
                             @endif
                         </td>
                         <th scope="row"
-                            class="px-6 py-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                            class="px-1 py-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             @if ($editkelasindex === $m->id)
                                 <select wire:model="editjurusan"
                                     class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -213,10 +223,10 @@
                                     {{ $m->jurusan->jurusan }}
                             @endif
                         </th>
-                        <td class="px-6 py-4 text-base">
+                        <td class="px-1 py-4 text-base">
                             @if ($editkelasindex === $m->id)
                                 <input type="text" wire:model="editket"
-                                    class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    class="w-full px-1 py-1 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             @else
                                 {{ $m->ket }}
                             @endif

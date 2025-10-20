@@ -5,6 +5,30 @@
         ['name' => 'Jadwal', 'href' => 'jadwal'],
     ]" />
 
+    {{-- ======================================================= --}}
+    {{-- TAMBAHKAN KODE BARU DI SINI --}}
+    @if (isset($bentrokJadwalList) && $bentrokJadwalList->isNotEmpty())
+        <div class="p-4 my-4 text-sm text-yellow-800 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300"
+            role="alert">
+            <span class="font-medium">Perhatian! Terdapat {{ $bentrokJadwalList->count() }} Jadwal Bentrok Pegawai
+                (Guru):</span>
+            <ul class="mt-2 list-disc list-inside">
+                @foreach ($bentrokJadwalList->unique('id') as $j)
+                    <li>
+                        Guru ,<strong>{{ $j->pegawai->name ?? 'N/A' }}</strong>
+                        bentrok pada Hari
+                        <strong>{{ $j->hari }}</strong> Jam
+                        <strong>**{{ date('H:i', strtotime($j->mulai)) }} -
+                            {{ date('H:i', strtotime($j->akhir)) }}**</strong> di Kelas
+                        <strong>{{ $j->kelas->kelas ?? 'N/A' }}</strong>
+                    </li>
+                @endforeach
+            </ul>
+            <p class="mt-3">Mohon perbaiki jadwal yang bentrok di bawah ini.</p>
+        </div>
+    @endif
+    {{-- ======================================================= --}}
+
     <div class="p-4 mt-5 border-2 border-gray-200 rounded-lg dark:border-gray-700">
         <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Jadwal Mata Pelajaran</h1>
 
@@ -14,7 +38,7 @@
         </div>
 
 
-        {{-- <form action="\jadwal" method="POST">
+        <form action="\jadwal" method="POST">
             <div class="grid gap-6 mb-6 md:grid-cols-2">
                 @csrf
                 <div>
@@ -147,7 +171,7 @@
             <button type="submit"
                 class="text-white bg-purple-700 hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-300 font-medium rounded-full text-sm px-5 py-2.5 text-center mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900">Simpan</button>
 
-        </form> --}}
+        </form>
 
         <hr class="my-1 border-gray-200 dark:border-gray-700" />
 
@@ -359,8 +383,19 @@
                 <tbody id="jadwalTable">
                     @foreach ($jadwals as $j)
                         {{-- Baris tampilan --}}
-                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
-                            id="row-{{ $j->id }}">
+
+                        @php
+                            // Cek apakah ID jadwal ini ada di dalam daftar bentrok
+                            $isConflict = isset($jadwalBentrokIds) && in_array($j->id, $jadwalBentrokIds);
+                            // Tentukan kelas CSS berdasarkan status bentrok
+                            $rowClass = $isConflict
+                                ? 'bg-red-100 dark:bg-red-900 border-red-400 hover:bg-red-200 dark:hover:bg-red-800'
+                                : 'bg-white dark:bg-gray-800 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600';
+                        @endphp
+
+                        <tr class="{{ $rowClass }} border-b dark:border-gray-700" id="row-{{ $j->id }}">
+
+
                             <td class="w-4 p-4">
                                 <div class="flex items-center">
                                     <input id="checkbox-table-search-{{ $j->id }}" type="checkbox"
@@ -519,13 +554,15 @@
 
                                 <!-- Mulai -->
                                 <td class="p-2">
-                                    <input type="time" name="mulai" value="{{ $j->mulai }}"
+                                    <input type="time" name="mulai"
+                                        value="{{ old('mulai', date('H:i', strtotime($j->mulai))) }}"
                                         class="w-full border rounded-lg p-1 text-sm" />
                                 </td>
 
                                 <!-- Akhir -->
                                 <td class="p-2">
-                                    <input type="time" name="akhir" value="{{ $j->akhir }}"
+                                    <input type="time" name="akhir"
+                                        value="{{ old('akhir', date('H:i', strtotime($j->akhir))) }}"
                                         class="w-full border rounded-lg p-1 text-sm" />
                                 </td>
 

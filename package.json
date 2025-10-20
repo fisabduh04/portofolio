@@ -7,8 +7,10 @@
         "preview": "vite preview"
     },
     "devDependencies": {
+        "@prettier/plugin-php": "^0.24.0",
         "axios": "^1.6.4",
         "laravel-vite-plugin": "^1.0",
+        "prettier": "^3.6.2",
         "vite": "^6.3.5"
     },
     "dependencies": {
