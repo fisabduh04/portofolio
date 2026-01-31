@@ -5,7 +5,7 @@
 <x-layout.header />
 
 <body>
-    @livewire('toast')
+    <x-layout.toast />
 
 
 

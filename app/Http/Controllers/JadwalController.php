@@ -276,5 +276,101 @@ class JadwalController extends Controller
             ->with('message', 'Gagal memperbarui data jadwal: ' . $e->getMessage());
     }
 }
+
+    public function rekap(Request $request)
+    {
+        $filter_tahun = $request->input('filter_tahun');
+        $filter_kelas = $request->input('filter_kelas');
+        $perpage = $request->input('perpage', 10);
+        $search = $request->input('search');
+
+        $tahun = \App\Models\Tahun::aktif()->get();
+        $kelas = \App\Models\Kelas::all();
+
+        // 1. Determine active year (same logic as index)
+        $tahunIDUntukProses = $filter_tahun;
+        if (empty($tahunIDUntukProses)) {
+            $firstActive = $tahun->first();
+            $tahunIDUntukProses = $firstActive ? $firstActive->id : null;
+            // Update filter_tahun for the view to show the default selected
+            $filter_tahun = $tahunIDUntukProses;
+        }
+
+        // 2. Query Pegawai with Schedules
+        $query = \App\Models\Pegawai::query();
+
+        // Eager load jadwals with filters
+        $query->with(['jadwals' => function ($q) use ($tahunIDUntukProses, $filter_kelas) {
+            $q->where('tahun_id', $tahunIDUntukProses);
+            if (!empty($filter_kelas)) {
+                $q->where('kelas_id', $filter_kelas);
+            }
+            $q->with(['mapel', 'kelas']);
+        }]);
+
+        // 3. Apply Search on Pegawai
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('nuptk', 'like', "%{$search}%");
+            });
+        }
+        
+        // Only show teachers who have schedules if a specific class filter is applied? 
+        // Or keep showing all teachers matching search? 
+        // Usually rekap shows everyone, or at least everyone with hours.
+        // Let's keep showing all searched employees, even with 0 hours, as that's often useful.
+        // But if filtering by class, effective hours will be 0 for teachers not teaching that class.
+        
+        $pegawais = $query->paginate($perpage)->appends($request->query());
+
+        // 4. Calculate Data
+        $pegawais->through(function ($guru) {
+            $totalSeconds = 0;
+            $details = [];
+
+            foreach ($guru->jadwals as $jadwal) {
+                $start = strtotime($jadwal->mulai);
+                $end = strtotime($jadwal->akhir);
+                
+                if ($end > $start) {
+                    $duration = $end - $start;
+                    $hours = $duration / 3600; // 1 hour = 3600 seconds
+                    
+                    $totalSeconds += $duration;
+
+                    // Build Detail String: "Matematika - X RPL 1"
+                    $mapel = $jadwal->mapel->mapel ?? 'Unknown';
+                    $kelas = $jadwal->kelas->kelas ?? 'Unknown';
+                    $key = "{$mapel} - {$kelas}";
+
+                    if (!isset($details[$key])) {
+                        $details[$key] = 0;
+                    }
+                    $details[$key] += $hours;
+                }
+            }
+
+            $guru->total_jam_mengajar = round($totalSeconds / 3600, 1); // Round to 1 decimal place
+            
+            // Format details to also be rounded
+            foreach($details as $k => $v) {
+                $details[$k] = round($v, 1);
+            }
+            $guru->detail_mengajar = $details;
+
+            return $guru;
+        });
+
+        return view('jadwal.rekap', compact(
+            'tahun',
+            'kelas',
+            'filter_tahun',
+            'filter_kelas',
+            'search',
+            'perpage',
+            'pegawais'
+        ));
+    }
 }
 

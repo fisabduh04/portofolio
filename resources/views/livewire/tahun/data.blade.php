@@ -36,97 +36,47 @@
                 </div>
             </div>
 
-<button type="submit"
-                class="px-5 py-2.5 text-sm font-medium text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                <svg class="w-3.5 h-3.5 text-white me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                    width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 6c0 1.657-3.134 3-7 3S5 7.657 5 6m14 0c0-1.657-3.134-3-7-3S5 4.343 5 6m14 0v6M5 6v6m0 0c0 1.657 3.134 3 7 3s7-1.343 7-3M5 12v6c0 1.657 3.134 3 7 3s7-1.343 7-3v-6" />
-                </svg>
-
-                {{ $tombol_simpan }}
-    </button>
-            <button wire:click="close" type="reset"
-                class="inline-flex items-center text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-3 py-2.5 text-center me-2 mb-2">
-                <svg class="w-4 h-4 text-white me-1 dark:text-white" aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="m15 9-6 6m0-6 6 6m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-                Close</button>
+            <div class="flex items-center space-x-2">
+                <x-btn type="submit" color="blue" icon="save" :text="$tombol_simpan" />
+                
+                <x-btn color="red" icon="x" text="Close" wireClick="close" />
+            </div>
         </form>
     @endif
 
 
     @if (!$form)
-        <x-btn text="Tambah" icon="plus" color="blue" wireClick="tambah" />
-        {{-- <x-button text="Tambah" icon="plus" color="blue" outline /> --}}
+        <div class="mb-4">
+            <x-btn text="Tambah Tahun Akademik" icon="plus" color="blue" wireClick="tambah" pill />
+        </div>
     @endif
 
 
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg border border-gray-200 dark:border-gray-700">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                    <th scope="col" class="px-6 py-3">
-                        No
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Aksi
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Tahun Akademik
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Semester
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Tanggal Mulai
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Tanggal Akhir
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-center">
-                        Aktif
-                    </th>
+                    <th scope="col" class="px-6 py-3">No</th>
+                    <th scope="col" class="px-6 py-3">Aksi</th>
+                    <th scope="col" class="px-6 py-3">Tahun Akademik</th>
+                    <th scope="col" class="px-6 py-3">Semester</th>
+                    <th scope="col" class="px-6 py-3">Tanggal Mulai</th>
+                    <th scope="col" class="px-6 py-3">Tanggal Akhir</th>
+                    <th scope="col" class="px-6 py-3 text-center">Aktif</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                 @foreach ($tahunlist as $t)
-                    <tr class="bg-white dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                    <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <td class="px-6 py-4 font-medium">{{ $loop->iteration }}</td>
                         <td class="px-6 py-4">
-                            {{ $loop->iteration }}
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center space-x-1">
-                                <!-- Tombol Edit -->
-                                <button type="button" wire:click="edit({{ $t->id }})"
-                                    class="inline-flex items-center justify-center p-2 text-sm font-semibold text-blue-800 hover:bg-blue-500 hover:text-white rounded-lg hover:border dark:bg-blue-700 dark:text-blue-300 group">
-                                    <svg class="w-4 h-4 text-blue-800 group-hover:text-white dark:text-white"
-                                        aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-                                        height="24" fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z" />
-                                    </svg>
-                                    <span class="sr-only">Edit</span>
-                                </button>
-
-                                <!-- Tombol Delete -->
-                                <button wire:click="del({{ $t->id }})"
-                                    wire:confirm="Apakah Anda Yakin akan menghapus? Jika data ini dihapus maka semua data yang berhubungan dengan data ini akan terhapus juga"
-                                    class="inline-flex items-center justify-center p-2 text-sm font-medium text-red-500 hover:bg-red-500 hover:text-white rounded-lg hover:border border-red-500 group">
-                                    <svg class="w-4 h-4 text-red-500 group-hover:text-white" aria-hidden="true"
-                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                        fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z" />
-                                    </svg>
-                                    <span class="sr-only">Delete</span>
-                                </button>
+                            <div class="flex items-center space-x-2">
+                                <x-btn color="blue" icon="pencil" outline size="sm" wireClick="edit({{ $t->id }})" />
+                                
+                                <x-btn color="red" icon="trash" outline size="sm" 
+                                    wireClick="del({{ $t->id }})" 
+                                    wire:confirm="Apakah Anda Yakin akan menghapus? Jika data ini dihapus maka semua data yang berhubungan dengan data ini akan terhapus juga" />
                             </div>
-
                         </td>
                         <th scope="row"
                             class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
