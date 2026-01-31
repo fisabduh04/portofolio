@@ -1,0 +1,602 @@
+<x-layout.layout>
+    <x-breadcrumb :breadcrumbs="[
+        ['name' => 'Home', 'href' => ''],
+        ['name' => 'Akademik', 'href' => ''],
+        ['name' => 'Jadwal Mata Pelajaran', 'href' => 'jadwal'],
+    ]" />
+
+    {{-- Alert Bentrok Jadwal --}}
+    @if (isset($bentrokJadwalList) && $bentrokJadwalList->isNotEmpty())
+        <div class="mb-6 p-4 border border-red-200 bg-red-50 rounded-xl dark:bg-red-900/20 dark:border-red-800"
+            role="alert">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-red-800 dark:text-red-400">Jadwal Bentrok Terdeteksi!</h3>
+                    <p class="text-sm text-red-700 dark:text-red-300">Terdapat {{ $totalBentrok }} data bentrok yang perlu diperbaiki.</p>
+                </div>
+            </div>
+            <ul class="ml-14 list-disc list-outside text-sm text-red-700 dark:text-red-300 space-y-1">
+                @foreach ($bentrokJadwalList->unique('id') as $j)
+                    <li>
+                        Guru <strong>{{ $j->pegawai->name ?? 'N/A' }}</strong> bentrok pada hari <strong>{{ $j->hari }}</strong> 
+                        ({{ $j->mulai }} - {{ $j->akhir }}) di Kelas <strong>{{ $j->kelas->kelas ?? 'N/A' }}</strong>
+                    </li>
+                @endforeach
+                @if($totalBentrok > 10)
+                    <li class="font-bold italic">... Dan {{ $totalBentrok - 10 }} data lainnya.</li>
+                @endif
+            </ul>
+        </div>
+    @endif
+
+    {{-- Main Content Card --}}
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
+        
+        {{-- Header Section --}}
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Jadwal Pelajaran</h2>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Kelola jadwal mata pelajaran sekolah.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    {{-- Primary Actions --}}
+                    <x-btn text="Tambah" icon="plus" onclick="tambah()" color="blue" class="whitespace-nowrap" />
+                    <x-btn text="Refresh" icon="refresh" color="light" onclick="location.reload()" class="whitespace-nowrap" />
+                    
+                    {{-- Bulk Actions --}}
+                    <button type="button" id="btnBulkDelete" onclick="if(confirm('Hapus data terpilih?')) document.getElementById('bulkDeleteForm').submit();"
+                         disabled class="disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-200 rounded-lg hover:bg-red-50 focus:z-10 focus:ring-2 focus:ring-red-300 dark:focus:ring-red-600 dark:bg-gray-800 dark:text-red-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 transition-all whitespace-nowrap">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Hapus Checked
+                    </button>
+
+                    <div class="hidden sm:block h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+
+                    {{-- Secondary Actions (Export/Import) --}}
+                    <div class="flex items-center gap-2 ml-auto sm:ml-0">
+                        <x-btn text="Export" icon="export" color="green" onclick="exportJadwal()" class="whitespace-nowrap" />
+                        <x-btn text="Import" icon="import" color="indigo" onclick="document.getElementById('importModal').classList.remove('hidden')" class="whitespace-nowrap" />
+                    </div>
+
+                    {{-- Hidden Forms --}}
+                    <form id="bulkDeleteForm" action="{{ route('jadwal.bulkDelete') }}" method="POST" class="hidden">
+                         @csrf @method('DELETE')
+                    </form>
+                     <form id="bulkFormJadwal" action="{{ route('jadwal.updateAll') }}" method="POST" class="hidden">
+                        @csrf
+                    </form>
+                    <form id="exportForm" action="{{ route('jadwal.export') }}" method="GET" class="hidden">
+                        <input type="hidden" name="type" id="exportType" value="all">
+                        <input type="hidden" name="ids" id="exportIds" value="">
+                        <input type="hidden" name="tahun_id" value="{{ request('filter_tahun') }}">
+                    </form>
+                </div>
+                </div>
+            </div>
+
+
+
+            {{-- Data Caching for Dropdowns (to prevent repeated loops in table) --}}
+        @php
+            $optKelas = ''; foreach($kelas as $k) $optKelas .= "<option value='{$k->id}'>{$k->kelas}</option>";
+            $optHari = ''; foreach($hari as $h) $optHari .= "<option value='{$h}'>{$h}</option>";
+            $optMapel = ''; foreach($mapel as $m) $optMapel .= "<option value='{$m->id}'>{$m->mapel}</option>";
+            $optPegawai = ''; foreach($pegawai as $p) $optPegawai .= "<option value='{$p->id}'>{$p->name}</option>";
+        @endphp
+
+        {{-- Panel Tambah Jadwal Baru (slide down) --}}
+            <div id="tahunbulk" class="hidden mt-6 bg-gray-50 rounded-xl p-5 border border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 transition-all">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">1</div>
+                    <h4 class="font-bold text-gray-800 dark:text-white">Setup Data Baru</h4>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 md:items-end">
+                    <div class="md:col-span-8">
+                        <label for="tahun_bulk" class="block mb-2 text-sm font-semibold text-gray-900 dark:text-white">Pilih Tahun Ajaran</label>
+                        <select id="tahun_bulk" name="tahun_id" form="bulkFormJadwal"
+                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="">-- Pilih Tahun Ajaran --</option>
+                            @foreach ($tahun as $t)
+                                <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
+                                    {{ $t->tahun }} - {{ $t->semester }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="md:col-span-4">
+                        <x-btn id="btnSimpanBarisBaru" text="Simpan" icon="check" color="blue" type="submit" form="bulkFormJadwal" class="justify-center" />
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">Tahun ajaran ini akan diterapkan kesemua baris baru yang Anda tambahkan.</p>
+            </div>
+        </div>
+
+        {{-- Filter & Search Bar --}}
+        <div class="p-4 bg-gray-50/50 border-b border-gray-200 dark:bg-gray-900/50 dark:border-gray-700">
+            <form action="/jadwal" method="GET" id="searchForm" class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                
+                {{-- Filters --}}
+                <div class="md:col-span-3">
+                    <select id="perpage" name="perpage" onchange="this.form.submit()"
+                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="10" {{ request('perpage') == 10 ? 'selected' : '' }}>10 Data</option>
+                        <option value="25" {{ request('perpage') == 25 ? 'selected' : '' }}>25 Data</option>
+                        <option value="50" {{ request('perpage') == 50 ? 'selected' : '' }}>50 Data</option>
+                        <option value="100" {{ request('perpage') == 100 ? 'selected' : '' }}>100 Data</option>
+                    </select>
+                </div>
+                
+                <div class="md:col-span-3">
+                    <select id="tahun" name="filter_tahun" onchange="this.form.submit()"
+                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">Semua Tahun Ajaran</option>
+                        @foreach ($tahun as $t)
+                            <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>{{ $t->tahun }} - {{ $t->semester }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="md:col-span-3">
+                    <select id="kelas" name="filter_kelas" onchange="this.form.submit()"
+                         class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">Semua Kelas</option>
+                        @foreach ($kelas as $k)
+                            <option value="{{ $k->id }}" {{ request('filter_kelas') == $k->id ? 'selected' : '' }}>{{ $k->kelas }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Search --}}
+                <div class="md:col-span-3">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" id="search" name="search" value="{{ request('search') }}"
+                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                            placeholder="Cari guru / mapel...">
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {{-- Table --}}
+        <div class="relative overflow-x-auto">
+            <table id="data" class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b dark:border-gray-600">
+                    <tr>
+                        <th scope="col" class="p-4 w-4">
+                            <div class="flex items-center">
+                                <input id="checkAll" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                            </div>
+                        </th>
+                        <th scope="col" class="px-2 py-3 min-w-[50px] text-center">NO</th>
+                        <th scope="col" class="px-6 py-3 min-w-[80px] text-center">AKSI</th>
+                        <th scope="col" class="px-6 py-3 min-w-[100px]">
+                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'kelas', 'direction' => request('sort') === 'kelas' && request('direction') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center gap-1.5 uppercase">
+                                KELAS
+                                <svg class="w-3 h-3 {{ request('sort') === 'kelas' ? 'text-blue-600' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5-5 5 5H7zM7 14l5 5 5-5H7z" /></svg>
+                             </a>
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'hari', 'direction' => request('sort') === 'hari' && request('direction') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center gap-1.5 uppercase">
+                                HARI
+                                <svg class="w-3 h-3 {{ request('sort') === 'hari' ? 'text-blue-600' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5-5 5 5H7zM7 14l5 5 5-5H7z" /></svg>
+                             </a>
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'mapel', 'direction' => request('sort') === 'mapel' && request('direction') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center gap-1.5 uppercase">
+                                MAPEL
+                                <svg class="w-3 h-3 {{ request('sort') === 'mapel' ? 'text-blue-600' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5-5 5 5H7zM7 14l5 5 5-5H7z" /></svg>
+                             </a>
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'pegawai', 'direction' => request('sort') === 'pegawai' && request('direction') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center gap-1.5 uppercase">
+                                GURU
+                                <svg class="w-3 h-3 {{ request('sort') === 'pegawai' ? 'text-blue-600' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5-5 5 5H7zM7 14l5 5 5-5H7z" /></svg>
+                             </a>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center">JAM KE</th>
+                        <th scope="col" class="px-6 py-3 text-center">MULAI</th>
+                        <th scope="col" class="px-6 py-3 text-center">AKHIR</th>
+                        <th scope="col" class="px-6 py-3">STATUS</th>
+                        <th scope="col" class="px-6 py-3">TAHUN</th>
+                    </tr>
+                </thead>
+                <tbody id="jadwalTable" class="divide-y divide-gray-200 dark:divide-gray-700">
+                     {{-- Template Row Baru --}}
+                     <template id="tplNewJadwalRow">
+                        <tr class="bg-blue-50/50 hover:bg-blue-50 new-row align-top dark:bg-blue-900/10 border-b dark:border-gray-700">
+                            <td class="p-4 w-4 text-center">
+                                <input type="checkbox" disabled class="w-4 h-4 rounded opacity-25">
+                            </td>
+                            <td class="px-4 py-4 text-center text-blue-600 font-bold">Baru</td>
+                             <td class="px-4 py-4 text-center">
+                                <button type="button" onclick="removeNewRow(this)" class="flex items-center justify-center w-8 h-8 mx-auto rounded-lg bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 shadow-sm transition-all" title="Hapus Baris">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </td>
+                             <td class="px-2 py-4">
+                                 <input type="hidden" name="id[]" value="" form="bulkFormJadwal">
+                                 <select name="kelas_id[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    <option value="">Pilih...</option>
+                                    {!! $optKelas !!}
+                                </select>
+                             </td>
+                             <td class="px-2 py-4">
+                                 <select name="hari[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    <option value="">Pilih...</option>
+                                    {!! $optHari !!}
+                                </select>
+                             </td>
+                              <td class="px-2 py-4">
+                                 <select name="mapel_id[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    <option value="">Pilih Mapel...</option>
+                                    {!! $optMapel !!}
+                                </select>
+                             </td>
+                             <td class="px-2 py-4">
+                                 <select name="pegawai_id[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    <option value="">Pilih Guru...</option>
+                                    {!! $optPegawai !!}
+                                </select>
+                             </td>
+                             <td class="px-2 py-4 w-20">
+                                 <input type="number" name="jam[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                             </td>
+                             <td class="px-2 py-4 w-24">
+                                 <input type="time" name="mulai[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                             </td>
+                             <td class="px-2 py-4 w-24">
+                                  <input type="time" name="akhir[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                             </td>
+                             <td class="px-2 py-4">
+                                  <input type="text" name="ket[]" form="bulkFormJadwal" placeholder="Keterangan..." class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                             </td>
+                             <td class="px-4 py-4 text-center text-gray-400 font-medium">-</td>
+                        </tr>
+                     </template>
+
+                    @forelse ($jadwals as $j)
+                        @php
+                            $isConflict = isset($jadwalBentrokIds) && in_array($j->id, $jadwalBentrokIds);
+                            $rowClass = $isConflict ? 'bg-red-50 dark:bg-red-900/30' : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700';
+                        @endphp
+                        
+                        {{-- Display Row --}}
+                        <tr class="{{ $rowClass }} transition-colors" id="row-{{ $j->id }}">
+                             <td class="w-4 p-4">
+                                <div class="flex items-center">
+                                    <input id="checkbox-table-search-{{ $j->id }}" type="checkbox" value="{{ $j->id }}" name="ids[]" form="bulkDeleteForm" class="item-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center text-gray-500 dark:text-gray-400 font-medium">{{ $loop->iteration + ($jadwals->currentPage() - 1) * $jadwals->perPage() }}</td>
+                            <td class="px-4 py-4 text-center">
+                                <div class="flex items-center justify-center gap-1">
+                                    <x-btn icon="edit" onclick="editRow({{ $j->id }})" color="blue" variant="ghost" size="icon" title="Ubah Data" />
+                                </div>
+                            </td>
+                             <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                {{ $j->kelas->kelas ?? '-' }}
+                            </th>
+                            <td class="px-4 py-4">
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                    {{ $j->hari }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-500 dark:text-gray-400">
+                                {{ $j->mapel->mapel ?? '-' }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-500 dark:text-gray-400">
+                                {{ $j->pegawai->name ?? '-' }}
+                            </td>
+                            <td class="px-4 py-4 text-center font-mono text-xs">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">{{ $j->jam }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-center font-mono text-sm text-gray-500 dark:text-gray-400">{{ \Carbon\Carbon::parse($j->mulai)->format('H:i') }}</td>
+                            <td class="px-6 py-4 text-center font-mono text-sm text-gray-500 dark:text-gray-400">{{ \Carbon\Carbon::parse($j->akhir)->format('H:i') }}</td>
+                            <td class="px-4 py-4 text-center">
+                                @if(strtolower($j->ket) == 'aktif')
+                                    <span class="inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
+                                        <span class="w-2 h-2 me-1 bg-green-500 rounded-full"></span> Aktif
+                                    </span>
+                                @elseif($j->ket)
+                                     <span class="inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">
+                                       {{ ucfirst($j->ket) }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400 text-xs">-</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-4 text-xs text-gray-500">
+                                {{ $j->tahun->tahun ?? '' }} ({{ $j->tahun->semester ?? '' }})
+                            </td>
+                        </tr>
+
+                        {{-- Edit Row Form (Hidden by default) --}}
+                        {{-- Inline Edit Row --}}
+                        <tr id="edit-form-{{ $j->id }}" class="hidden bg-blue-50/50 dark:bg-blue-900/10 border-y border-blue-200 dark:border-blue-800">
+                             <td class="w-4 p-4">
+                                <form action="jadwal/{{ $j->id }}" method="POST" id="form-edit-{{ $j->id }}">
+                                    @csrf @method('PUT')
+                                    <input type="hidden" name="tahun_id" value="{{ $j->tahun_id }}">
+                                </form>
+                                <input type="checkbox" disabled class="w-4 h-4 rounded opacity-25">
+                            </td>
+                            <td class="px-4 py-4 text-center text-gray-400 font-medium">#</td>
+                            <td class="px-4 py-4">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <button type="submit" form="form-edit-{{ $j->id }}" class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm transition-colors" title="Simpan">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                    </button>
+                                    <button type="button" onclick="cancelEditRow({{ $j->id }})" class="flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 shadow-sm transition-all" title="Batal">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
+                            </td>
+                             <td class="px-2 py-4">
+                                <select name="kelas_id" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    @foreach ($kelas as $k) <option value="{{ $k->id }}" @selected($j->kelas_id == $k->id)>{{ $k->kelas }}</option> @endforeach
+                                </select>
+                            </td>
+                            <td class="px-2 py-4">
+                                <select name="hari" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    @foreach ($hari as $h) <option value="{{ $h }}" @selected($j->hari == $h)>{{ $h }}</option> @endforeach
+                                </select>
+                            </td>
+                            <td class="px-2 py-4">
+                                <select name="mapel_id" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                     @foreach ($mapel as $m) <option value="{{ $m->id }}" @selected($j->mapel_id == $m->id)>{{ $m->mapel }}</option> @endforeach
+                                </select>
+                            </td>
+                            <td class="px-2 py-4">
+                                 <select name="pegawai_id" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                     @foreach ($pegawai as $p) <option value="{{ $p->id }}" @selected($j->pegawai_id == $p->id)>{{ $p->name }}</option> @endforeach
+                                </select>
+                            </td>
+                            <td class="px-2 py-4 w-20">
+                                <input type="number" name="jam" form="form-edit-{{ $j->id }}" value="{{ $j->jam }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                            </td>
+                            <td class="px-2 py-4 w-24">
+                                <input type="time" name="mulai" form="form-edit-{{ $j->id }}" value="{{ \Carbon\Carbon::parse($j->mulai)->format('H:i') }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                            </td>
+                            <td class="px-2 py-4 w-24">
+                               <input type="time" name="akhir" form="form-edit-{{ $j->id }}" value="{{ \Carbon\Carbon::parse($j->akhir)->format('H:i') }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                            </td>
+                            <td class="px-2 py-4">
+                                <input type="text" name="ket" form="form-edit-{{ $j->id }}" value="{{ $j->ket }}" placeholder="Keterangan" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                            </td>
+                            <td class="px-4 py-4 text-xs text-gray-400">
+                                {{ $j->tahun->tahun ?? '' }}
+                            </td>
+                        </tr>
+
+                    @empty
+                        <tr>
+                            <td colspan="12" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                <div class="flex flex-col items-center justify-center">
+                                    <svg class="w-12 h-12 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                    <p class="text-base font-medium">Belum ada data jadwal.</p>
+                                    <p class="text-sm">Silakan tambah jadwal baru atau pilih filter lain.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        {{-- Pagination --}}
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            {{ $jadwals->appends(request()->query())->links() }}
+        </div>
+    </div> {{-- End Main Content Card --}}
+
+    {{-- Import Modal --}}
+    <div id="importModal" tabindex="-1" class="fixed inset-0 z-50 hidden overflow-y-auto overflow-x-hidden bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="relative w-full max-w-md max-h-full">
+            <div class="relative bg-white rounded-lg shadow-xl dark:bg-gray-700">
+                <div class="flex items-start justify-between p-4 border-b rounded-t dark:border-gray-600">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                        Import Data Jadwal
+                    </h3>
+                    <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                        </svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div class="text-center mb-6">
+                        <svg class="mx-auto mb-4 text-indigo-500 w-12 h-12 dark:text-indigo-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/></svg>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Pastikan file CSV Anda menggunakan pemisah koma (,) dan mengikuti format kolom yang ditentukan.</p>
+                    </div>
+                    
+                    <form action="{{ route('jadwal.import') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="mb-4">
+                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Upload file CSV</label>
+                            <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="file_input" type="file" name="file" accept=".csv" required>
+                            <div class="mt-2 text-xs text-gray-500 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-600">
+                                <p class="font-bold mb-1">Urutan Kolom CSV (Wajib):</p>
+                                <code class="text-blue-600 dark:text-blue-400">ID, Tahun, Kelas, Hari, Mapel, Guru, Jam, Mulai, Akhir, Keterangan</code>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600 pt-4">
+                            <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600">Batal</button>
+                            <button type="submit" class="text-white bg-indigo-600 hover:bg-indigo-800 focus:ring-4 focus:outline-none focus:ring-indigo-300 dark:focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Mulai Import</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    function exportJadwal() {
+        const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+        const exportTypeInput = document.getElementById('exportType');
+        const exportIdsInput = document.getElementById('exportIds');
+        const form = document.getElementById('exportForm');
+
+        if (checkedBoxes.length > 0) {
+            // Export Selected
+            const ids = Array.from(checkedBoxes).map(cb => cb.value).join(',');
+            exportTypeInput.value = 'selected';
+            exportIdsInput.value = ids;
+            
+            if(confirm('Export ' + checkedBoxes.length + ' data terpilih?')) {
+                form.submit();
+            }
+        } else {
+            // Export All (Filtered)
+            exportTypeInput.value = 'all';
+            exportIdsInput.value = '';
+            
+            if(confirm('Export semua data jadwal sesuai filter tahun saat ini?')) {
+                form.submit();
+            }
+        }
+    }
+</script>
+{{-- Script Preservation - Logic kept intact --}}
+<script>
+    // Fungsi untuk buka form edit sebuah baris
+    function editRow(id) {
+        document.querySelectorAll('tr[id^="edit-form-"]').forEach(function(row) {
+            row.classList.add('hidden');
+            let otherId = row.id.replace('edit-form-', '');
+            let otherDisplay = document.getElementById('row-' + otherId);
+            if (otherDisplay) otherDisplay.classList.remove('hidden');
+        });
+
+        const displayRow = document.getElementById('row-' + id);
+        const editRowEl = document.getElementById('edit-form-' + id);
+        if (displayRow) displayRow.classList.add('hidden');
+        if (editRowEl) {
+            editRowEl.classList.remove('hidden');
+            editRowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const firstInput = editRowEl.querySelector('select, input, textarea, button');
+            if (firstInput) firstInput.focus();
+        }
+    }
+
+    function cancelEditRow(id) {
+        const editRowEl = document.getElementById('edit-form-' + id);
+        const displayRow = document.getElementById('row-' + id);
+        if (editRowEl) editRowEl.classList.add('hidden');
+        if (displayRow) displayRow.classList.remove('hidden');
+    }
+
+    // Hide edit on outside click
+    document.addEventListener('click', function(event) {
+        let isEditButton = !!event.target.closest('button[onclick^="editRow"]');
+        let isEditForm = !!event.target.closest('tr[id^="edit-form-"]');
+
+        if (!isEditButton && !isEditForm) {
+            document.querySelectorAll('tr[id^="edit-form-"]').forEach(function(row) {
+                if (!row.classList.contains('hidden')) {
+                    row.classList.add('hidden');
+                    let id = row.id.replace('edit-form-', '');
+                    let displayRow = document.getElementById('row-' + id);
+                    if (displayRow) displayRow.classList.remove('hidden');
+                }
+            });
+        }
+    });
+
+    const checkAll = document.getElementById('checkAll');
+    const bulkDeleteBtn = document.getElementById('btnBulkDelete');
+
+    function getItemCheckboxes() { return document.querySelectorAll('.item-checkbox'); }
+
+    function updateBulkButtonState() {
+        if (!bulkDeleteBtn) return;
+        const checkedCount = Array.from(getItemCheckboxes()).filter(cb => cb.checked).length;
+        bulkDeleteBtn.disabled = checkedCount === 0;
+    }
+
+    checkAll.addEventListener('change', function() { 
+        getItemCheckboxes().forEach(cb => cb.checked = this.checked); 
+        updateBulkButtonState();
+    });
+
+    function updateCheckAllState() {
+        const items = getItemCheckboxes();
+        if (items.length === 0) { checkAll.checked = false; updateBulkButtonState(); return; }
+        checkAll.checked = Array.from(items).every(cb => cb.checked);
+        updateBulkButtonState();
+    }
+
+    document.addEventListener('change', function(e) { 
+        if (e.target && e.target.matches('.item-checkbox')) { 
+            updateCheckAllState(); 
+        } 
+    });
+
+    updateCheckAllState();
+
+    // Auto Search
+    const searchInput = document.getElementById('search');
+    const form = document.getElementById('searchForm');
+    let typingTimer;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => { form.submit(); }, 1000);
+    });
+
+    // Tambah Baris Baru Logic
+    function tambah() {
+        const panel = document.getElementById('tahunbulk');
+        if (panel) panel.classList.remove('hidden');
+
+        const tpl = document.getElementById('tplNewJadwalRow');
+        const tbody = document.getElementById('jadwalTable');
+        if (!tpl || !tbody) return;
+
+        // Clone template and insert at top
+        const clone = tpl.content.cloneNode(true);
+        tbody.insertBefore(clone, tbody.firstChild);
+
+        refreshSimpanBarisBaru();
+    }
+
+    function removeNewRow(btn) {
+        const tr = btn.closest('tr');
+        if (tr) tr.remove();
+        
+        const tbody = document.getElementById('jadwalTable');
+        const panel = document.getElementById('tahunbulk');
+        const masihAdaBaru = tbody && tbody.querySelector('tr.new-row');
+        if (!masihAdaBaru && panel) { panel.classList.add('hidden'); }
+        
+        refreshSimpanBarisBaru();
+    }
+
+    function refreshSimpanBarisBaru() {
+        const tahun = document.getElementById('tahun_bulk');
+        const btn = document.getElementById('btnSimpanBarisBaru');
+        if (!btn) return;
+
+        const hasTahun = tahun && tahun.value !== '';
+        const hasRowBaru = document.querySelector('#jadwalTable tr.new-row') !== null;
+        btn.disabled = !(hasTahun && hasRowBaru);
+        
+        // Visual feedback for disabled button
+        if(btn.disabled) { btn.classList.add('opacity-50', 'cursor-not-allowed'); } 
+        else { btn.classList.remove('opacity-50', 'cursor-not-allowed'); }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        refreshSimpanBarisBaru();
+        const tahun = document.getElementById('tahun_bulk');
+        if (tahun) tahun.addEventListener('change', refreshSimpanBarisBaru);
+    });
+</script>
+</x-layout.layout>

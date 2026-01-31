@@ -13,13 +13,25 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 class Siswaexport implements FromQuery, ShouldAutoSize, WithMapping, WithHeadings
 {
     use Exportable;
+    protected $ids;
+
+    public function __construct($ids = null)
+    {
+        $this->ids = $ids;
+    }
+
     /**
     * @return \Illuminate\Support\Collection
     */
     public function query()
     {
-        return siswa::query();
+        $query = siswa::query();
+        
+        if ($this->ids) {
+            $query->whereIn('id', $this->ids);
+        }
 
+        return $query;
     }
     public function map($siswa):array
     {

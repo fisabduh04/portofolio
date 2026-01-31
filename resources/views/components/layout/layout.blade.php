@@ -12,7 +12,7 @@
 
     <x-layout.navbar />
     <x-layout.sidebar />
-    <div class="p-4 sm:ml-64">
+    <div class="p-4 sm:ml-64 mt-12">
 
         {{ $slot }}
     </div>

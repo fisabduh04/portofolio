@@ -1,366 +1,198 @@
 <x-layout.layout>
     <x-breadcrumb :breadcrumbs="[
-        ['name' => 'Home', 'href' => ''],
-        ['name' => 'Kelas', 'href' => ''],
-        ['name' => 'Kelas-Siswa', 'href' => '/kelassiswa'],
+        ['name' => 'Home', 'href' => '/dashboard'],
+        ['name' => 'Kelas', 'href' => '/kelas'],
+        ['name' => 'Rombongan Belajar', 'href' => '/kelassiswa'],
     ]" />
 
-    <div class="p-4 mt-5 border-2 border-gray-200 rounded-lg dark:border-gray-700">
-
-        <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Kelas Siswa</h1>
-
-
-        {{-- Kumpulan Tombol --}}
-        <div class="flex flex-col md:flex-row rounded-md shadow-sm" role="group">
-            <a type="button" id="tambah" onclick="muncul()"
-                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-s-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
-                <svg class="w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                    viewBox="0 0 20 20">
-                    <path
-                        d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z" />
-                </svg>
-                Tambah
-            </a>
-            <button type="button" data-modal-target="small-modal" data-modal-toggle="small-modal"
-                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
-                <svg class="w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                    viewBox="0 0 20 20">
-                    <path
-                        d="M14.707 7.793a1 1 0 0 0-1.414 0L11 10.086V1.5a1 1 0 0 0-2 0v8.586L6.707 7.793a1 1 0 1 0-1.414 1.414l4 4a1 1 0 0 0 1.416 0l4-4a1 1 0 0 0-.002-1.414Z" />
-                    <path
-                        d="M18 12h-2.55l-2.975 2.975a3.5 3.5 0 0 1-4.95 0L4.55 12H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2Zm-3 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
-                </svg>
-                Import Excel
-            </button>
-
-            <a type="button" href="{{ route('kelas-siswa-export') }}"
-                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
-                <svg class="w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                    viewBox="0 0 20 20">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 12.25V1m0 11.25a2.25 2.25 0 0 0 0 4.5m0-4.5a2.25 2.25 0 0 1 0 4.5M4 19v-2.25m6-13.5V1m0 2.25a2.25 2.25 0 0 0 0 4.5m0-4.5a2.25 2.25 0 0 1 0 4.5M10 19V7.75m6 4.5V1m0 11.25a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5ZM16 19v-2" />
-                </svg>
-                Export Excel
-            </a>
-
-            <button type="submit" data-modal-target="popup-modal" data-modal-toggle="popup-modal"
-                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-e-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white">
-                <svg class="w-4 h-4 me-2 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                    width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z" />
-                </svg>
-                Hapus
-            </button>
-
-            <div id="popup-modal" tabindex="-1"
-                class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-                <div class="relative w-full max-w-md max-h-full p-4">
-                    <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
-                        <button type="button"
-                            class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                            data-modal-hide="popup-modal">
-                            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                viewBox="0 0 14 14">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                            </svg>
-                            <span class="sr-only">Close modal</span>
-                        </button>
-                        <div class="p-4 text-center md:p-5">
-                            <svg class="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-200" aria-hidden="true"
-                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                            </svg>
-                            <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">Apakah anda akan
-                                menghapus data ini ?</h3>
-                            <button data-modal-hide="popup-modal" type="submit" form="MyForm"
-                                class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
-                                Ya Benar !
-                            </button>
-                            <button data-modal-hide="popup-modal" type="button"
-                                class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">No,
-                                cancel</button>
-                        </div>
-                    </div>
-                </div>
+    {{-- Main Content Container (Style Jadwal) --}}
+    <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-base overflow-hidden border border-gray-200 dark:border-gray-700">
+        
+        {{-- Header Section --}}
+        <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="w-full md:w-auto">
+                <h2 class="text-xl font-bold font-sans text-gray-900 dark:text-white">
+                    Data Rombongan Belajar
+                    <span class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400 font-sans">(Total: {{ $pemetaans->total() }})</span>
+                </h2>
             </div>
-
+            <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
+                <x-btn onclick="muncul()" icon="plus" text="Tambah Data" color="blue" />
+                <x-btn onclick="location.reload()" icon="arrow-path" text="Refresh" color="light" />
+            </div>
         </div>
 
-        <hr class="h-px my-3 bg-gray-200 border-0 dark:bg-gray-700">
-        <form action="{{ isset($pemetaan) ? route('kelassiswa.update', $pemetaan->id) : route('kelassiswa.store') }}"
-            id="InputSiswa" method="POST" class="hidden">
-            @csrf
-            @isset($pemetaan)
-                @method('PUT')
-            @endisset
-
-            <div class="grid gap-6 mb-6 md:grid-cols-2">
-                <!-- Tahun Ajaran -->
-                <div>
-                    <label for="tahun" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tahun
-                        Ajaran</label>
-                    <select id="tahun" name="tahun"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="" disabled
-                            {{ old('tahun', $pemetaan->tahun_id ?? '') == '' ? 'selected' : '' }}>Tahun Ajaran</option>
-                        @foreach ($tahun as $t)
-                            <option value="{{ $t->id }}"
-                                {{ old('tahun', $pemetaan->tahun_id ?? '') == $t->id ? 'selected' : '' }}>
-                                {{ $t->tahun }} - {{ $t->semester }}
-                            </option>
-                        @endforeach
-                    </select>
+        {{-- Panel Input (Setup Data) --}}
+        <div id="InputSiswaPanel" class="hidden bg-gray-50 p-6 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600 transition-all">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 </div>
-
-                <!-- Kelas -->
-                <div>
-                    <label for="kelas"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Kelas</label>
-                    <select id="kelas" name="kelas"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="" disabled
-                            {{ old('kelas', $pemetaan->kelas_id ?? '') == '' ? 'selected' : '' }}>Kelas</option>
-                        @foreach ($kelas as $k)
-                            <option value="{{ $k->id }}"
-                                {{ old('kelas', $pemetaan->kelas_id ?? '') == $k->id ? 'selected' : '' }}>
-                                {{ $k->kelas }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Siswa -->
-                <div>
-                    <label for="siswa"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Siswa</label>
-                    <select id="siswa" name="siswa"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="" disabled
-                            {{ old('siswa', $pemetaan->siswa_id ?? '') == '' ? 'selected' : '' }}>Siswa</option>
-                        @foreach ($siswa as $s)
-                            <option value="{{ $s->id }}"
-                                {{ old('siswa', $pemetaan->siswa_id ?? '') == $s->id ? 'selected' : '' }}>
-                                {{ $s->nama }} - {{ $s->nipd }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Keterangan -->
-                <div>
-                    <label for="keterangan"
-                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Keterangan</label>
-                    <select id="keterangan" name="ket"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option disabled {{ old('ket', $pemetaan->ket ?? '') == '' ? 'selected' : '' }}>Pilih</option>
-                        <option value="aktif" {{ old('ket', $pemetaan->ket ?? '') == 'aktif' ? 'selected' : '' }}>
-                            Aktif</option>
-                        <option value="do" {{ old('ket', $pemetaan->ket ?? '') == 'do' ? 'selected' : '' }}>
-                            Berhenti</option>
-                        <option value="naik" {{ old('ket', $pemetaan->ket ?? '') == 'naik' ? 'selected' : '' }}>Naik
-                            Kelas</option>
-                        <option value="tinggal" {{ old('ket', $pemetaan->ket ?? '') == 'tinggal' ? 'selected' : '' }}>
-                            Tidak Naik Kelas</option>
-                    </select>
-                </div>
-
-                <!-- Tombol -->
-                <div class="flex flex-row items-center gap-3 mt-2">
-                    <button type="submit" id="submitButton"
-                        class="text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 shadow-lg shadow-purple-500/50 dark:shadow-lg dark:shadow-purple-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
-                        {{ isset($pemetaan) ? 'Update' : 'Simpan' }}
-                    </button>
-
-                    <x-btn text="Tutup" color="red" onclick="tutup()" />
-                </div>
+                <h4 id="panelTitle" class="font-bold text-sm text-gray-800 dark:text-white uppercase tracking-wider">Form Input Rombongan Belajar</h4>
             </div>
-        </form>
 
+            <form action="{{ isset($pemetaan) ? route('kelassiswa.update', $pemetaan->id) : route('kelassiswa.store') }}"
+                id="InputSiswa" method="POST">
+                @csrf
+                @isset($pemetaan)
+                    @method('PUT')
+                @endisset
 
-
-        <hr class="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700">
-
-
-
-        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-            <div
-                class="flex flex-wrap items-center justify-between pb-4 space-y-2 flex-column sm:flex-row sm:space-y-0 me-1 ms-2">
-                <form action="{{ route('kelassiswa.index') }}" method="GET" class="flex items-center space-x-4">
-
-                    <div class="flex items-center space-x-2">
-                        <label for="items-per-page" class="sr-only">Items per page</label>
-                        <select id="perPage" name="per_page"
-                            class="block py-2 px-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 min-w-[90px]">
-
-                            <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
-                            <option value="15" {{ request('per_page') == 15 ? 'selected' : '' }}>15</option>
-                            <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
-                            <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
-                            <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
-                            <option value="10000000">All</option>
-                        </select>
-                        <small class="inline-block text-gray-500 dark:text-gray-400">Items</small>
-                    </div>
-
-
-                    {{-- Filter  --}}
-
-                    <div class="flex items-center space-x-2">
-                        <label for="filter-tahun"
-                            class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">Tahun
-                            Ajaran:</label>
-                        <select id="filter-tahun" name="filter_tahun"
-                            class="block p-2 px-3 text-sm text-gray-900 border border-gray-300 rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                            onchange="this.form.submit()">
-                            <option value="all">Semua</option>
+                <div class="grid gap-6 mb-6 md:grid-cols-2 lg:grid-cols-4">
+                    <!-- Tahun Ajaran -->
+                    <div>
+                        <label for="tahun" class="block mb-2 text-xs font-semibold text-gray-900 dark:text-white uppercase">Tahun Ajaran</label>
+                        <select id="tahun" name="tahun"
+                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="">Pilih Tahun</option>
                             @foreach ($tahun as $t)
-                                <option value="{{ $t->id }}"
-                                    {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
+                                <option value="{{ $t->id }}">
                                     {{ $t->tahun }} - {{ $t->semester }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
-                    <div class="flex items-center space-x-2 ms-4">
-                        <label for="filter-kelas"
-                            class="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">Kelas:</label>
-                        <select id="filter-kelas" name="filter_kelas"
-                            class="block p-2 px-6 text-sm text-gray-900 border border-gray-300 rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                            onchange="this.form.submit()">
-                            <option value="all">Semua</option>
+                    <!-- Kelas -->
+                    <div>
+                        <label for="kelas" class="block mb-2 text-xs font-semibold text-gray-900 dark:text-white uppercase">Kelas</label>
+                        <select id="kelas" name="kelas"
+                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="">Pilih Kelas</option>
                             @foreach ($kelas as $k)
-                                <option value="{{ $k->id }}"
-                                    {{ request('filter_kelas') == $k->id ? 'selected' : '' }}>
+                                <option value="{{ $k->id }}">
                                     {{ $k->kelas }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
-                    {{-- Search --}}
-                    <div class="relative ms-2">
-                        <div
-                            class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
-                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-                            </svg>
-                        </div>
-                        <input type="text" id="table-search" type="text" name="search"
-                            value="{{ request('search') }}"
-                            class="block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                            placeholder="Search for items">
+                    <!-- Siswa -->
+                    <div>
+                        <label for="siswa" class="block mb-2 text-xs font-semibold text-gray-900 dark:text-white uppercase">Siswa</label>
+                        <select id="siswa" name="siswa"
+                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="">Pilih Siswa</option>
+                            @foreach ($siswa as $s)
+                                <option value="{{ $s->id }}">
+                                    {{ $s->nama }} - {{ $s->nipd }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
 
+                    <!-- Keterangan -->
+                    <div>
+                        <label for="keterangan" class="block mb-2 text-xs font-semibold text-gray-900 dark:text-white uppercase">Keterangan</label>
+                        <select id="keterangan" name="ket"
+                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="aktif">Aktif</option>
+                            <option value="do">Berhenti</option>
+                            <option value="naik">Naik Kelas</option>
+                            <option value="tinggal">Tidak Naik Kelas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <x-btn type="submit" id="submitButton" text="Simpan Data" icon="check" color="green" />
+                    <x-btn type="button" text="Batal" color="light" onclick="tutup()" />
+                </div>
+            </form>
+        </div>
+
+        {{-- Secondary Toolbar (Style Jadwal) --}}
+        <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4 bg-white dark:bg-gray-900">
+            
+            {{-- Left: Bulk Actions --}}
+            <div class="w-full md:w-auto">
+                <button id="actionsDropdownButton" data-dropdown-toggle="actionsDropdown" class="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-base border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700" type="button">
+                    <svg class="-ml-1 mr-1.5 w-5 h-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path clip-rule="evenodd" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                    </svg>
+                    Actions
+                </button>
+                <div id="actionsDropdown" class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
+                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
+                        <li><a href="{{ route('kelas-siswa-export') }}" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Export Results</a></li>
+                        <li><a href="#" data-modal-target="small-modal" data-modal-toggle="small-modal" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Import CSV</a></li>
+                    </ul>
+                    <div class="py-1">
+                        <button type="submit" form="MyForm" onclick="return confirm('Apakah Anda yakin ingin menghapus data yang dipilih?')" class="block w-full text-left py-2 px-4 text-sm text-red-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-red-200 dark:hover:text-white">
+                            Delete Selected
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Right: Search & Filters --}}
+            <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
+                <form action="{{ route('kelassiswa.index') }}" method="GET" class="flex flex-wrap items-center justify-end gap-3">
+                    {{-- Search --}}
+                    <div class="relative w-full md:w-96">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                            </svg>
+                        </div>
+                        <input type="text" name="search" value="{{ request('search') }}"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Cari Siswa...">
+                    </div>
+
+                    {{-- Filter Tahun --}}
+                    <select name="filter_tahun" onchange="this.form.submit()"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-32 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="all">Tahun</option>
+                        @foreach ($tahun as $t)
+                            <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
+                                {{ $t->tahun }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    {{-- Filter Kelas --}}
+                    <select name="filter_kelas" onchange="this.form.submit()"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-32 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="all">Kelas</option>
+                        @foreach ($kelas as $k)
+                            <option value="{{ $k->id }}" {{ request('filter_kelas') == $k->id ? 'selected' : '' }}>
+                                {{ $k->kelas }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    {{-- Per Page --}}
+                    <select name="per_page" onchange="this.form.submit()"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-36 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        @foreach([10, 25, 50, 100] as $p)
+                            <option value="{{ $p }}" {{ request('per_page') == $p ? 'selected' : '' }}>{{ $p }} Items</option>
+                        @endforeach
+                    </select>
                 </form>
+            </div>
+        </div>
 
-
-                <table class="w-full text-sm text-left text-gray-500 rtl:text-right dark:text-gray-400 mt-2">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                        <tr>
-                            <th scope="col" class="p-4">
-                                <div class="flex items-center">
-                                    <input type="checkbox" id="checkAll"
-                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                    <label for="checkAll" class="sr-only">checkbox</label>
-                                </div>
-                            </th>
-
-                            <th scope="col" class="px-2 py-3">
-                                <div class="flex items-center">No
-                                    <a href="#"><svg class="w-3 h-3 ms-1.5" aria-hidden="true"
-                                            xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path
-                                                d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
-                                        </svg></a>
-                                </div>
-                            </th>
-                            <th scope="col" class="px-4 py-3">
-                                Action
-                            </th>
-
-                            <th scope="col" class="px-4 py-3">
-                                <div class="flex items-center">NIPD
-                                    <a
-                                        href="?sort=nipd&direction={{ request('sort') === 'nipd' && request('direction') === 'asc' ? 'desc' : 'asc' }}">
-                                        <svg class="w-3 h-3 ms-1.5 {{ request('sort') == 'nipd' && request('direction') == 'asc' ? 'rotate-180' : '' }}"
-                                            aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086
-                1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0
-                L6.837 7.952a1.9 1.9 0 0 0-.11 1.986
-                2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087
-                1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05
-                a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
-                                        </svg>
-                                    </a>
-                                </div>
-                            </th>
-                            <th scope="col" class="px-4 py-3">
-                                <div class="flex items-center">
-                                    Nama
-                                    <a
-                                        href="?sort=nama&direction={{ request('sort') == 'nama' && request('direction') == 'asc' ? 'desc' : 'asc' }}">
-                                        <svg class="w-3 h-3 ms-1.5 {{ request('sort') == 'nama' && request('direction') == 'asc' ? 'rotate-180' : '' }}"
-                                            aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086
-                1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0
-                L6.837 7.952a1.9 1.9 0 0 0-.11 1.986
-                2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087
-                1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05
-                a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
-                                        </svg>
-                                    </a>
-                                </div>
-                            </th>
-
-
-                            <th scope="col" class="px-4 py-3">
-                                <div class="flex items-center">Kelas
-                                    <a
-                                        href="?sort=kelas&direction={{ request('sort') === 'kelas' && request('direction') === 'asc' ? 'desc' : 'asc' }}">
-                                        <svg class="w-3 h-3 ms-1.5 {{ request('sort') == 'kelas' && request('direction') == 'asc' ? 'rotate-180' : '' }}"
-                                            aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path
-                                                d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
-                                        </svg></a>
-                                </div>
-                            </th>
-                            <th scope="col" class="px-4 py-3">
-                                <div class="flex items-center">Tahun Ajaran
-                                    <a
-                                        href="?sort=ket&direction={{ request('sort') === 'tahun' && request('direction') === 'asc' ? 'desc' : 'asc' }}">
-                                        <svg class="w-3 h-3 ms-1.5 {{ request('sort') == 'tahun' && request('direction') == 'asc' ? 'rotate-180' : '' }}"
-                                            aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                            viewBox="0 0 24 24">>
-                                            <path
-                                                d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
-                                        </svg></a>
-                                </div>
-                            </th>
-                            <th scope="col" class="px-4 py-3">
-                                <div class="flex items-center">Keterangan
-                                    <a
-                                        href="?sort=ket&direction={{ request('sort') === 'tahun' && request('direction') === 'asc' ? 'desc' : 'asc' }}">
-                                        <svg class="w-3 h-3 ms-1.5 {{ request('sort') == 'tahun' && request('direction') == 'asc' ? 'rotate-180' : '' }}"
-                                            aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path
-                                                d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z" />
-                                        </svg></a>
-                                </div>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        {{-- Table Container --}}
+        <div class="relative overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500 rtl:text-right dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" class="p-4">
+                            <div class="flex items-center">
+                                <input id="checkAll" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                            </div>
+                        </th>
+                        <th scope="col" class="px-4 py-3">No</th>
+                        <th scope="col" class="px-4 py-3 text-center">Action</th>
+                        <th scope="col" class="px-4 py-3">NIPD</th>
+                        <th scope="col" class="px-4 py-3">Nama Siswa</th>
+                        <th scope="col" class="px-4 py-3">Kelas</th>
+                        <th scope="col" class="px-4 py-3">Tahun Ajaran</th>
+                        <th scope="col" class="px-4 py-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
                         @if ($pemetaans->isNotEmpty())
                             <form id="MyForm"
                                 action="{{ route('kelassiswa.destroy', $pemetaans->first()->id ?? '') }}"
@@ -383,19 +215,12 @@
                                     {{-- Use paginator firstItem() so numbering continues across pages --}}
                                     {{ ($pemetaans->firstItem() ?? 0) + $loop->index }}
                                 </td>
-                                <td class="px-4 py-4">
-                                    <a type="button"
-                                        onclick="edit({{ $pemetaan->id }}, {{ $pemetaan->siswa_id }}, {{ $pemetaan->kelas_id }}, {{ $pemetaan->tahun_id }}, '{{ $pemetaan->ket }}')"
-                                        class="p-2 text-xs font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                                        <svg class="w-4 h-4 text-white dark:text-white" aria-hidden="true"
-                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <path stroke="currentColor" stroke-linecap="round"
-                                                stroke-linejoin="round" stroke-width="2"
-                                                d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z" />
-                                        </svg>
-
-                                        Edit
-                                    </a>
+                                <td class="px-4 py-3 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <x-btn type="button" 
+                                            onclick="edit({{ $pemetaan->id }}, {{ $pemetaan->siswa_id }}, {{ $pemetaan->kelas_id }}, {{ $pemetaan->tahun_id }}, '{{ $pemetaan->ket }}')"
+                                            icon="pencil-square" color="blue" variant="ghost" size="sm" class="!p-2" title="Edit" />
+                                    </div>
                                 </td>
 
                                 <td class="px-4 py-4">
@@ -435,11 +260,13 @@
                 </table>
 
             </div>
-            <div class="mt-4">
+            
+            {{-- Pagination Footer (Style Jadwal) --}}
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700">
                 {{ $pemetaans->withQueryString()->links() }}
             </div>
         </div>
-
+    </div>
 
         <!-- Small Modal untuk Import Excel -->
         <div id="small-modal" tabindex="-1"
@@ -526,42 +353,34 @@
                 }, 1000);
             });
 
-            function tutup() {
-                const form = document.getElementById('InputSiswa');
-                form.classList.toggle('hidden'); // Toggle visibility of the form
-                form.reset();
-                form.querySelectorAll('select').forEach(pilihan => {
-                    pilihan.selectedIndex = 0
-                })
-
-            }
-
-
             function muncul() {
+                const panel = document.getElementById('InputSiswaPanel');
                 const form = document.getElementById('InputSiswa');
                 const submitBtn = document.getElementById('submitButton');
+                const panelTitle = document.getElementById('panelTitle');
 
                 form.reset();
-                form.classList.toggle('hidden');
+                panel.classList.toggle('hidden');
 
-                form.removeAttribute('action'); // reset action agar tidak konflik
-                form.setAttribute('action', "{{ route('kelassiswa.store') }}");
-                form.querySelector('input[name="_method"]')?.remove(); // remove _method PUT
-                form.querySelectorAll('select').forEach(select => {
-                    select.selectedIndex = 0
-                })
-
-                submitBtn.textContent = 'Simpan';
+                if (!panel.classList.contains('hidden')) {
+                    form.removeAttribute('action');
+                    form.setAttribute('action', "{{ route('kelassiswa.store') }}");
+                    form.querySelector('input[name="_method"]')?.remove();
+                    
+                    panelTitle.textContent = 'Setup Data Baru';
+                    submitBtn.textContent = 'Simpan Data';
+                }
             }
 
             function edit(id, siswa_id, kelas_id, tahun_id, ket) {
+                const panel = document.getElementById('InputSiswaPanel');
                 const form = document.getElementById('InputSiswa');
                 const submitBtn = document.getElementById('submitButton');
+                const panelTitle = document.getElementById('panelTitle');
 
-                form.classList.remove('hidden');
+                panel.classList.remove('hidden');
                 form.setAttribute('action', `/kelassiswa/${id}`);
 
-                // Tambahkan method PUT jika belum ada
                 if (!form.querySelector('input[name="_method"]')) {
                     const methodInput = document.createElement('input');
                     methodInput.setAttribute('type', 'hidden');
@@ -570,14 +389,18 @@
                     form.appendChild(methodInput);
                 }
 
-                // Set nilai input form
                 form.querySelector('select[name="siswa"]').value = siswa_id;
                 form.querySelector('select[name="kelas"]').value = kelas_id;
                 form.querySelector('select[name="tahun"]').value = tahun_id;
                 form.querySelector('select[name="ket"]').value = ket;
 
-                // Ganti teks tombol submit
-                submitBtn.textContent = 'Update';
+                panelTitle.textContent = 'Edit Data Rombongan Belajar';
+                submitBtn.textContent = 'Update Data';
+            }
+
+            function tutup() {
+                const panel = document.getElementById('InputSiswaPanel');
+                panel.classList.add('hidden');
             }
         </script>
 

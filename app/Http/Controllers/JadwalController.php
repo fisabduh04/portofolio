@@ -9,6 +9,9 @@ use App\Models\Mapel;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\JadwalExport;
+use App\Imports\JadwalImport;
 
 class JadwalController extends Controller
 {
@@ -95,14 +98,24 @@ class JadwalController extends Controller
             // --- 2. DETEKSI BENTROKAN MASSAL (Hanya pada tahun yang sedang ditampilkan) ---
             $jadwalBentrokIds = [];
             $bentrokJadwalList = collect();
+            $jadwalBentrokIds = [];
+            $totalBentrok = 0;
 
             if (!empty($tahunIDUntukProses)) {
-            // Deteksi bentrokan hanya pada tahun yang ID-nya saat ini digunakan
-            $bentrokJadwalList = Jadwal::bentrokSaatIni($tahunIDUntukProses)
-                ->with(['kelas', 'mapel', 'pegawai'])
-                ->get();
-            $jadwalBentrokIds = $bentrokJadwalList->pluck('id')->all();
-        }
+                // 1. Ambil SEMUA ID untuk highlight tabel (Query sangat ringan)
+                $jadwalBentrokIds = Jadwal::bentrokSaatIni($tahunIDUntukProses)->pluck('id')->toArray();
+                $totalBentrok = count($jadwalBentrokIds);
+
+                // 2. Ambil Detail (Hanya untuk 10 data pertama agar Alert tidak berat)
+                if ($totalBentrok > 0) {
+                    // Ambil detail lengkap hanya untuk 10 ID pertama
+                    $topIds = array_slice($jadwalBentrokIds, 0, 10);
+                    $bentrokJadwalList = Jadwal::whereIn('id', $topIds)
+                        ->with(['kelas', 'mapel', 'pegawai'])
+                        ->get();
+                }
+            }
+
         // --------------------------------------------------
 
         return view('jadwal.index', compact(
@@ -110,7 +123,8 @@ class JadwalController extends Controller
             'mapel','hari','pegawai','jadwals',
             'sort','direction','perpage','search',
             'jadwalBentrokIds', 
-            'bentrokJadwalList' 
+            'bentrokJadwalList',
+            'totalBentrok'
         ));
         } catch (\Exception $e) {
             Log::error('Error loading jadwal index: ' . $e->getMessage());
@@ -126,7 +140,7 @@ class JadwalController extends Controller
             if (Jadwal::conflict($validated)->exists()) {
                 return redirect()->back()
                     ->with('type', 'error')
-                    ->with('message', 'Pegawai sudah memiliki jadwal lain yang bentrok pada waktu tersebut.');
+                    ->with('message', 'Jadwal bentrok! Guru atau Kelas sudah memiliki jadwal lain pada waktu tersebut.');
             }
 
             Jadwal::create($validated);
@@ -150,7 +164,7 @@ class JadwalController extends Controller
             if (Jadwal::conflict($validated, $jadwal->id)->exists()) {
                 return redirect()->back()
                 ->with('type', 'error')
-                ->with('message', 'Pegawai sudah memiliki jadwal lain yang bentrok pada waktu tersebut.');
+                ->with('message', 'Jadwal bentrok! Guru atau Kelas sudah memiliki jadwal lain pada waktu tersebut.');
             }
 
             $jadwal->update($validated);
@@ -171,11 +185,10 @@ class JadwalController extends Controller
             $jadwal->delete();
 
             return redirect()->route('jadwal.index', request()->query())
-                ->with('type', 'success')
-                ->with('message', 'Jadwal berhasil dihapus');
+                ->with('success', 'Jadwal berhasil dihapus');
         } catch (\Exception $e) {
             Log::error('Error deleting jadwal: ' . $e->getMessage());
-            return redirect()->back()->with('type', 'error')->with('message', 'Gagal menghapus jadwal: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menghapus jadwal: ' . $e->getMessage());
         }
     }
 
@@ -195,15 +208,15 @@ class JadwalController extends Controller
         $ids = $request->input('ids');
 
         if (empty($ids)) {
-            return response()->json(['message' => 'Tidak ada ID yang dikirim'], 400);
+            return redirect()->back()->with('error', 'Tidak ada ID yang dikirim');
         }
 
         try {
             Jadwal::whereIn('id', $ids)->delete();
-            return response()->json(['message' => 'Jadwal berhasil dihapus'], 200);
+            return redirect()->back()->with('success', 'Jadwal berhasil dihapus');
         } catch (\Exception $e) {
             Log::error('Error bulk deleting jadwal: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
+            return redirect()->back()->with('error', 'Gagal menghapus jadwal: ' . $e->getMessage());
         }
     }
 
@@ -255,16 +268,19 @@ class JadwalController extends Controller
         }
 
         if (count($bentrokList) > 0) {
-    $pesanBentrok = "Beberapa jadwal tidak diperbarui karena bentrok:\n";
+            $pesanBentrok = "Beberapa jadwal gagal diperbarui karena bentrok:\n";
 
-    foreach ($bentrokList as $jadwal) {
-        $pesanBentrok .= "- Pegawai ID {$jadwal['pegawai_id']} bentrok di hari {$jadwal['hari']} jam {$jadwal['mulai']}–{$jadwal['akhir']} kelas ID {$jadwal['kelas_id']}\n";
-    }
+            foreach ($bentrokList as $jadwal) {
+                // Ambil info nama agar lebih manusiawi
+                $pName = Pegawai::find($jadwal['pegawai_id'])->name ?? 'N/A';
+                $kName = Kelas::find($jadwal['kelas_id'])->kelas ?? 'N/A';
+                $pesanBentrok .= "• $pName ($kName) pada {$jadwal['hari']} ({$jadwal['mulai']}–{$jadwal['akhir']})\n";
+            }
 
-    return redirect()->back()
-        ->with('type', 'warning')
-        ->with('message', nl2br($pesanBentrok)); // nl2br agar newline tampil di HTML
-}
+            return redirect()->back()
+                ->with('type', 'warning')
+                ->with('message', $pesanBentrok);
+        }
 
         return redirect()->back()
             ->with('type', 'success')
@@ -276,6 +292,37 @@ class JadwalController extends Controller
             ->with('message', 'Gagal memperbarui data jadwal: ' . $e->getMessage());
     }
 }
+
+    public function export(Request $request)
+    {
+        $ids = $request->input('ids');
+        $type = $request->input('type');
+
+        if ($type === 'selected' && !empty($ids)) {
+            // IDs come as "1,2,3" string from the hidden input
+            return Excel::download(new JadwalExport($ids), 'jadwal_selected.xlsx');
+        }
+
+        // Export all (or filtered, if we passed filters to Export class, but for now typical implementation exports all or selection)
+        // If we want to support filtered export, we'd accept filter params in JadwalExport.
+        // For now, let's just export all since 'ids' will be empty if 'all' is selected usually.
+        return Excel::download(new JadwalExport(null), 'jadwal_all.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:csv,xls,xlsx'
+        ]);
+
+        try {
+            Excel::import(new JadwalImport, $request->file('file'));
+            return redirect()->route('jadwal.index')->with('success', 'Data Jadwal berhasil diimport');
+        } catch (\Exception $e) {
+            Log::error('Import error: ' . $e->getMessage());
+            return redirect()->back()->with('type', 'error')->with('message', 'Gagal import data: ' . $e->getMessage());
+        }
+    }
 
     public function rekap(Request $request)
     {

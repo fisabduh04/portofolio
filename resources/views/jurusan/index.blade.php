@@ -1,13 +1,12 @@
 <x-layout.layout>
     <x-breadcrumb :breadcrumbs="[
-        ['name' => 'Home', 'href' => ''],
-        ['name' => 'Users', 'href' => ''],
-        ['name' => 'Jurusan', 'href' => '']
+        ['name' => 'Home', 'href' => route('dashboard.index')],
+        ['name' => 'Jurusan', 'href' => route('jurusan.index')]
     ]" />
 
-    <div class="p-4 mt-5 border-2 border-gray-200 rounded-lg dark:border-gray-700">
-        <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Jurusan</h1>
-        @livewire('jurusan.data')
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-base shadow-sm">
+        <div class="p-6">
+            @livewire('jurusan.data')
+        </div>
     </div>
-
 </x-layout.layout>

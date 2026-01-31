@@ -20,38 +20,72 @@ class SiswaController extends Controller
      */
     public function index(Request $request)
     {
-        // dd($request->search);
-        
-        $perPage = $request->get('per_page', 10); // Ambil jumlah data per halaman dari request, default 10
-        $search = $request->get('search', ''); // Ambil nilai pencarian
+        $perPage = $request->input('perPage', 10);
+        $search = $request->input('search');
+
         $query = siswa::query();
+
         if ($search) {
-            // dd($search);
-            $query->where('nama', 'like', '%' . $search . '%')
-                  ->orWhere('nipd', 'like', '%' . $search . '%')
-                  ->orWhere('nisn', 'like', '%' . $search . '%');
-                  
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('nipd', 'like', "%{$search}%")
+                  ->orWhere('nisn', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
         }
+
+        $sort = $request->input('sort', 'created_at');
+        $direction = $request->input('direction', 'desc');
         
-        $siswa = $query->orderBy('id', 'desc')->paginate($perPage);
+        // Whitelist safe sort columns
+        $allowedSorts = ['nama', 'nipd', 'nisn', 'status', 'created_at', 'kelas'];
+        if (in_array($sort, $allowedSorts)) {
+            $query->orderBy($sort, $direction);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
 
-        return view('siswa.index',compact('siswa'));
+        $siswa = $query->paginate($perPage)->withQueryString();
 
+        return view('siswa.index', compact('siswa'));
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function export()
+    public function export(Request $request)
     {
-        return Excel::download(new SiswaExport, 'siswa.xlsx');
-        return redirect()->route('siswa.index')->with('message', 'Data siswa berhasil dieksport')->with('type', 'success');
+        $ids = $request->input('ids');
+        if ($ids) {
+            $ids = explode(',', $ids); // If IDs are passed as comma specific string
+        }
+        return Excel::download(new SiswaExport($ids), 'siswa.xlsx');
     }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids');
+        
+        if ($ids) {
+            $siswa = siswa::whereIn('id', $ids)->get();
+            
+            foreach ($siswa as $s) {
+                if ($s->foto) {
+                    Storage::disk('public')->delete($s->foto);
+                }
+                $s->delete();
+            }
+            
+            return redirect()->back()->with('message', count($ids) . ' data siswa berhasil dihapus')->with('type', 'success');
+        }
+        
+        return redirect()->back()->with('message', 'Tidak ada data yang dipilih')->with('type', 'warning');
+    }
+
     public function import()
     {
         Excel::import(new SiswaImport, request()->file('file'));
         return redirect()->route('siswa.index')->with('message', 'Data siswa berhasil diimport')->with('type', 'success');
-
     }
      public function create()
     {

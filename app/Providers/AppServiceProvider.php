@@ -23,10 +23,17 @@ class AppServiceProvider extends ServiceProvider
     {
 
         Paginator::useTailwind();
-        // Definisikan path logo global
+        
+        // Definisikan path logo global dan data Sekolah
         $logo = asset('img/logo.png');
+        try {
+            $sekolah = \App\Models\Sekolah::first();
+        } catch (\Exception $e) {
+            $sekolah = null;
+        }
 
         // Bagikan variabel ke semua view
         View::share('logo', $logo);
+        View::share('sekolah', $sekolah);
     }
 }

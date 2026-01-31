@@ -14,9 +14,34 @@ class PegawaiController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $pegawai = pegawai::orderBy('name','asc')->get();
+        $perPage = $request->input('perPage', 10);
+        $search = $request->input('search');
+
+        $query = pegawai::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('nuptk', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $sort = $request->input('sort', 'created_at');
+        $direction = $request->input('direction', 'desc');
+        
+        // Whitelist kolom sorting untuk keamanan
+        $allowedSorts = ['name', 'nuptk', 'email', 'status', 'created_at'];
+        if (in_array($sort, $allowedSorts)) {
+            $query->orderBy($sort, $direction);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $pegawai = $query->paginate($perPage)->withQueryString();
+        
         return view('pegawai.index', compact('pegawai'));
     }
 
@@ -34,17 +59,20 @@ class PegawaiController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
-
         $request->validate([
             'name' => 'required',
             'nuptk' => 'required',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
         ]);
 
-        pegawai::create($request->all());
-        return redirect('pegawai')->with('message', 'Data Pegawai telah diinput')->with('type', 'success');
-        // session()->flash('message', 'Data berhasil disimpan!');
-        // session()->flash('type', 'success');
+        $data = $request->all();
+
+        if ($request->hasFile('foto')) {
+            $data['foto'] = $request->file('foto')->store('uploads/pegawai', 'public');
+        }
+
+        pegawai::create($data);
+        return redirect()->route('pegawai.index')->with('message', 'Data Pegawai berhasil disimpan')->with('type', 'success');
     }
 
     /**
@@ -60,41 +88,45 @@ class PegawaiController extends Controller
      */
     public function edit($id)
     {
-        // dd($id);
-        $pegawai = pegawai::find($id);
+        $pegawai = pegawai::findOrFail($id);
         return view('pegawai.input-pegawai', compact('pegawai'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-        public function update(Request $request, pegawai $pegawai)
-        {
-            // dd($pegawai);
-            $request->validate([
-                'name' => 'required',
-                'nuptk' => 'required',
-            ]);
+    public function update(Request $request, $id)
+    {
+        $pegawai = pegawai::findOrFail($id); // Ensure model is loaded
 
-            $pegawai->update($request->all());
-            return redirect('/pegawai')->with('message', 'Data Berhasil Diupdate')->with('type', 'success');
+        $request->validate([
+            'name' => 'required',
+            'nuptk' => 'required',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+        ]);
+
+        $data = $request->all();
+
+        if ($request->hasFile('foto')) {
+            // Delete old photo if exists
+            if ($pegawai->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($pegawai->foto)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($pegawai->foto);
+            }
+            $data['foto'] = $request->file('foto')->store('uploads/pegawai', 'public');
         }
+
+        $pegawai->update($data);
+        return redirect()->route('pegawai.index')->with('message', 'Data Pegawai berhasil diperbarui')->with('type', 'success');
+    }
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy($id)
-    {
-        // @dd($id);
-        // pegawai::destroy($id);
+    {        
         $peg=pegawai::findOrFail($id);
         $peg->delete();
 
-        // return redirect('pegawai')->with('error', 'Data Berhasil Dihapus');
-        // session()->flash('message', 'Data berhasil dihapus!');
-        // session()->flash('type', 'error');
-        // return redirect('pegawai');
-        // Di controller
 return redirect('pegawai')->with('message', 'Data Berhasil Dihapus')->with('type', 'error');
     }
     public function Addpegawai()

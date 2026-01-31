@@ -5,12 +5,7 @@
         ['name' => 'Kelas', 'href' => '']
     ]" />
 
-    <div class="p-4 border-2 border-gray-200 rounded-lg dark:border-gray-700 mt-5">
-        
+    <div class="mt-2">
         @livewire('kelas.data')
     </div>
-
-
-
-
 </x-layout.layout>

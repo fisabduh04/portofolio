@@ -44,47 +44,46 @@ class jadwal extends Model
 
     public function scopeConflict($query, array $data, $excludeId = null)
     {
-    return $query->where('pegawai_id', $data['pegawai_id'])
-        ->where('hari', $data['hari'])
-        ->where('tahun_id', $data['tahun_id'])
-        ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
-        ->where(function ($q) use ($data) {
-            $q->whereBetween('mulai', [$data['mulai'], $data['akhir']])
-              ->orWhereBetween('akhir', [$data['mulai'], $data['akhir']])
-              ->orWhere(function ($sub) use ($data) {
-                  $sub->where('mulai', '<=', $data['mulai'])
-                      ->where('akhir', '>=', $data['akhir']);
-              });
-        });
+        return $query->where('hari', $data['hari'])
+            ->where('tahun_id', $data['tahun_id'])
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->where(function ($q) use ($data) {
+                // Logic: Same Teacher OR Same Class
+                $q->where('pegawai_id', $data['pegawai_id'])
+                  ->orWhere('kelas_id', $data['kelas_id']);
+            })
+            ->where(function ($q) use ($data) {
+                // Standard Time Overlap: (StartA < EndB) && (EndA > StartB)
+                $q->where('mulai', '<', $data['akhir'])
+                  ->where('akhir', '>', $data['mulai']);
+            });
     }
 
     public function scopeBentrokSaatIni($query, int $tahunId)
     {
-        // 1. Filter berdasarkan tahun ajaran
-        $query->where('jadwals.tahun_id',$tahunId);
+        // Filter Current Year
+        $query->where('jadwals.tahun_id', $tahunId);
 
-        // 2. Lakukan self-join untuk menemukan bentrokan
-        return $query->select('jadwals.*')
-            ->join('jadwals as j2', function ($join) {
-                $join->on('jadwals.id', '>', 'j2.id') // Hindari perbandingan ganda dan dengan diri sendiri
-                    ->whereColumn('jadwals.pegawai_id', 'j2.pegawai_id') // Guru yang sama
-                    ->whereColumn('jadwals.hari', 'j2.hari') // Hari yang sama
-                    ->whereColumn('jadwals.tahun_id', 'j2.tahun_id') // Tahun ajaran yang sama
-                    ->where(function ($q) {
-                        // Logika tumpang tindih waktu (membandingkan baris dengan baris lain)
-                        $q->where(function ($sub) {
-                            $sub->whereColumn('jadwals.mulai', '>=', 'j2.mulai')
-                                ->whereColumn('jadwals.mulai', '<', 'j2.akhir');
-                        })->orWhere(function ($sub) {
-                            $sub->whereColumn('jadwals.akhir', '>', 'j2.mulai')
-                                ->whereColumn('jadwals.akhir', '<=', 'j2.akhir');
-                        })->orWhere(function ($sub) {
-                            $sub->whereColumn('jadwals.mulai', '<=', 'j2.mulai')
-                                ->whereColumn('jadwals.akhir', '>=', 'j2.akhir');
-                        });
-                    });
-            })
-            ->distinct();
+        // Find records where ANOTHER record exists that conflicts with it
+        return $query->whereExists(function ($sub) {
+            $sub->select('j2.id')
+                ->from('jadwals as j2')
+                ->whereColumn('j2.hari', 'jadwals.hari')             // Same Day
+                ->whereColumn('j2.tahun_id', 'jadwals.tahun_id')     // Same Year
+                ->whereColumn('j2.id', '!=', 'jadwals.id')           // Not the same record
+                
+                // Logic: Same Teacher OR Same Class
+                ->where(function ($w) {
+                    $w->whereColumn('j2.pegawai_id', 'jadwals.pegawai_id') 
+                      ->orWhereColumn('j2.kelas_id', 'jadwals.kelas_id');
+                })
+
+                ->where(function ($q) {
+                    // Standard Time Overlap: (StartA < EndB) && (EndA > StartB)
+                    $q->whereColumn('jadwals.mulai', '<', 'j2.akhir')
+                      ->whereColumn('jadwals.akhir', '>', 'j2.mulai');
+                });
+        });
     }
 
     

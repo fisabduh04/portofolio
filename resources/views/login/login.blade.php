@@ -52,15 +52,20 @@
                             });
                         </script>
                         <div class="flex items-center justify-between">
-                            <div class="flex items-start">
+                            <div class="flex items-center">
                                 <div class="flex items-center h-5">
-                                  <input id="remember" aria-describedby="remember" type="checkbox" name="remember" class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800">
+                                    <input id="remember" name="remember" type="checkbox" 
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 transition duration-150 ease-in-out cursor-pointer">
                                 </div>
-                                <div class="ml-3 text-sm">
-                                  <label for="remember" class="text-gray-500 dark:text-gray-300">Ingat Saya</label>
+                                <div class="ml-4 text-sm">
+                                    <label for="remember" class="font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                                        Ingat Saya
+                                    </label>
                                 </div>
                             </div>
-                            <a href="{{ route('password.request') }}" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500">Lupa kata sandi?</a>
+                            <a href="{{ route('password.request') }}" class="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-500 hover:underline">
+                                Lupa kata sandi?
+                            </a>
                         </div>
                         <button type="submit" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 flex justify-center items-center">
                             <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
