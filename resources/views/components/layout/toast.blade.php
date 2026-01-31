@@ -2,72 +2,74 @@
 
 <script>
     /**
-     * Global Notif System (Vanilla JS) - 100% Tailwind Utility Classes
-     * Mendukung: window.notif(), Livewire dispatch, dan Session Laravel transaksional.
+     * Premium Global Notification System (Vanilla JS)
+     * Standard Industri: Stacking Support, Progress Bar, Smooth Animations, & Delayed Closing.
      */
-    window.notif = function(message, type = 'success', duration = 4000) {
+    window.notif = function(message, type = 'success', duration = 4500) {
         const container = document.getElementById('toast-container');
         if (!container) return;
 
-        const id = 'toast-' + Date.now();
+        const id = 'toast-' + Math.random().toString(36).substr(2, 9);
         const toast = document.createElement('div');
         toast.id = id;
         
-        // Base Class: Glassmorphism + Transition (Tanpa CSS @keyframes kustom)
-        toast.className = `relative flex flex-col w-full p-4 rounded-base shadow-xl border-l-4 transition-all duration-300 transform translate-x-full opacity-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md pointer-events-auto overflow-hidden`;
+        // Base Styling: Glassmorphism Ultra + Premium Shadow + Stacking Animation
+        toast.className = `
+            relative flex flex-col w-full p-4 rounded-xl shadow-2xl border border-white/20 
+            bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl pointer-events-auto 
+            transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] 
+            transform translate-x-[110%] opacity-0 overflow-hidden group
+        `;
         
-        // Konfigurasi Warna & Ikon berdasarkan standar Flowbite/Tailwind
+        // Color Configuration & Standard Icons
         const config = {
             success: {
-                border: 'border-emerald-500',
-                iconColor: 'text-emerald-500 dark:text-emerald-400',
-                barBg: 'bg-emerald-500',
-                icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`
+                accent: 'bg-emerald-500',
+                iconColor: 'text-emerald-500',
+                icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
             },
             error: {
-                border: 'border-rose-600',
-                iconColor: 'text-rose-600 dark:text-rose-500',
-                barBg: 'bg-rose-600',
-                icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+                accent: 'bg-rose-600',
+                iconColor: 'text-rose-600',
+                icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
             },
             warning: {
-                border: 'border-amber-500',
-                iconColor: 'text-amber-500 dark:text-amber-400',
-                barBg: 'bg-amber-500',
-                icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`
+                accent: 'bg-amber-500',
+                iconColor: 'text-amber-500',
+                icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`
             },
             info: {
-                border: 'border-blue-500',
-                iconColor: 'text-blue-500 dark:text-blue-400',
-                barBg: 'bg-blue-500',
-                icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+                accent: 'bg-blue-500',
+                iconColor: 'text-blue-500',
+                icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
             }
         };
 
         const style = config[type] || config.info;
-        toast.classList.add(style.border);
         
         toast.innerHTML = `
-            <div class="flex items-start">
-                <div class="flex-shrink-0 ${style.iconColor}">
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 ${style.iconColor} animate-bounce-short">
                     ${style.icon}
                 </div>
-                <div class="ms-3 text-sm font-medium text-gray-800 dark:text-gray-200">
-                    ${message}
+                <div class="flex-1">
+                    <h4 class="text-sm font-bold capitalize ${style.iconColor} mb-0.5">${type}</h4>
+                    <p class="text-xs font-medium text-gray-700 dark:text-gray-300 leading-relaxed">${message}</p>
                 </div>
-                <button type="button" class="ms-auto -mx-1.5 -my-1.5 text-gray-400 hover:text-gray-900 rounded-lg p-1.5 inline-flex items-center justify-center h-8 w-8 dark:hover:text-white" onclick="this.closest('[id^=toast-]').remove()">
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 14 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg>
+                <button type="button" class="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200" onclick="window.closeToast('${id}')">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <!-- Progress Bar (Timer) -->
-            <div class="absolute bottom-0 left-0 h-1 ${style.barBg} opacity-30 transition-all ease-linear" style="width: 100%; transition-duration: ${duration}ms;" id="progress-${id}"></div>
+            <!-- Progress Line (Timer) -->
+            <div class="absolute bottom-0 left-0 h-[3px] ${style.accent} transition-all ease-linear" style="width: 100%; transition-duration: ${duration}ms;" id="progress-${id}"></div>
         `;
 
+        // Tambahkan ke container
         container.appendChild(toast);
 
-        // Animasi Masuk (Slide-in)
+        // Slide In Animation
         requestAnimationFrame(() => {
-            toast.classList.remove('translate-x-full', 'opacity-0');
+            toast.classList.remove('translate-x-[110%]', 'opacity-0');
             toast.classList.add('translate-x-0', 'opacity-100');
         });
 
@@ -77,38 +79,54 @@
             if (bar) bar.style.width = '0%';
         }, 50);
 
-        // Animasi Keluar & Hapus Otomatis
-        setTimeout(() => {
-            if (document.getElementById(id)) {
-                toast.classList.add('translate-x-full', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }
+        // Auto Close Timer
+        const autoCloseTimeout = setTimeout(() => {
+            window.closeToast(id);
         }, duration);
+
+        // Simpan timeout ID di elemen untuk referensi
+        toast.dataset.timeoutId = autoCloseTimeout;
     };
 
     /**
-     * Bridge Otomatis: Menangkap Dispatch dari Livewire
+     * Profesional Closing: Animasi Keluar dulu baru Hapus Elemen
+     */
+    window.closeToast = function(id) {
+        const toast = document.getElementById(id);
+        if (!toast) return;
+
+        // Bersihkan timeout jika ada
+        if (toast.dataset.timeoutId) clearTimeout(toast.dataset.timeoutId);
+
+        // Animasi Keluar (Slide Out)
+        toast.classList.add('translate-x-[120%]', 'opacity-0', 'scale-90');
+        
+        // Hapus elemen setelah animasi selesai
+        setTimeout(() => {
+            toast.remove();
+        }, 500);
+    };
+
+    /**
+     * Bridge: Menangkap Dispatch Livewire
      */
     document.addEventListener('livewire:init', () => {
         Livewire.on('showToast', (event) => {
-            // Support parameter objek (event.message) atau array positional (event[0])
             const data = Array.isArray(event) ? event[0] : event;
-            const message = data.message;
-            const type = data.type || 'success';
-            if (message) window.notif(message, type);
+            if (data.message) window.notif(data.message, data.type || 'success');
         });
     });
 
     /**
-     * Bridge Otomatis: Menangkap Session Laravel (Cara Lama & Baru)
+     * Bridge: Menangkap Session Laravel
      */
     window.addEventListener('load', () => {
-        // Cara Lama: with('message', '...')->with('type', '...')
+        // Cara Lama
         @if(session()->has('message'))
             window.notif("{{ session('message') }}", "{{ session('type', 'success') }}");
         @endif
 
-        // Cara Baru (Shorthand): with('success', '...') atau with('error', '...')
+        // Shorthand with('success', ...)
         @foreach(['success', 'error', 'warning', 'info'] as $type)
             @if(session()->has($type) && $type !== 'message')
                 window.notif("{{ session($type) }}", "{{ $type }}");
@@ -116,3 +134,14 @@
         @endforeach
     });
 </script>
+
+<style>
+    /* Mikro Animasi Tambahan */
+    @keyframes bounce-short {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+    }
+    .animate-bounce-short {
+        animation: bounce-short 1.5s ease-in-out infinite;
+    }
+</style>
