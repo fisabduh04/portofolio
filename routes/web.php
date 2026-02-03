@@ -11,6 +11,7 @@ use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\CobaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JadwalController;
+use App\Http\Controllers\JadwalPiketController;
 use App\Http\Controllers\KelasSiswaController;
 
 // Rute Publik (Redirect ke Login jika belum auth)
@@ -65,6 +66,11 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/absensi/rekap-bulanan', [AbsensiController::class, 'rekapBulanan'])->name('absensi.rekap-bulanan');
         Route::get('/absensi/rekap-tahunan', [AbsensiController::class, 'rekapTahunan'])->name('absensi.rekap-tahunan');
         Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
+        
+        // Piket Routes
+        Route::get('/absensi/piket', [AbsensiController::class, 'piket'])->name('absensi.piket');
+        Route::post('/absensi/piket/check-in', [AbsensiController::class, 'piketCheckIn'])->name('absensi.piket.check-in');
+        Route::post('/absensi/piket/check-out', [AbsensiController::class, 'piketCheckOut'])->name('absensi.piket.check-out');
     });
 
     // 3. AKSES KHUSUS ADMIN & OPERATOR (Manajemen Data Master)
@@ -83,7 +89,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/jadwal/export', [JadwalController::class, 'export'])->name('jadwal.export');
         Route::post('/jadwal/import', [JadwalController::class, 'import'])->name('jadwal.import');
         
+        Route::post('/jadwal/import', [JadwalController::class, 'import'])->name('jadwal.import');
+        
         Route::resource('jadwal', JadwalController::class); // Generic resource last
+        Route::resource('jadwal-piket', JadwalPiketController::class);
         Route::get('/users', [CobaController::class, 'tableView'])->name('users.index');
 
         // Specific routes for resources that are not full resource controllers
