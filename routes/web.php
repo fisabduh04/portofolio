@@ -58,7 +58,16 @@ Route::middleware(['auth', 'active'])->group(function () {
     // 1. AKSES UNTUK SEMUA ROLE (Dashboard)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
-    // 2. AKSES KHUSUS ADMIN & OPERATOR (Manajemen Data Master)
+    // 2. AKSES REKAPITULASI (Kepala Sekolah, Admin, Operator) - Must be before resource routes
+    Route::middleware(['role:kepala,admin,operator'])->group(function () {
+        Route::get('/absensi/rekap', [AbsensiController::class, 'rekap'])->name('absensi.rekap');
+        Route::get('/absensi/rekap-harian', [AbsensiController::class, 'rekapHarian'])->name('absensi.rekap-harian');
+        Route::get('/absensi/rekap-bulanan', [AbsensiController::class, 'rekapBulanan'])->name('absensi.rekap-bulanan');
+        Route::get('/absensi/rekap-tahunan', [AbsensiController::class, 'rekapTahunan'])->name('absensi.rekap-tahunan');
+        Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
+    });
+
+    // 3. AKSES KHUSUS ADMIN & OPERATOR (Manajemen Data Master)
     Route::middleware(['role:admin,operator'])->group(function () {
         Route::resource('tahun', TahunController::class);
         Route::resource('jurusan', JurusanController::class);
@@ -102,15 +111,13 @@ Route::middleware(['auth', 'active'])->group(function () {
     // 3. AKSES KHUSUS GURU & ADMIN (Presensi)
     Route::middleware(['role:guru,admin,operator'])->group(function () {
         Route::resource('absensi', AbsensiController::class);
+        
+        // Guru Piket Actions
+        Route::get('/absensi/piket', [AbsensiController::class, 'piket'])->name('absensi.piket');
+        Route::post('/absensi/piket/check-in', [AbsensiController::class, 'piketCheckIn'])->name('absensi.piket.check-in');
+        Route::post('/absensi/piket/check-out', [AbsensiController::class, 'piketCheckOut'])->name('absensi.piket.check-out');
     });
 
-    // 4. AKSES REKAPITULASI (Kepala Sekolah, Admin, Operator)
-    Route::middleware(['role:kepala,admin,operator'])->group(function () {
-        Route::get('/absensi/rekap', [AbsensiController::class, 'rekap'])->name('absensi.rekap');
-        Route::get('/absensi/rekap-bulanan', [AbsensiController::class, 'rekapBulanan'])->name('absensi.rekap-bulanan');
-        Route::get('/absensi/rekap-tahunan', [AbsensiController::class, 'rekapTahunan'])->name('absensi.rekap-tahunan');
-        Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
-    });
 });
 
 // RUTE UJI COBA (Hanya untuk Developer/Tanpa Auth jika diperlukan)

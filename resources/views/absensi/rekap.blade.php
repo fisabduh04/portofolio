@@ -26,22 +26,43 @@
     </div>
 
     {{-- Filter Bar --}}
-    <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 mb-6">
+    <div class="p-6 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700 mb-8">
+        <div class="flex flex-wrap items-center gap-2 mb-6 border-b border-gray-50 dark:border-gray-700 pb-4">
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-2">Quick Filter:</span>
+            <a href="{{ route('absensi.rekap', array_merge(request()->all(), ['from' => now()->toDateString(), 'to' => now()->toDateString()])) }}" 
+               class="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full border transition-all {{ $from == now()->toDateString() && $to == now()->toDateString() ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-500/30' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50' }}">
+               Hari Ini
+            </a>
+            <a href="{{ route('absensi.rekap', array_merge(request()->all(), ['from' => now()->startOfWeek()->toDateString(), 'to' => now()->endOfWeek()->toDateString()])) }}" 
+               class="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full border transition-all {{ $from == now()->startOfWeek()->toDateString() ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-500/30' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50' }}">
+               Minggu Ini
+            </a>
+            <a href="{{ route('absensi.rekap', array_merge(request()->all(), ['from' => now()->startOfMonth()->toDateString(), 'to' => now()->endOfMonth()->toDateString()])) }}" 
+               class="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full border transition-all {{ $from == now()->startOfMonth()->toDateString() ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-500/30' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50' }}">
+               Bulan Ini
+            </a>
+            <div class="ml-auto flex items-center gap-2">
+                <a href="{{ route('absensi.rekap', array_merge(request()->all(), ['view' => 'detail'])) }}" 
+                   class="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">
+                   Lihat Detail Jurnal
+                </a>
+            </div>
+        </div>
+
         <form action="{{ route('absensi.rekap') }}" method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <input type="hidden" name="kategori" value="{{ $kategori }}">
+            <input type="hidden" name="view" value="{{ $view }}">
             
             <div>
-                <label class="block mb-2 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Kategori</label>
-                <select name="kategori_proxy" onchange="window.location.href='{{ route('absensi.rekap') }}?kategori=' + this.value" 
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <label class="block mb-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Kategori</label>
+                <select name="kategori" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="mapel" {{ $kategori == 'mapel' ? 'selected' : '' }}>GURU MAPEL</option>
                     <option value="piket" {{ $kategori == 'piket' ? 'selected' : '' }}>GURU PIKET</option>
                 </select>
             </div>
 
             <div>
-                <label class="block mb-2 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Kelas</label>
-                <select name="kelas_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <label class="block mb-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Kelas</label>
+                <select name="kelas_id" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="">Semua Kelas</option>
                     @foreach($listKelas as $lk)
                         <option value="{{ $lk->id }}" {{ $filterKelasId == $lk->id ? 'selected' : '' }}>{{ $lk->kelas }}</option>
@@ -50,8 +71,8 @@
             </div>
 
             <div>
-                <label class="block mb-2 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Guru</label>
-                <select name="pegawai_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <label class="block mb-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Guru</label>
+                <select name="pegawai_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="">Semua Guru</option>
                     @foreach($listPegawai as $lp)
                         <option value="{{ $lp->id }}" {{ $filterPegawaiId == $lp->id ? 'selected' : '' }}>{{ $lp->name }}</option>
@@ -60,16 +81,15 @@
             </div>
 
             <div>
-                <label class="block mb-2 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Rentang Tanggal</label>
+                <label class="block mb-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Rentang Tanggal</label>
                 <div class="flex items-center gap-2">
-                    <input type="date" name="from" value="{{ $from }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2 dark:bg-gray-700 dark:text-white">
-                    <span class="text-gray-400">-</span>
-                    <input type="date" name="to" value="{{ $to }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2 dark:bg-gray-700 dark:text-white">
+                    <input type="date" name="from" value="{{ $from }}" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-primary-500 block w-full p-2 dark:bg-gray-700 dark:text-white">
+                    <input type="date" name="to" value="{{ $to }}" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-primary-500 block w-full p-2 dark:bg-gray-700 dark:text-white">
                 </div>
             </div>
 
             <div class="flex items-end">
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase py-3 rounded-lg transition-all shadow-md">
+                <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs uppercase py-3 rounded-xl transition-all shadow-lg shadow-primary-500/20">
                     Terapkan Filter
                 </button>
             </div>

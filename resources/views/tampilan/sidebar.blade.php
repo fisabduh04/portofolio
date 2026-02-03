@@ -96,14 +96,59 @@
 
                     </ul>
                 </li>
+                </li>
+
+                <!-- ABSENSI SECTION -->
+                <li class="nav-header text-xs font-bold text-gray-400 uppercase tracking-widest mt-4 ml-3">ABSENSI</li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-th"></i>
+                    <a href="{{ route('jadwal.index') }}" class="nav-link {{ request()->is('jadwal*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-calendar-alt"></i>
+                        <p>Jadwal & Presensi</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('jadwal-piket.index') }}" class="nav-link {{ request()->is('jadwal-piket*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-shield"></i>
+                        <p>Jadwal Piket</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('absensi.piket') }}" class="nav-link {{ request()->is('absensi/piket') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-clock"></i>
+                        <p>Presensi Piket</p>
+                    </a>
+                </li>
+
+                <!-- LAPORAN SECTION -->
+                <li class="nav-header text-xs font-bold text-gray-400 uppercase tracking-widest mt-4 ml-3">LAPORAN</li>
+                <li class="nav-item {{ request()->is('absensi/rekap*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->is('absensi/rekap*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-chart-pie"></i>
                         <p>
-                            Simple Link
-                            <span class="right badge badge-danger">New</span>
+                            Rekapitulasi
+                            <i class="right fas fa-angle-left"></i>
                         </p>
                     </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('absensi.rekap') }}" class="nav-link {{ request()->fullUrl() == route('absensi.rekap') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Summary (Ringkasan)</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('absensi.rekap', ['view' => 'detail']) }}" class="nav-link {{ request()->input('view') == 'detail' ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Detail Journal</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('absensi.rekap-bulanan') }}" class="nav-link {{ request()->is('absensi/rekap-bulanan') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Matriks Bulanan</p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
             </ul>
         </nav>
