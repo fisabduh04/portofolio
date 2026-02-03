@@ -429,7 +429,20 @@ class AbsensiController extends Controller
             ];
         });
 
-        return view('absensi.rekap_harian', compact('date', 'kelasId', 'listKelas', 'rekapData'));
+        // Query for Separate Detail Table (Bottom View)
+        $detailLogs = Absensi::with(['siswa.kelas', 'logbook.jadwal.mapel', 'logbook.jadwal.pegawai'])
+            ->whereHas('logbook', function($q) use ($date) {
+                $q->where('tanggal', $date);
+            })
+            ->when($kelasId, function($q) use ($kelasId) {
+                $q->whereHas('siswa', function($s) use ($kelasId) {
+                    $s->where('kelas_id', $kelasId);
+                });
+            })
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('absensi.rekap_harian', compact('date', 'kelasId', 'listKelas', 'rekapData', 'detailLogs'));
     }
 
     public function piket()

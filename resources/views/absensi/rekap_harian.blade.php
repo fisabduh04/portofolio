@@ -91,5 +91,75 @@
             </table>
         </div>
     </div>
+    {{-- Detail Logs Table (Bottom) --}}
+    <div class="mt-12 mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">Detail Jurnal Aktivitas Siswa</h2>
+                <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Rincian per mata pelajaran & sesi</p>
+            </div>
+            <div class="flex gap-2">
+                 <button onclick="document.getElementById('detail-table').classList.toggle('hidden')" class="px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50">
+                    Toggle View
+                </button>
+            </div>
+        </div>
+
+        <div id="detail-table" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50/50 dark:bg-gray-700/50 text-[10px] text-gray-400 uppercase font-black tracking-widest">
+                        <tr>
+                            <th class="px-6 py-4">Waktu</th>
+                            <th class="px-6 py-4">Siswa</th>
+                            <th class="px-6 py-4">Mata Pelajaran</th>
+                            <th class="px-6 py-4">Guru</th>
+                            <th class="px-6 py-4 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        @forelse($detailLogs as $log)
+                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
+                            <td class="px-6 py-4">
+                                <span class="text-xs font-bold text-gray-500">{{ $log->logbook->jadwal->mulai ?? '-' }} - {{ $log->logbook->jadwal->akhir ?? '-' }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-bold text-gray-900 dark:text-white">{{ $log->siswa->nama }}</span>
+                                    <span class="text-[10px] text-gray-400 font-bold">{{ $log->siswa->kelas->kelas ?? '-' }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                                    {{ $log->logbook->jadwal->mapel->nama_mapel ?? 'N/A' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-xs text-gray-600 dark:text-gray-300">{{ $log->logbook->jadwal->pegawai->nama ?? '-' }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                @if($log->status == 'Alpha')
+                                    <span class="px-3 py-1 bg-rose-100 text-rose-800 rounded-lg text-[10px] font-black uppercase tracking-widest">A</span>
+                                @elseif($log->status == 'Sakit')
+                                    <span class="px-3 py-1 bg-orange-100 text-orange-800 rounded-lg text-[10px] font-black uppercase tracking-widest">S</span>
+                                @elseif($log->status == 'Izin')
+                                    <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-[10px] font-black uppercase tracking-widest">I</span>
+                                @elseif($log->status == 'Hadir')
+                                    <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-[10px] font-black uppercase tracking-widest">H</span>
+                                @else
+                                    <span class="text-[10px] text-gray-300 font-bold uppercase tracking-widest italic">-</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-400 font-bold uppercase tracking-widest">Belum ada data detail untuk tanggal ini</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 </x-layout.layout>
