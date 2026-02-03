@@ -1,7 +1,13 @@
-@extends('tampilan.main')
-
-@section('content')
+<x-layout.layout>
 <div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <x-breadcrumb :breadcrumbs="[
+            ['name' => 'Home', 'href' => route('dashboard.index')],
+            ['name' => 'Absensi', 'href' => route('absensi.index')],
+            ['name' => 'Input Presensi', 'href' => '#'],
+        ]" />
+    </div>
+
     <form action="{{ route('absensi.store') }}" method="POST" enctype="multipart/form-data" id="absensiForm">
         @csrf
         <input type="hidden" name="jadwal_id" value="{{ $jadwal->id }}">
@@ -155,7 +161,7 @@
 
                 <!-- Submit Action -->
                 <button type="submit" class="w-full flex items-center justify-center px-6 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-2xl shadow-lg shadow-primary-500/30 transition-all transform hover:-translate-y-1">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2-2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                     Simpan Presensi & Jurnal
                 </button>
             </div>
@@ -188,6 +194,7 @@
 </script>
 @endpush
 
+@push('styles')
 <style>
     /* Premium Color Tokens - If Tailwind v4 is used these can be mapped, otherwise vanilla CSS fallback */
     :root {
@@ -201,4 +208,5 @@
     .border-primary-500:focus { border-color: #0ea5e9; }
     .ring-primary-500:focus { --tw-ring-color: #0ea5e9; }
 </style>
-@endsection
+@endpush
+</x-layout.layout>

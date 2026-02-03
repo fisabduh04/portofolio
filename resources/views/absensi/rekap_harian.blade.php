@@ -1,6 +1,4 @@
-@extends('tampilan.main')
-
-@section('content')
+<x-layout.layout>
 <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
@@ -94,4 +92,4 @@
         </div>
     </div>
 </div>
-@endsection
+</x-layout.layout>
