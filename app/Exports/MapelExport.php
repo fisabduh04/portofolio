@@ -16,9 +16,25 @@ class MapelExport implements FromQuery,WithMapping, ShouldAutoSize, WithHeadings
     /**
     * @return \Illuminate\Support\Collection
     */
+    protected $ids;
+
+    public function __construct($ids = null)
+    {
+        $this->ids = $ids;
+    }
+
+    /**
+    * @return \Illuminate\Support\Collection
+    */
     public function query()
     {
-        return mapel::query();
+        $query = mapel::query()->with('jurusan');
+
+        if (!empty($this->ids)) {
+            $query->whereIn('id', $this->ids);
+        }
+
+        return $query;
     }
     public function map($mapel):array
     {

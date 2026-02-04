@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\JadwalPiket;
 use App\Models\Pegawai;
-use App\Models\tahun;
+use App\Models\Tahun;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -12,7 +12,7 @@ class JadwalPiketController extends Controller
 {
     public function index()
     {
-        $tahunAktif = tahun::aktif()->first();
+        $tahunAktif = Tahun::aktif()->first();
         $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
         
         $piketSchedule = [];

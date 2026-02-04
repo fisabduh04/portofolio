@@ -9,7 +9,7 @@ use App\Models\kelas;
 use App\Models\siswa;
 
 
-class tahun extends Model
+class Tahun extends Model
 {
     use HasFactory;
     protected $fillable = ['tanggalmulai', 'tanggalakhir', 'tahun', 'semester', 'isActive'];
@@ -25,14 +25,14 @@ class tahun extends Model
      */
     public function kelas(): BelongsToMany
     {
-        return $this->belongsToMany(kelas::class, 'kelas_siswas', 'kelas_id', 'siswa_id')
+        return $this->belongsToMany(Kelas::class, 'kelas_siswas', 'kelas_id', 'siswa_id')
         ->withPivot('kelas_id')
         ->withTimestamps();
     }
 
     public function siswa(): BelongsToMany
     {
-        return $this->belongsToMany(kelas::class, 'kelas_siswas', 'siswa_id','kelas_id')
+        return $this->belongsToMany(Siswa::class, 'kelas_siswas', 'siswa_id','kelas_id')
         ->withPivot('siswa_id')
         ->withTimestamps();
     }

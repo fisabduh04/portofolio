@@ -3,20 +3,21 @@
 namespace App\Livewire\Mapel;
 
 use Livewire\Component;
-use App\Models\Mapel; // Pastikan menggunakan Model yang benar (Mapel, bukan mapel)
+use App\Models\Mapel;
 use App\Models\Jurusan;
 use Livewire\WithPagination;
-use Livewire\WithFileUploads; // Tambahkan trait ini
+use Livewire\WithFileUploads;
 use App\Imports\ImportMapel;
+use App\Exports\MapelExport;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\View\View; // Import untuk tipe data View
+use Illuminate\View\View;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Log; // Import untuk logging
+use Illuminate\Support\Facades\Log;
 
 class Data extends Component
 {
     use WithPagination;
-    use WithFileUploads; // Gunakan trait WithFileUploads
+    use WithFileUploads;
 
     public $kode = [];
     public $mapel = [];
@@ -37,8 +38,8 @@ class Data extends Component
     public $search = "";
     public $tombol_simpan = false;
     public $file; // Property untuk file upload
-    public $sortField = 'Mapel'; // Default sorting column
-    public $sortAsc = true; // Default sorting order
+    public $sortField = 'mapel'; // Default sorting column (lowercase to match DB)
+    public $sortDirection = 'asc'; // Use string 'asc' or 'desc' to match view expectations
 
     protected $paginationTheme = 'tailwind'; // Jika Anda menggunakan Tailwind untuk paginasi
 
@@ -49,8 +50,8 @@ class Data extends Component
     }
 
     public function search()
-{
-    $query = Mapel::query(); // Mulai query
+    {
+        $query = Mapel::query()->with('jurusan'); // Eager load jurusan to fix N+1
 
     if ($this->search) {
         $query->where('mapel', 'like', '%' . $this->search . '%')
@@ -62,7 +63,7 @@ class Data extends Component
 
     // Terapkan sorting
     if ($this->sortField) {
-        $query->orderBy($this->sortField, $this->sortAsc ? 'asc' : 'desc');
+            $query->orderBy($this->sortField, $this->sortDirection);
     } else {
         // Default sorting jika tidak ada sortField yang ditentukan
         $query->orderBy('jurusan_id', 'asc');
@@ -207,10 +208,20 @@ class Data extends Component
 
     }
 
+    public function export()
+    {
+        $ids = $this->mapel_selected_id ?? [];
+        return Excel::download(new MapelExport($ids), 'MataPelajaran.xlsx');
+    }
+
     public function sortBy($field)
     {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortDirection = 'asc';
+        }
         $this->sortField = $field;
-        $this->sortAsc = !$this->sortAsc;
         $this->resetPage();
     }
 

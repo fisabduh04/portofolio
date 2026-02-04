@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class mapel extends Model
+class Mapel extends Model
 {
     use HasFactory;
 
@@ -13,7 +13,7 @@ class mapel extends Model
 
     public function jurusan()
     {
-        return $this->belongsTo(jurusan::class, 'jurusan_id');
+        return $this->belongsTo(Jurusan::class, 'jurusan_id');
     }
 
 }

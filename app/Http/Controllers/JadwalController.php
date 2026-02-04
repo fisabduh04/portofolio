@@ -9,6 +9,8 @@ use App\Models\Mapel;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\JadwalExport;
 use App\Imports\JadwalImport;
@@ -40,10 +42,21 @@ class JadwalController extends Controller
             $filter_tahun = $request->input('filter_tahun', null);
             $filter_kelas = $request->input('filter_kelas', null);
 
-            $tahun   = Tahun::aktif()->get();
-            $kelas   = Kelas::all();
-            $mapel   = Mapel::all();
-            $pegawai = Pegawai::select('id', 'name')->get();
+            $tahun = Cache::remember('dropdown_tahun', 3600, function () {
+                return Tahun::aktif()->select('id', 'tahun', 'semester')->get();
+            });
+
+            $kelas = Cache::remember('dropdown_kelas', 3600, function () {
+                return Kelas::select('id', 'kelas')->get();
+            });
+
+            $mapel = Cache::remember('dropdown_mapel', 3600, function () {
+                return Mapel::select('id', 'mapel')->get();
+            });
+
+            $pegawai = Cache::remember('dropdown_pegawai', 3600, function () {
+                return Pegawai::select('id', 'name')->get();
+            });
             $hari    = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
             // --- 1. LOGIKA PENENTUAN TAHUN ID YANG BERLAKU ---
             
@@ -362,45 +375,42 @@ class JadwalController extends Controller
                   ->orWhere('nuptk', 'like', "%{$search}%");
             });
         }
-        
-        // Only show teachers who have schedules if a specific class filter is applied? 
-        // Or keep showing all teachers matching search? 
-        // Usually rekap shows everyone, or at least everyone with hours.
-        // Let's keep showing all searched employees, even with 0 hours, as that's often useful.
-        // But if filtering by class, effective hours will be 0 for teachers not teaching that class.
+
+        // 4. Optimization: Calculate total hours directly in Database
+        $query->withSum(['jadwals as total_menit' => function ($q) use ($tahunIDUntukProses, $filter_kelas) {
+            $q->where('tahun_id', $tahunIDUntukProses);
+            if (!empty($filter_kelas)) {
+                $q->where('kelas_id', $filter_kelas);
+            }
+            // Logic: SUM(TIMESTAMPDIFF(MINUTE, mulai, akhir))
+            $q->select(DB::raw('SUM(TIMESTAMPDIFF(MINUTE, mulai, akhir))'));
+        }], 'total_menit');
         
         $pegawais = $query->paginate($perpage)->appends($request->query());
 
-        // 4. Calculate Data
+        // 5. Build presentation details
         $pegawais->through(function ($guru) {
-            $totalSeconds = 0;
             $details = [];
 
+            // We still loop through eager-loaded jadwals ONLY to build the detail strings
             foreach ($guru->jadwals as $jadwal) {
                 $start = strtotime($jadwal->mulai);
                 $end = strtotime($jadwal->akhir);
                 
                 if ($end > $start) {
-                    $duration = $end - $start;
-                    $hours = $duration / 3600; // 1 hour = 3600 seconds
+                    $hours = ($end - $start) / 3600;
                     
-                    $totalSeconds += $duration;
-
-                    // Build Detail String: "Matematika - X RPL 1"
                     $mapel = $jadwal->mapel->mapel ?? 'Unknown';
                     $kelas = $jadwal->kelas->kelas ?? 'Unknown';
                     $key = "{$mapel} - {$kelas}";
 
-                    if (!isset($details[$key])) {
-                        $details[$key] = 0;
-                    }
-                    $details[$key] += $hours;
+                    $details[$key] = ($details[$key] ?? 0) + $hours;
                 }
             }
 
-            $guru->total_jam_mengajar = round($totalSeconds / 3600, 1); // Round to 1 decimal place
+            // The total is now taken from database result (total_menit / 60)
+            $guru->total_jam_mengajar = round(($guru->total_menit ?? 0) / 60, 1);
             
-            // Format details to also be rounded
             foreach($details as $k => $v) {
                 $details[$k] = round($v, 1);
             }
@@ -418,6 +428,79 @@ class JadwalController extends Controller
             'perpage',
             'pegawais'
         ));
+    }
+    public function presensiHarianGuru(Request $request)
+    {
+        $date = $request->input('date', now()->toDateString());
+        
+        // 1. Tentukan Hari (Bahasa Indonesia)
+        $dayName = \Carbon\Carbon::parse($date)->locale('id')->isoFormat('dddd');
+        
+        // 2. Ambil Tahun Aktif (Default logic similar to index)
+        $activeYear = Cache::remember('active_year_default', 3600, function () {
+            return Tahun::aktif()->first();
+        });
+        
+        if (!$activeYear) {
+            return redirect()->back()->with('error', 'Tidak ada tahun ajaran aktif.');
+        }
+
+        // 3. Query Jadwal
+        $query = Jadwal::with(['kelas', 'mapel', 'pegawai'])
+            ->where('tahun_id', $activeYear->id)
+            ->where('hari', $dayName)
+            ->orderBy('jam');
+
+        // 4. Role & Piket Check
+        $user = auth()->user();
+        $isPiket = false;
+        $viewMode = $request->input('view_mode', 'all');
+
+        if ($user->role === 'guru') {
+            if (!$user->pegawai_id) {
+                return redirect()->back()->with('error', 'Akun anda tidak terhubung dengan data pegawai.');
+            }
+
+            // Cek apakah guru ini sedang PIKET pada hari tersebut?
+            $isPiket = \App\Models\JadwalPiket::where('pegawai_id', $user->pegawai_id)
+                ->where('hari', $dayName)
+                ->where('tahun_id', $activeYear->id)
+                ->exists();
+
+            // Jika BUKAN piket, maka hanya bisa lihat jadwal sendiri
+            if (!$isPiket) {
+                $query->where('pegawai_id', $user->pegawai_id);
+                $viewMode = 'mine';
+            } else {
+                // Guru Piket
+                if ($viewMode === 'mine') {
+                   $query->where('pegawai_id', $user->pegawai_id);
+                }
+            }
+        } else {
+             // Admin/Operator/Kepala
+             if ($viewMode === 'mine' && $user->pegawai_id) {
+                 $query->where('pegawai_id', $user->pegawai_id);
+             }
+        }
+
+        $jadwals = $query->get();
+
+        // 5. Cek Status Presensi (Apakah sudah ada Logbook untuk jadwal ini di tanggal ini?)
+        // Kita butuh Logbook model untuk cek
+        $logbooks = \App\Models\Logbook::whereIn('jadwal_id', $jadwals->pluck('id'))
+            ->where('tanggal', $date)
+            ->get()
+            ->keyBy('jadwal_id');
+
+        // Tambahkan properti status ke collection jadwal
+        $jadwals->transform(function ($jadwal) use ($logbooks) {
+            $jadwal->logbook = $logbooks->get($jadwal->id);
+            $jadwal->status_presensi = $jadwal->logbook ? 'sudah' : 'belum';
+            return $jadwal;
+        });
+
+        return view('jadwal.presensiHarianGuru', compact('jadwals', 'date', 'dayName', 'activeYear', 'isPiket', 'viewMode'));
     }
 }
 

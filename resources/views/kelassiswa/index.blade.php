@@ -1,24 +1,32 @@
 <x-layout.layout>
     <x-breadcrumb :breadcrumbs="[
-        ['name' => 'Home', 'href' => '/dashboard'],
-        ['name' => 'Kelas', 'href' => '/kelas'],
-        ['name' => 'Rombongan Belajar', 'href' => '/kelassiswa'],
+        ['name' => 'Home', 'href' => route('dashboard.index')],
+        ['name' => 'Akademik', 'href' => '#'],
+        ['name' => 'Rombongan Belajar', 'href' => route('kelassiswa.index')],
     ]" />
 
     {{-- Main Content Container (Style Jadwal) --}}
     <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-base overflow-hidden border border-gray-200 dark:border-gray-700">
         
         {{-- Header Section --}}
+        {{-- Header Section --}}
         <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4 border-b border-gray-200 dark:border-gray-700">
             <div class="w-full md:w-auto">
-                <h2 class="text-xl font-bold font-sans text-gray-900 dark:text-white">
-                    Data Rombongan Belajar
-                    <span class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400 font-sans">(Total: {{ $pemetaans->total() }})</span>
-                </h2>
+                {{-- Data Count --}}
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400 font-sans">Total Data: {{ $pemetaans->total() }}</span>
             </div>
             <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-                <x-btn onclick="muncul()" icon="plus" text="Tambah Data" color="blue" />
-                <x-btn onclick="location.reload()" icon="arrow-path" text="Refresh" color="light" />
+                {{-- Primary Action: Tambah --}}
+                <x-btn onclick="muncul()" color="blue" size="sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    <span>Tambah Data</span>
+                </x-btn>
+
+                {{-- Secondary Action: Refresh --}}
+                <x-btn onclick="location.reload()" color="light" size="sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span>Refresh</span>
+                </x-btn>
             </div>
         </div>
 
@@ -101,30 +109,8 @@
             </form>
         </div>
 
-        {{-- Secondary Toolbar (Style Jadwal) --}}
-        <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4 bg-white dark:bg-gray-900">
-            
-            {{-- Left: Bulk Actions --}}
-            <div class="w-full md:w-auto">
-                <button id="actionsDropdownButton" data-dropdown-toggle="actionsDropdown" class="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-base border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700" type="button">
-                    <svg class="-ml-1 mr-1.5 w-5 h-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path clip-rule="evenodd" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                    </svg>
-                    Actions
-                </button>
-                <div id="actionsDropdown" class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
-                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
-                        <li><a href="{{ route('kelas-siswa-export') }}" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Export Results</a></li>
-                        <li><a href="#" data-modal-target="small-modal" data-modal-toggle="small-modal" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Import CSV</a></li>
-                    </ul>
-                    <div class="py-1">
-                        <button type="submit" form="MyForm" onclick="return confirm('Apakah Anda yakin ingin menghapus data yang dipilih?')" class="block w-full text-left py-2 px-4 text-sm text-red-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-red-200 dark:hover:text-white">
-                            Delete Selected
-                        </button>
-                    </div>
-                </div>
-            </div>
-
+        {{-- Secondary Toolbar --}}
+        <div class="flex flex-col md:flex-row items-center justify-end space-y-3 md:space-y-0 md:space-x-4 p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
             {{-- Right: Search & Filters --}}
             <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
                 <form action="{{ route('kelassiswa.index') }}" method="GET" class="flex flex-wrap items-center justify-end gap-3">
@@ -135,7 +121,7 @@
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                             </svg>
                         </div>
-                        <input type="text" name="search" value="{{ request('search') }}"
+                        <input type="text" id="search" name="search" value="{{ request('search') }}"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             placeholder="Cari Siswa...">
                     </div>
@@ -162,6 +148,36 @@
                         @endforeach
                     </select>
 
+                    {{-- Actions Dropdown --}}
+                    <div class="relative">
+                        <button id="actionsDropdownButton" data-dropdown-toggle="actionsDropdown" class="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-base border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 transition-all duration-200" type="button">
+                            <span>Actions</span>
+                            <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div id="actionsDropdown" class="hidden z-10 w-48 bg-white rounded-base divide-y divide-gray-100 shadow-xl dark:bg-gray-700 dark:divide-gray-600 border border-gray-200 dark:border-gray-600 !right-0">
+                            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="actionsDropdownButton">
+                                <li>
+                                    <a href="#" onclick="exportData(event)" class="flex items-center gap-3 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors duration-200">
+                                        <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        <span>Export Results</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" data-modal-target="small-modal" data-modal-toggle="small-modal" class="flex items-center gap-3 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors duration-200">
+                                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        <span>Import CSV</span>
+                                    </a>
+                                </li>
+                            </ul>
+                            <div class="py-2">
+                                <button type="submit" form="MyForm" onclick="return confirm('Apakah Anda yakin ingin menghapus data yang dipilih?')" class="flex items-center w-full gap-3 py-2 px-4 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:text-red-400 dark:hover:text-red-300 transition-all duration-200">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    <span>Delete Selected</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- Per Page --}}
                     <select name="per_page" onchange="this.form.submit()"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-36 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -172,6 +188,8 @@
                 </form>
             </div>
         </div>
+
+
 
         {{-- Table Container --}}
         <div class="relative overflow-x-auto">
@@ -204,10 +222,10 @@
                                 class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                 <td class="w-4 p-4">
                                     <div class="flex items-center">
-                                        <input id="checkbox" type="checkbox" name="id[]"
+                                        <input id="checkbox-{{ $pemetaan->id }}" type="checkbox" name="id[]"
                                             value="{{ $pemetaan->id }}"
                                             class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                        <label for="checkbox-table-search-{{ $pemetaan->id }}"
+                                        <label for="checkbox-{{ $pemetaan->id }}"
                                             class="sr-only">checkbox</label>
                                     </div>
                                 </td>
@@ -317,7 +335,7 @@
                                         d="M12 5v9m-5 0H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1h-2M8 9l4-5 4 5m1 8h.01" />
                                 </svg>
                                 Unggah</button>
-                            </from>
+                            </form>
                     </div>
                     <!-- Modal footer -->
                     <div class="flex items-center p-4 border-t border-gray-200 rounded-b md:p-5 dark:border-gray-600">
@@ -338,20 +356,43 @@
                 window.location.search = urlParams.toString(); // Reload with new parameters
             });
 
-            // Handle select all checkbox
-            document.getElementById('checkAll').addEventListener('click', function() {
-                const checkboxes = document.querySelectorAll('input[type="checkbox"][name="id[]"]');
-                checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+            // Handle select all checkbox (Bidirectional)
+            const checkAll = document.getElementById('checkAll');
+            const rowCheckboxes = document.querySelectorAll('input[type="checkbox"][name="id[]"]');
+
+            if (checkAll) {
+                // Header -> Rows
+                checkAll.addEventListener('change', function() {
+                    rowCheckboxes.forEach(checkbox => checkbox.checked = this.checked);
+                });
+            }
+
+            // Rows -> Header
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (checkAll) {
+                        const allChecked = Array.from(rowCheckboxes).every(cb => cb.checked);
+                        const someChecked = Array.from(rowCheckboxes).some(cb => cb.checked);
+                        checkAll.checked = allChecked;
+                        checkAll.indeterminate = someChecked && !allChecked;
+                    }
+                });
             });
 
-            document.getElementById('table-search').addEventListener('input', function() {
-                clearTimeout(window.delay);
-                window.delay = setTimeout(() => {
-                    if (this.value.trim() !== '') {
-                        this.form.submit(); // submit form induk langsung
-                    }
-                }, 1000);
-            });
+            // Handle Search Auto-submit
+            const searchInput = document.getElementById('search');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(window.delay);
+                    window.delay = setTimeout(() => {
+                        this.form.submit();
+                    }, 1000);
+                });
+                
+                // Restore focus after reload if needed (optional, simplistic)
+                // const urlParams = new URLSearchParams(window.location.search);
+                // if(urlParams.has('search')) searchInput.focus(); 
+            }
 
             function muncul() {
                 const panel = document.getElementById('InputSiswaPanel');
@@ -401,6 +442,31 @@
             function tutup() {
                 const panel = document.getElementById('InputSiswaPanel');
                 panel.classList.add('hidden');
+            }
+
+            function exportData(e) {
+                e.preventDefault();
+                const checkboxes = document.querySelectorAll('input[name="id[]"]:checked');
+                let ids = [];
+                checkboxes.forEach((checkbox) => {
+                    ids.push(checkbox.value);
+                });
+
+                if (ids.length === 0) {
+                     // Verify if the user intended to export ALL (Active Year)
+                     // If they checked nothing, we let it flow to 'active year' default.
+                     // But if they THINK they checked something, this console log helps.
+                     console.log("No checkboxes detected. Defaulting to Active Year export.");
+                } else {
+                     console.log("Exporting IDs: " + ids.join(','));
+                }
+
+                let url = "{{ route('kelas-siswa-export') }}";
+                if (ids.length > 0) {
+                    url += '?ids=' + ids.join(',');
+                }
+
+                window.location.href = url;
             }
         </script>
 

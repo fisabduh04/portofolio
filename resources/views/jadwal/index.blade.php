@@ -39,14 +39,22 @@
         {{-- Header Section --}}
         <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4 border-b border-gray-200 dark:border-gray-700">
             <div class="w-full md:w-auto">
-                <h2 class="text-xl font-bold font-sans text-gray-900 dark:text-white">
-                    Data Jadwal Pelajaran
-                    <span class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400 font-sans">(Total: {{ $jadwals->total() }})</span>
-                </h2>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400 font-sans">Total Data: {{ $jadwals->total() }}</span>
             </div>
             <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-                <x-btn onclick="tambah()" icon="plus" text="Tambah Jadwal" color="blue" />
-                <x-btn onclick="location.reload()" icon="arrow-path" text="Refresh" color="light" />
+                {{-- Primary Action: Tambah --}}
+                @if(in_array(auth()->user()->role, ['admin', 'operator']))
+                <x-btn onclick="tambah()" color="blue" size="sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    <span>Tambah Jadwal</span>
+                </x-btn>
+                @endif
+                
+                {{-- Secondary Action: Refresh --}}
+                <x-btn onclick="location.reload()" color="light" size="sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span>Refresh</span>
+                </x-btn>
             </div>
         </div>
 
@@ -76,70 +84,78 @@
             </div>
         </div>
 
+
         {{-- Secondary Toolbar --}}
-        <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4 bg-white dark:bg-gray-900">
-            
-            {{-- Left: Actions --}}
-            <div class="w-full md:w-auto">
-                {{-- Actions Dropdown Button --}}
-                <button id="actionsDropdownButton" data-dropdown-toggle="actionsDropdown" class="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-base border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700" type="button">
-                    <svg class="-ml-1 mr-1.5 w-5 h-5" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path clip-rule="evenodd" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                    </svg>
-                    Actions
-                </button>
-                <div id="actionsDropdown" class="hidden z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
-                    <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="actionsDropdownButton">
-                        <li><a href="#" onclick="exportJadwal(); return false;" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Export Excel</a></li>
-                        <li><a href="#" onclick="document.getElementById('importModal').classList.remove('hidden'); return false;" class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Import CSV</a></li>
-                    </ul>
-                    <div class="py-1">
-                         <button type="button" id="btnBulkDelete" data-modal-target="modal-bulk-delete" data-modal-toggle="modal-bulk-delete" disabled class="block w-full text-left py-2 px-4 text-sm text-red-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-red-200 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">
-                            Delete Selected
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Right: Filters --}}
-            <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-                 <form action="/jadwal" method="GET" id="searchForm" class="flex flex-col md:flex-row gap-3 w-full">
-                    
-                    {{-- Filter Tahun --}}
-                    <div class="w-full md:w-40">
-                         <select id="tahun" name="filter_tahun" onchange="this.form.submit()"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option value="">Semua Tahun</option>
-                            @foreach ($tahun as $t)
-                                <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>{{ $t->tahun }} - {{ $t->semester }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Filter Kelas --}}
-                    <div class="w-full md:w-32">
-                        <select id="kelas" name="filter_kelas" onchange="this.form.submit()"
-                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option value="">Semua Kelas</option>
-                            @foreach ($kelas as $k)
-                                <option value="{{ $k->id }}" {{ request('filter_kelas') == $k->id ? 'selected' : '' }}>{{ $k->kelas }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Search Input --}}
-                    <div class="relative w-full md:w-64">
+        <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+            {{-- Right: Search & Filters --}}
+            <div class="w-full flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
+                <form action="/jadwal" method="GET" id="searchForm" class="flex flex-wrap items-center w-full gap-3">
+                    {{-- Search --}}
+                    <div class="relative w-full md:w-auto md:flex-1">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <svg aria-hidden="true" class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                             </svg>
                         </div>
-                        <input type="text" id="search" name="search" value="{{ request('search') }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search mapel/guru..." required="">
+                        <input type="text" id="search" name="search" value="{{ request('search') }}"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Cari Mapel/Guru...">
+                    </div>
+
+                    {{-- Filter Tahun --}}
+                    <select id="tahun" name="filter_tahun" onchange="this.form.submit()"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-32 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">Tahun</option>
+                        @foreach ($tahun as $t)
+                            <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
+                                {{ $t->tahun }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    {{-- Filter Kelas --}}
+                    <select id="kelas" name="filter_kelas" onchange="this.form.submit()"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-32 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">Kelas</option>
+                        @foreach ($kelas as $k)
+                            <option value="{{ $k->id }}" {{ request('filter_kelas') == $k->id ? 'selected' : '' }}>
+                                {{ $k->kelas }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    {{-- Actions Dropdown --}}
+                    <div class="relative">
+                        <button id="actionsDropdownButton" data-dropdown-toggle="actionsDropdown" class="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-base border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 transition-all duration-200" type="button">
+                            <span>Actions</span>
+                            <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div id="actionsDropdown" class="hidden z-10 w-48 bg-white rounded-base divide-y divide-gray-100 shadow-xl dark:bg-gray-700 dark:divide-gray-600 border border-gray-200 dark:border-gray-600 !right-0">
+                            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="actionsDropdownButton">
+                                <li>
+                                    <a href="#" onclick="exportJadwal(); return false;" class="flex items-center gap-3 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors duration-200">
+                                        <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        <span>Export Excel</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" onclick="document.getElementById('importModal').classList.remove('hidden'); return false;" class="flex items-center gap-3 py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors duration-200">
+                                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        <span>Import CSV</span>
+                                    </a>
+                                </li>
+                            </ul>
+                            <div class="py-2">
+                                <button type="button" id="btnBulkDelete" data-modal-target="modal-bulk-delete" data-modal-toggle="modal-bulk-delete" disabled class="flex items-center w-full gap-3 py-2 px-4 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-40 disabled:grayscale disabled:pointer-events-none transition-all duration-200">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    <span>Hapus Terpilih</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
-
         {{-- Hidden Logic Forms --}}
         <form id="bulkDeleteForm" action="{{ route('jadwal.bulkDelete') }}" method="POST" class="hidden">@csrf @method('DELETE')</form>
         <form id="bulkFormJadwal" action="{{ route('jadwal.updateAll') }}" method="POST" class="hidden">@csrf</form>
@@ -241,10 +257,19 @@
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <div class="flex items-center justify-center gap-2">
+                                    {{-- Absen Button --}}
+                                    <a href="{{ route('absensi.create', ['jadwal_id' => $j->id]) }}" 
+                                       class="p-2 inline-flex items-center justify-center text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                       title="Input Presensi">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                    </a>
+
+                                    @if(in_array(auth()->user()->role, ['admin', 'operator']))
                                     {{-- Edit Button --}}
                                     <x-btn onclick="editRow({{ $j->id }})" icon="pencil-square" color="blue" variant="ghost" size="sm" class="!p-2" />
                                     {{-- Delete Button --}}
                                     <x-btn data-modal-target="popup-modal-{{ $j->id }}" data-modal-toggle="popup-modal-{{ $j->id }}" icon="trash" color="red" variant="ghost" size="sm" class="!p-2" />
+                                    @endif
                                 </div>
                             </td>
                             <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">

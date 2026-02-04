@@ -1,8 +1,8 @@
 <x-layout.layout>
     <x-breadcrumb :breadcrumbs="[
-        ['name' => 'Home', 'href' => ''],
-        ['name' => 'Users', 'href' => ''],
-        ['name' => 'Kelas', 'href' => '']
+        ['name' => 'Home', 'href' => route('dashboard.index')],
+        ['name' => 'Akademik', 'href' => '#'],
+        ['name' => 'Kelas', 'href' => route('kelas.index')]
     ]" />
 
     <div class="mt-2">

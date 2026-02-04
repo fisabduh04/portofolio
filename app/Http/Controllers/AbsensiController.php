@@ -11,6 +11,8 @@ use App\Models\Kelas;
 use App\Models\KelasSiswa;
 use App\Models\Logbook;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AbsensiController extends Controller
@@ -37,13 +39,19 @@ class AbsensiController extends Controller
 
         $jadwal = Jadwal::with(['kelas', 'mapel', 'pegawai'])->findOrFail($jadwalId);
         
+        // Cek apakah sudah ada logbook untuk jadwal ini hari ini
+        $existingLogbook = Logbook::with(['absensis', 'jadwal'])
+            ->where('jadwal_id', $jadwalId)
+            ->where('tanggal', now()->toDateString())
+            ->first();
+
         // Ambil daftar siswa berdasarkan kelas dan tahun ajaran dari jadwal
         $students = Siswa::whereHas('KelasSiswa', function ($q) use ($jadwal) {
             $q->where('kelas_id', $jadwal->kelas_id)
               ->where('tahun_id', $jadwal->tahun_id);
         })->orderBy('nama')->get();
 
-        return view('absensi.input', compact('jadwal', 'students'));
+        return view('absensi.input', compact('jadwal', 'students', 'existingLogbook'));
     }
 
     /**
@@ -66,41 +74,67 @@ class AbsensiController extends Controller
 
             $jadwal = Jadwal::findOrFail($request->jadwal_id);
 
-            // 1. Handle Multiple Photo Uploads
+            // Cek Existing Logbook (Mode Edit/Update)
+            $logbook = Logbook::where('jadwal_id', $jadwal->id)
+                ->where('tanggal', now()->toDateString())
+                ->first();
+
+            // 1. Handle Photo Uploads
             $photos = [];
+            // Jika update, ambil foto lama dulu
+            if ($logbook && $logbook->foto) {
+                $photos = json_decode($logbook->foto, true) ?? [];
+            }
+
             if ($request->hasFile('foto')) {
                 foreach ($request->file('foto') as $file) {
                     $photos[] = $file->store('absensi/foto', 'public');
                 }
             }
 
-            // 2. Create Logbook (Jurnal)
-            $logbook = Logbook::create([
-                'kategori' => 'mapel',
-                'jadwal_id' => $jadwal->id,
-                'kelas_id' => $jadwal->kelas_id,
-                'pegawai_id' => $jadwal->pegawai_id,
-                'tanggal' => now()->toDateString(),
-                'materi' => $request->materi,
-                'catatan' => $request->catatan,
-                'foto' => json_encode($photos),
-            ]);
-
-            // 3. Create Student Attendance Entries
-            foreach ($request->attendance as $siswaId => $data) {
-                Absensi::create([
-                    'logbook_id' => $logbook->id,
-                    'siswa_id' => $siswaId,
-                    'status' => $data['status'],
-                    'keterangan' => $data['keterangan'] ?? null,
+            // 2. Create or Update Logbook
+            if ($logbook) {
+                // UPDATE
+                $logbook->update([
+                    'materi' => $request->materi,
+                    'catatan' => $request->catatan,
+                    'foto' => json_encode($photos),
                 ]);
+            } else {
+                // CREATE
+                $logbook = Logbook::create([
+                    'kategori' => 'mapel',
+                    'jadwal_id' => $jadwal->id,
+                    'kelas_id' => $jadwal->kelas_id,
+                    'pegawai_id' => $jadwal->pegawai_id,
+                    'tanggal' => now()->toDateString(),
+                    'materi' => $request->materi,
+                    'catatan' => $request->catatan,
+                    'foto' => json_encode($photos),
+                ]);
+            }
+
+            // 3. Update/Create Student Attendance Entries
+            foreach ($request->attendance as $siswaId => $data) {
+                Absensi::updateOrCreate(
+                    [
+                        'logbook_id' => $logbook->id,
+                        'siswa_id' => $siswaId,
+                    ],
+                    [
+                        'status' => $data['status'],
+                        'keterangan' => $data['keterangan'] ?? null,
+                    ]
+                );
             }
 
             DB::commit();
 
-            return redirect()->route('jadwal.index')
-                ->with('type', 'success')
-                ->with('message', 'Presensi berhasil disimpan.');
+        $redirectTo = $request->input('redirect_to', route('jadwal.index'));
+
+        return redirect($redirectTo)
+            ->with('type', 'success')
+            ->with('message', 'Presensi berhasil disimpan.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -500,5 +534,20 @@ class AbsensiController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('type', 'error')->with('message', 'Gagal Check-out: ' . $e->getMessage());
         }
+    }
+
+    public function exportHarian(Request $request)
+    {
+        return Excel::download(new \App\Exports\AbsensiExport($request->all(), 'harian'), 'rekap_harian_' . now()->format('Ymd') . '.xlsx');
+    }
+
+    public function exportBulanan(Request $request)
+    {
+        return Excel::download(new \App\Exports\AbsensiExport($request->all(), 'bulanan'), 'rekap_bulanan_' . now()->format('Ymd') . '.xlsx');
+    }
+
+    public function exportTahunan(Request $request)
+    {
+        return Excel::download(new \App\Exports\AbsensiExport($request->all(), 'tahunan'), 'rekap_tahunan_' . now()->format('Ymd') . '.xlsx');
     }
 }

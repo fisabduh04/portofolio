@@ -87,7 +87,6 @@ class KelasSiswaController extends Controller
 
         $perpage = $request->input('per_page', 10);
         $pemetaans = $query->paginate($perpage);
-        $pemetaans->load(['siswa', 'kelas', 'tahun']);
 
         return view('kelassiswa.index', compact('pemetaans', 'tahun', 'siswa', 'kelas'));
     }
@@ -172,12 +171,22 @@ class KelasSiswaController extends Controller
             ->with('message', 'Data berhasil dihapus.')
             ->with('type', 'success');
     }
-    public function export()
+    public function export(Request $request)
     {
-        return Excel::download(new KelasSiswaExport, 'KelasSiswa.xlsx');
-        return redirect()->route('kelassiswa.index')
-            ->with('message', 'Data berhasil diexport.')
-            ->with('type', 'success');
+        $ids = $request->input('ids');
+        if ($ids) {
+            $ids = explode(',', $ids);
+        }
+
+        $activeYearId = null;
+        if (empty($ids)) {
+            $activeYear = Tahun::aktif()->first();
+            if ($activeYear) {
+                $activeYearId = $activeYear->id;
+            }
+        }
+
+        return Excel::download(new KelasSiswaExport($ids, $activeYearId), 'KelasSiswa.xlsx');
     }
 
     public function import()

@@ -19,9 +19,29 @@ class KelasSiswaExport implements FromQuery,WithHeadings, WithMapping, ShouldAut
     /**
     * @return \Illuminate\Support\Collection
     */
+    protected $ids;
+    protected $activeYearId;
+
+    public function __construct($ids = null, $activeYearId = null)
+    {
+        $this->ids = $ids;
+        $this->activeYearId = $activeYearId;
+    }
+
+    /**
+    * @return \Illuminate\Support\Collection
+    */
     public function query()
     {
-       return KelasSiswa::query();
+       $query = KelasSiswa::query()->with(['siswa', 'kelas', 'tahun']);
+
+       if (!empty($this->ids)) {
+           $query->whereIn('id', $this->ids);
+       } elseif ($this->activeYearId) {
+           $query->where('tahun_id', $this->activeYearId);
+       }
+
+       return $query;
     }
 
     public function map($KelasSiswa):array

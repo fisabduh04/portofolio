@@ -14,6 +14,11 @@ use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\JadwalPiketController;
 use App\Http\Controllers\KelasSiswaController;
 
+// Override Fortify Password Reset to Block Inactive Users
+Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])
+    ->middleware(['guest:'.config('fortify.guard')])
+    ->name('password.email');
+
 // Rute Publik (Redirect ke Login jika belum auth)
 Route::get('/', function () {
     return redirect()->route('dashboard.index');
@@ -36,7 +41,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     // Route mata pelajaran
     Route::resource('mapel', MapelController::class);
     Route::post('importmapel', [MapelController::class, 'import'])->name('importmapel');
-    Route::get('exporttmapel', [MapelController::class, 'export'])->name('exportportmapel');
+    Route::get('exporttmapel', [MapelController::class, 'export'])->name('mapel.export');
 
     // Route pegawai
     Route::resource('pegawai', PegawaiController::class);
@@ -55,7 +60,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('kelas-siswa-import', [KelasSiswaController::class, 'import'])->name('kelas-siswa-import');
 
     // Daftar Hadir Siswa
-    Route::resource('absensi', AbsensiController::class);
+    // Daftar Hadir Siswa (Moved to specific middleware group to prevent conflict)
+    // Route::resource('absensi', AbsensiController::class);
     // 1. AKSES UNTUK SEMUA ROLE (Dashboard)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
@@ -65,6 +71,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/absensi/rekap-harian', [AbsensiController::class, 'rekapHarian'])->name('absensi.rekap-harian');
         Route::get('/absensi/rekap-bulanan', [AbsensiController::class, 'rekapBulanan'])->name('absensi.rekap-bulanan');
         Route::get('/absensi/rekap-tahunan', [AbsensiController::class, 'rekapTahunan'])->name('absensi.rekap-tahunan');
+        Route::get('/absensi/export-harian', [AbsensiController::class, 'exportHarian'])->name('absensi.export-harian');
+        Route::get('/absensi/export-bulanan', [AbsensiController::class, 'exportBulanan'])->name('absensi.export-bulanan');
+        Route::get('/absensi/export-tahunan', [AbsensiController::class, 'exportTahunan'])->name('absensi.export-tahunan');
         Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
         
         // Piket Routes
@@ -73,7 +82,17 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/absensi/piket/check-out', [AbsensiController::class, 'piketCheckOut'])->name('absensi.piket.check-out');
     });
 
-    // 3. AKSES KHUSUS ADMIN & OPERATOR (Manajemen Data Master)
+    // 3. AKSES KHUSUS GURU & ADMIN (Presensi) - MOVED UP TO FIX ROUTE PRECEDENCE
+    Route::middleware(['role:guru,admin,operator,kepala'])->group(function () {
+        Route::get('/jadwal', [JadwalController::class, 'index'])->name('jadwal.index');
+        Route::get('/jadwal/presensi-harian', [JadwalController::class, 'presensiHarianGuru'])->name('jadwal.presensiHarian');
+        Route::resource('absensi', AbsensiController::class);
+        
+        // Guru Piket Actions
+        Route::get('/absensi/piket', [AbsensiController::class, 'piket'])->name('absensi.piket');
+    });
+
+    // 4. AKSES KHUSUS ADMIN & OPERATOR (Manajemen Data Master)
     Route::middleware(['role:admin,operator'])->group(function () {
         Route::resource('tahun', TahunController::class);
         Route::resource('jurusan', JurusanController::class);
@@ -91,9 +110,13 @@ Route::middleware(['auth', 'active'])->group(function () {
         
         Route::post('/jadwal/import', [JadwalController::class, 'import'])->name('jadwal.import');
         
-        Route::resource('jadwal', JadwalController::class); // Generic resource last
+        // Resource constrained to IDs only (numbers) to prevent conflict with /jadwal/presensi-harian
+        Route::resource('jadwal', JadwalController::class)
+            ->except(['index'])
+            ->whereNumber('jadwal'); 
+            
         Route::resource('jadwal-piket', JadwalPiketController::class);
-        Route::get('/users', [CobaController::class, 'tableView'])->name('users.index');
+
 
         // Specific routes for resources that are not full resource controllers
         // Kelas
@@ -101,7 +124,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('importkelas', [KelasController::class, 'import'])->name('importkelas');
         // Mapel
         Route::post('importmapel', [MapelController::class, 'import'])->name('importmapel');
-        Route::get('exporttmapel', [MapelController::class, 'export'])->name('exportportmapel');
+        Route::get('exporttmapel', [MapelController::class, 'export'])->name('mapel.export');
         // Pegawai
         Route::post('importpegawai', [PegawaiController::class, 'import'])->name('importpegawai');
         Route::get('exportpegawai', [PegawaiController::class, 'export'])->name('exportpegawai');
@@ -113,18 +136,18 @@ Route::middleware(['auth', 'active'])->group(function () {
         // Kelas Siswa
         Route::get('/kelas-siswa-export', [KelasSiswaController::class, 'export'])->name('kelas-siswa-export');
         Route::post('kelas-siswa-import', [KelasSiswaController::class, 'import'])->name('kelas-siswa-import');
+        
+        // MANAJEMEN USER (Operator/Admin)
+        Route::prefix('users')->name('operator.users.')->group(function () {
+             Route::get('/', [App\Http\Controllers\Operator\UserProvisioningController::class, 'index'])->name('index'); // operator.users.index
+             Route::post('/', [App\Http\Controllers\Operator\UserProvisioningController::class, 'store'])->name('store');
+             Route::patch('/{user}/active', [App\Http\Controllers\Operator\UserProvisioningController::class, 'toggleActive'])->name('toggle-active');
+             Route::patch('/{user}/role', [App\Http\Controllers\Operator\UserProvisioningController::class, 'updateRole'])->name('update-role');
+             Route::post('/resend-reset', [App\Http\Controllers\Operator\UserProvisioningController::class, 'resendReset'])->name('resend-reset');
+        });
+
         // Jadwal specific routes
         // Jadwal routes moved up
-    });
-
-    // 3. AKSES KHUSUS GURU & ADMIN (Presensi)
-    Route::middleware(['role:guru,admin,operator'])->group(function () {
-        Route::resource('absensi', AbsensiController::class);
-        
-        // Guru Piket Actions
-        Route::get('/absensi/piket', [AbsensiController::class, 'piket'])->name('absensi.piket');
-        Route::post('/absensi/piket/check-in', [AbsensiController::class, 'piketCheckIn'])->name('absensi.piket.check-in');
-        Route::post('/absensi/piket/check-out', [AbsensiController::class, 'piketCheckOut'])->name('absensi.piket.check-out');
     });
 
 });
@@ -132,7 +155,4 @@ Route::middleware(['auth', 'active'])->group(function () {
 // RUTE UJI COBA (Hanya untuk Developer/Tanpa Auth jika diperlukan)
 Route::get('/coba', [CobaController::class, 'index']);
 Route::get('/coba3', [CobaController::class, 'tampil3']);
-Route::post('/users', [CobaController::class, 'store']);
-Route::put('/users/{id}', [CobaController::class, 'update']);
-Route::delete('/users/{id}', [CobaController::class, 'destroy']);
 Route::get('/coba2', [CobaController::class, 'tampil2']);

@@ -151,6 +151,8 @@
     {{-- Teks (hanya jika ada) --}}
     @if($text)
         <span>{{ $text }}</span>
+    @else
+        {{ $slot }}
     @endif
 
     {{-- Ikon posisi kanan --}}

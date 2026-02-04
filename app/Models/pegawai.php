@@ -5,9 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class pegawai extends Model
+class Pegawai extends Model
 {
     use HasFactory;
 
     protected $guarded = [''];
+
+    public function user()
+    {
+        return $this->hasOne(User::class);
+    }
+
+    public function jadwals()
+    {
+        return $this->hasMany(Jadwal::class);
+    }
 }

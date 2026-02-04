@@ -2,12 +2,15 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
             <x-breadcrumb :breadcrumbs="[
-                ['name' => 'Home', 'href' => route('home')],
+                ['name' => 'Home', 'href' => route('dashboard.index')],
                 ['name' => 'Absensi', 'href' => route('absensi.index')],
                 ['name' => 'Jurnal Bulanan', 'href' => route('absensi.rekap-bulanan')],
             ]" />
             <h1 class="mt-2 text-2xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">Rekapitulasi Bulanan</h1>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Laporan Akumulasi Kehadiran Per Siswa</p>
+        </div>
+        <div class="flex items-center gap-3">
+             <x-btn href="{{ route('absensi.export-bulanan', request()->query()) }}" text="Export Excel" color="green" icon="save" size="sm" />
         </div>
     </div>
 

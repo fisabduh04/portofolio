@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Tahun;
 
-use App\Models\tahun;
+use App\Models\Tahun;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Database\QueryException;
@@ -34,12 +34,12 @@ class Data extends Component
     }
 
     private function loadTahunList() {
-        $this->tahunlist = tahun::all();
+        $this->tahunlist = Tahun::all();
     }
 
     public function toggleIsActive($id)
     {
-        $tahun = tahun::find($id);
+        $tahun = Tahun::find($id);
         if ($tahun) {
             $tahun->isActive = !$tahun->isActive;
             $tahun->save();
@@ -64,7 +64,7 @@ class Data extends Component
     public function edit($id)
     {
         // dd($id);
-        $tahun = tahun::find($id);
+        $tahun = Tahun::find($id);
         $this->tahunID = $tahun->id;
         $this->tanggalmulai = $tahun->tanggalmulai;
         $this->tanggalakhir = $tahun->tanggalakhir;
@@ -97,7 +97,7 @@ class Data extends Component
         ]);
 
         try{
-        tahun::updateOrCreate([
+        Tahun::updateOrCreate([
             'id' => $this->tahunID,
         ], [
             'tahun' => $this->tahun,
@@ -126,7 +126,7 @@ class Data extends Component
 
     public function del($id)
     {
-        tahun::destroy($id);
+        Tahun::destroy($id);
 
         session()->flash('error', 'Gateli Data Berhasil Dihapus');
         $this->loadTahunList(); // Refresh the list

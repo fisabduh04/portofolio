@@ -5,21 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class absensi extends Model
+class Absensi extends Model
 {
     use HasFactory;
-    protected $fillable = ['jadwal_id', 'siswa_id', 'sakit', 'masuk', 'izin', 'alpha', 'pulang', 'lainnya', 'materi','deskripsi'];
+    protected $fillable = ['logbook_id', 'siswa_id', 'status', 'keterangan'];
+
+    public function logbook()
+    {
+        return $this->belongsTo(Logbook::class);
+    }
 
     public function siswa()
     {
         return $this->belongsTo(Siswa::class);
     }
-
-    public function jadwal()
-    {
-        return $this->belongsTo(Jadwal::class);
-    }
-
-
-
 }

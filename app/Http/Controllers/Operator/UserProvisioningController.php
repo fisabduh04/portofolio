@@ -6,16 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Support\Facades\Hash;
-
+use App\Policies\UserPolicy; 
 
 class UserProvisioningController extends Controller
 {
@@ -41,14 +35,35 @@ class UserProvisioningController extends Controller
         return view('operator.users.index', compact('pegawais', 'q'));
     }
 
+    /**
+     * Menyimpan Data User Baru (Create Account).
+     *
+     * Alur Logika:
+     * 1. Validasi input (email unik, role valid).
+     * 2. Cek Otorisasi: Apakah user yang login punya wewenang membuat role tersebut?
+     *    (Misal: Operator tidak boleh membuat akun Admin).
+     * 3. Buat user dengan status default Non-Aktif (0).
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
             'pegawai_id' => ['required', 'integer', 'exists:pegawais,id'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'in:' . implode(',', self::ROLES)],
+            'email'      => ['required', 'email', 'max:255', 'unique:users,email'],
+            'role'       => ['required', 'in:' . implode(',', self::ROLES)],
         ]);
 
+        // CEK WEWENANG (Authorization)
+        // Kita hitung rank role yang mau dibuat vs rank user yang login.
+        $targetRank = $this->getRank($data['role']);
+        $myRank     = $this->getRank($request->user()->role);
+
+        // Jika Rank saya lebih kecil atau sama dengan Rank yang mau dibuat, TOLAK.
+        // Kecuali saya adalah 'kepala'.
+        if ($myRank <= $targetRank && $request->user()->role !== 'kepala') {
+             return back()->with('error', 'Anda tidak memiliki wewenang untuk membuat user dengan role setara atau lebih tinggi.');
+        }
+
+        // Cek apakah pegawai ini sudah punya akun sebelumnya?
         $pegawai = Pegawai::findOrFail($data['pegawai_id']);
 
         if (User::where('pegawai_id', $pegawai->id)->exists()) {
@@ -57,102 +72,124 @@ class UserProvisioningController extends Controller
                 ->withInput();
         }
 
+        // Buat User Baru
         $user = User::create([
             'pegawai_id' => $pegawai->id,
-            'name' => $pegawai->name ?? 'Pegawai',
-            'email' => strtolower(trim($data['email'])),
-            'password' => bcrypt(Str::random(40)),
-            'role' => $data['role'],
-            'is_active' => 0, // ✅ dibuat nonaktif dulu
+            'name'       => $pegawai->name ?? 'Pegawai',
+            'email'      => strtolower(trim($data['email'])),
+            'password'   => bcrypt(Str::random(40)), // Password acak karena nanti akan di-reset user
+            'role'       => $data['role'],
+            'is_active'  => 0, // Default inactive (Harus diaktifkan manual agar kirim email)
         ]);
 
         return redirect()
             ->route('operator.users.index')
-            ->with('success', "Akun {$user->role} dibuat (nonaktif). Aktifkan untuk mengirim link set password.");
+            ->with('success', "Akun {$user->role} berhasil dibuat (Status: Nonaktif). Silakan aktifkan untuk mengirim email password.");
     }
 
-
-    public function resendReset(Request $request)
-    {
-    $request->validate([
-        'email' => ['required', 'email', 'exists:users,email'],
-    ]);
-
-    $user = User::where('email', $request->email)->firstOrFail();
-
-    if (! $user->is_active) {
-        return back()->with('warning', 'Akun masih nonaktif. Aktifkan akun dulu sebelum kirim reset.');
-    }
-
-    $status = Password::sendResetLink(['email' => $user->email]);
-
-    if ($status !== Password::RESET_LINK_SENT) {
-        return back()->with('warning', 'Gagal mengirim reset. Cek konfigurasi email.');
-    }
-
-    return back()->with('success', 'Link reset password berhasil dikirim ulang.');
-    }
-
-
+    /**
+     * Mengubah Status Aktif/Nonaktif (Switch ON/OFF).
+     *
+     * Fitur Penting:
+     * - Jika akun diubah dari Non-Aktif menjadi Aktif, sistem OTOMATIS mengirim email reset password.
+     */
     public function toggleActive(User $user)
     {
-        // 1) Cegah nonaktifkan diri sendiri
-        if ($user->id === auth()->id()) {
-            return back()->with('warning', 'Anda tidak dapat menonaktifkan akun sendiri.');
+        // 1. Cek Policy: Apakah saya boleh mengelola user ini?
+        if (Gate::denies('toggleStatus', $user)) {
+             return back()->with('error', 'Tindakan Ditolak: Anda tidak memiliki akses untuk mengubah status pengguna ini.');
         }
 
-        // 2) Jika yang login OPERATOR, jangan boleh nonaktifkan ADMIN
-        if (auth()->user()->role === 'operator' && $user->role === 'admin') {
-            return back()->with('warning', 'Operator tidak boleh menonaktifkan akun admin.');
-        }
-
-        // ✅ cek apakah sebelumnya nonaktif
+        // Simpan status lama untuk pengecekan
         $wasInactive = (int) $user->is_active === 0;
 
-        // toggle
+        // Update status kebalikan (Toggle)
         $user->update([
             'is_active' => ! $user->is_active,
         ]);
 
-        // ✅ hanya saat BARU DI-AKTIFKAN: kirim reset link
+        // JIKA status berubah jadi AKTIF, kirim email reset password
         if ($wasInactive && (int) $user->is_active === 1) {
             $status = Password::sendResetLink(['email' => $user->email]);
-
+            
             if ($status !== Password::RESET_LINK_SENT) {
-                return back()->with('warning', 'Akun aktif, tapi email set password gagal terkirim. Cek MAIL.');
+                return back()->with('success', 'Akun aktif, namun gagal mengirim email reset password. Silakan coba fitur "Resend Reset".');
             }
-
-            return back()->with('success', 'Akun berhasil diaktifkan. Link set password sudah dikirim ke email.');
+            return back()->with('success', 'Akun diaktifkan! Link atur password telah dikirim ke email pegawai.');
         }
 
         return back()->with('success', 'Status akun berhasil diperbarui.');
     }
 
-
-    
+    /**
+     * Mengubah Role (Jabatan) User.
+     * Contoh: Mengangkat Guru menjadi Operator.
+     */
     public function updateRole(Request $request, User $user)
-{
-    $data = $request->validate([
-        'role' => ['required', 'in:admin,operator,guru,siswa,kepala'],
-    ]);
+    {
+        $data = $request->validate([
+            'role' => ['required', 'in:' . implode(',', self::ROLES)],
+        ]);
 
-    // 1) Cegah ubah role diri sendiri
-    if ($user->id === auth()->id()) {
-        return back()->with('warning', 'Anda tidak dapat mengubah role akun sendiri.');
+        // 1. Cek Policy Dasar: Boleh gak saya edit user ini?
+        if (Gate::denies('updateRole', $user)) {
+             return back()->with('error', 'Tindakan Ditolak: Anda tidak bisa mengubah role pengguna ini.');
+        }
+
+        // 2. Cek Policy Lanjutan: Boleh gak saya mengangkat dia ke role baru ini?
+        // (Saya tidak boleh mengangkat orang jadi atasan saya).
+        $newRoleRank = $this->getRank($data['role']);
+        $myRank      = $this->getRank($request->user()->role);
+
+        if ($request->user()->role !== 'kepala' && $myRank <= $newRoleRank) {
+             return back()->with('error', 'Tindakan Ditolak: Anda tidak bisa menaikkan role ke tingkat yang setara atau lebih tinggi dari Anda.');
+        }
+
+        $user->update(['role' => $data['role']]);
+
+        return back()->with('success', 'Role pengguna berhasil diperbarui.');
     }
 
-    // 2) Jika yang login OPERATOR, jangan boleh mengubah role ADMIN
-    if (auth()->user()->role === 'operator' && $user->role === 'admin') {
-        return back()->with('warning', 'Operator tidak boleh mengubah role admin.');
+    /**
+     * Mengirim Ulang Link Reset Password.
+     * Digunakan jika email pertama tidak sampai atau kadaluarsa.
+     */
+    public function resendReset(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email', 'exists:users,email'],
+        ]);
+
+        $user = User::where('email', $request->email)->firstOrFail();
+
+        // Security Check
+        if (Gate::denies('manage', $user)) {
+             return back()->with('error', 'Anda tidak berwenang mengelola pengguna ini.');
+        }
+
+        // Pastikan akun aktif dulu
+        if (! $user->is_active) {
+            return back()->with('warning', 'Akun masih nonaktif. Harap aktifkan terlebih dahulu.');
+        }
+
+        // Kirim Email via Laravel Fortify/Password Broker
+        $status = Password::sendResetLink(['email' => $user->email]);
+
+        if ($status !== Password::RESET_LINK_SENT) {
+            return back()->with('error', 'Gagal mengirim link reset. Periksa konfigurasi email.');
+        }
+
+        return back()->with('success', 'Link reset password berhasil dikirim ulang.');
     }
 
-    $user->update([
-        'role' => $data['role'],
-    ]);
-
-    return back()->with('success', 'Role user berhasil diperbarui.');
-}
-
-
-
+    // Helper sederhana untuk mengubah Role string (teks) menjadi angka (rank)
+    private function getRank(string $role): int
+    {
+        return match ($role) {
+            'kepala'   => 4,
+            'admin'    => 3,
+            'operator' => 2,
+            default    => 1, // Guru & Siswa
+        };
+    }
 }

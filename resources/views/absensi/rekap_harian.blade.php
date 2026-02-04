@@ -10,6 +10,7 @@
             <p class="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">{{ \Carbon\Carbon::parse($date)->format('d F Y') }}</p>
         </div>
         <div class="flex items-center gap-3">
+             <x-btn href="{{ route('absensi.export-harian', request()->query()) }}" text="Export Excel" color="green" icon="save" size="sm" />
              <a href="{{ route('absensi.rekap') }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 Kembali ke Laporan
             </a>

@@ -2,7 +2,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
             <x-breadcrumb :breadcrumbs="[
-                ['name' => 'Home', 'href' => route('home')],
+                ['name' => 'Home', 'href' => route('dashboard.index')],
                 ['name' => 'Absensi', 'href' => route('absensi.index')],
                 ['name' => 'Rekap Tahunan', 'href' => '#'],
             ]" />

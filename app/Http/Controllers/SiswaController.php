@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\siswa;
-use App\Models\tahun;
-use App\Models\jurusan;
-use App\Exports\Siswaexport;
+use App\Models\Siswa;
+use App\Models\Tahun;
+use App\Models\Jurusan;
+use App\Exports\SiswaExport;
 use App\Imports\SiswaImport;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -23,7 +23,7 @@ class SiswaController extends Controller
         $perPage = $request->input('perPage', 10);
         $search = $request->input('search');
 
-        $query = siswa::query();
+        $query = Siswa::query();
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -67,7 +67,7 @@ class SiswaController extends Controller
         $ids = $request->input('ids');
         
         if ($ids) {
-            $siswa = siswa::whereIn('id', $ids)->get();
+            $siswa = Siswa::whereIn('id', $ids)->get();
             
             foreach ($siswa as $s) {
                 if ($s->foto) {
@@ -115,7 +115,7 @@ class SiswaController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(siswa $siswa)
+    public function show(Siswa $siswa)
     {
         //
     }
@@ -123,16 +123,16 @@ class SiswaController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(siswa $siswa)
+    public function edit(Siswa $siswa)
     {
-        $siswa=siswa::find($siswa->id);
+        $siswa=Siswa::find($siswa->id);
         return view('siswa.input-siswa',compact('siswa'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, siswa $siswa)
+    public function update(Request $request, Siswa $siswa)
     {
         // dd($request->all());
         $request->validate([
@@ -159,7 +159,7 @@ class SiswaController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(siswa $siswa)
+    public function destroy(Siswa $siswa)
     {
         // dd($siswa);
         if ($siswa->foto) {

@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\siswa;
+use App\Models\Siswa;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class Siswaexport implements FromQuery, ShouldAutoSize, WithMapping, WithHeadings
+class SiswaExport implements FromQuery, ShouldAutoSize, WithMapping, WithHeadings
 {
     use Exportable;
     protected $ids;
@@ -25,7 +25,7 @@ class Siswaexport implements FromQuery, ShouldAutoSize, WithMapping, WithHeading
     */
     public function query()
     {
-        $query = siswa::query();
+        $query = Siswa::query();
         
         if ($this->ids) {
             $query->whereIn('id', $this->ids);

@@ -5,19 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class logbook extends Model
+class Logbook extends Model
 {
     use HasFactory;
-    protected $fillable = ['absensi_id','siswa_id', 'presensi', 'ket'];
+    protected $fillable = ['kategori', 'jadwal_id', 'kelas_id', 'tanggal', 'materi', 'catatan', 'foto', 'pegawai_id'];
 
-    public function absensi()
+    public function jadwal()
     {
-        return $this->belongsTo(Absensi::class);
+        return $this->belongsTo(Jadwal::class);
     }
 
-    public function siswa()
+    public function kelas()
     {
-        return $this->belongsTo(Siswa::class);
+        return $this->belongsTo(Kelas::class);
+    }
+
+    public function pegawai()
+    {
+        return $this->belongsTo(Pegawai::class);
+    }
+
+    public function absensis()
+    {
+        return $this->hasMany(Absensi::class);
     }
 }
 

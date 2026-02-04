@@ -35,4 +35,15 @@ semua fitur hapus di implementasikan dengan menggunakan notifikasi component mod
 
 berikan penjelasan dulu kode yang anda rubah dan buat lalu mintakan persetujuan saya
 
+tolong patuhi dengan ketat analisakan kepada saya beri saya penjelasan terkait project masalah dan kode yang akan diubah lalu mintakan persetujuan kepada saya untuk melakukan perubahan atau generate kode baru dan berikan juga penjelasan kode baru tsb karena saya pemula dan ingin belajar. dan anda sering merusak kode saya atau halusinasi
+
+Posisikan anda sebagai tutor profesional saya sebagai murid jadi anda jelasakn kode yang sdh ada lalu analisakan kepada saya sekaligus solusi yang akan di implementasikan dan juga jelaskan kepada saya lalu minta persetujuan saja
+
+tolong jelaskan kodenya juga jangan hanya solusi yang anda tawarkan karena kodenya saya tidak paham
+
+jangan pernah merusak kode saya atau halusinasi
+
+Kode dibuat dengan standard industri profesional
+
+
 
