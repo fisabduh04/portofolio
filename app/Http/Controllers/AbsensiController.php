@@ -504,139 +504,7 @@ class AbsensiController extends Controller
         ));
     }
 
-    public function rekapBulanan(Request $request)
-    {
-        $kelasId = $request->input('kelas_id');
-        $month = $request->input('month', date('m'));
-        $year = $request->input('year', date('Y'));
-        $kategori = $request->input('kategori', 'mapel');
-        
-        $listKelas = Kelas::all();
-        $listPegawai = Pegawai::all();
-        $listMapel = Mapel::all();
-        $selectedKelas = $kelasId ? Kelas::find($kelasId) : null;
-        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-        
-        $rekapData = collect([]);
 
-        if ($kelasId) {
-             $tahunAktif = Tahun::aktif()->first();
-             $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
-                $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
-             })->orderBy('nama')->get();
-             $startDate = "$year-$month-01";
-             $endDate = "$year-$month-$daysInMonth";
-
-             // Ambil data presensi mentah dengan filter kategori
-             $absensis = Absensi::whereHas('siswa', function($q) use($kelasId, $tahunAktif){
-                 $q->whereHas('KelasSiswa', function($sq) use($kelasId, $tahunAktif){
-                     $sq->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
-                 });
-             })
-             ->whereHas('logbook', function($q) use ($startDate, $endDate, $kategori) {
-                 $q->whereBetween('tanggal', [$startDate, $endDate]);
-                 if ($kategori == 'mapel') {
-                     $q->where('kategori', 'mapel');
-                 } else {
-                     $q->whereIn('kategori', ['piket_masuk', 'piket_pulang']);
-                 }
-             })
-             ->get();
-
-             $rekapData = $students->map(function($student) use ($absensis, $daysInMonth, $year, $month) {
-                 $studentAbsensi = $absensis->where('siswa_id', $student->id);
-                 $days = [];
-                 $totals = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0];
-
-                 for($d=1; $d<=$daysInMonth; $d++) {
-                     $dateStr = sprintf('%s-%s-%02d', $year, $month, $d);
-                     
-                     $dailyRecords = $studentAbsensi->filter(function($item) use ($dateStr) {
-                         return $item->logbook->tanggal == $dateStr;
-                     });
-
-                     $status = null;
-                     if ($dailyRecords->count() > 0) {
-                         // Prioritas: Alpha > Sakit > Izin > Hadir
-                         if ($dailyRecords->contains('status', 'Alpha')) {
-                             $status = 'Alpha';
-                         } elseif ($dailyRecords->contains('status', 'Sakit')) {
-                             $status = 'Sakit';
-                         } elseif ($dailyRecords->contains('status', 'Izin')) {
-                             $status = 'Izin';
-                         } else {
-                             $status = 'Hadir';
-                         }
-                     }
-
-                     if($status && isset($totals[$status])) {
-                         $totals[$status]++;
-                     }
-
-                     $days[$d] = [
-                         'main_status' => $status
-                     ];
-                 }
-
-                 return [
-                     'id' => $student->id,
-                     'nama' => $student->nama,
-                     'days' => $days,
-                     'daily_totals' => $totals
-                 ];
-             });
-        }
-
-        return view('absensi.rekap_bulanan', compact(
-            'kelasId', 'month', 'year', 'kategori', 'listKelas', 'listPegawai', 'listMapel', 'selectedKelas', 'rekapData', 'daysInMonth'
-        ));
-    }
-
-    public function rekapTahunan(Request $request)
-    {
-        $kelasId = $request->input('kelas_id');
-        $tahunId = $request->input('tahun_id'); 
-        
-        $listKelas = Kelas::all();
-        $listTahun = Tahun::all(); 
-        
-        $selectedKelas = $kelasId ? Kelas::find($kelasId) : null;
-        $rekapData = collect([]);
-
-        if ($kelasId && $tahunId) {
-            $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunId) {
-                $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunId);
-            })->orderBy('nama')->get();
-            
-            $absensis = Absensi::whereHas('siswa', function($q) use($kelasId, $tahunId){
-                    $q->whereHas('KelasSiswa', function($sq) use($kelasId, $tahunId){
-                        $sq->where('kelas_id', $kelasId)->where('tahun_id', $tahunId);
-                    });
-                })
-                ->whereHas('logbook', function($q) use ($tahunId) {
-                    $q->whereHas('jadwal', function($sq) use ($tahunId) {
-                        $sq->where('tahun_id', $tahunId);
-                    });
-                })
-                ->get();
-
-             $rekapData = $students->map(function($student) use ($absensis) {
-                 $studentRecords = $absensis->where('siswa_id', $student->id);
-                 return (object) [
-                     'nama' => $student->nama,
-                     'nipd' => $student->nipd ?? '-',
-                     'hadir' => $studentRecords->where('status', 'Hadir')->count(),
-                     'sakit' => $studentRecords->where('status', 'Sakit')->count(),
-                     'izin' => $studentRecords->where('status', 'Izin')->count(),
-                     'alpha' => $studentRecords->where('status', 'Alpha')->count(),
-                 ];
-             });
-        }
-
-        return view('absensi.rekap_tahunan', compact(
-            'kelasId', 'tahunId', 'listKelas', 'listTahun', 'selectedKelas', 'rekapData'
-        ));
-    }
 
     public function rekapHarian(Request $request)
     {
@@ -889,8 +757,222 @@ class AbsensiController extends Controller
         return Excel::download(new \App\Exports\AbsensiExport($request->all(), 'bulanan'), 'rekap_bulanan_' . now()->format('Ymd') . '.xlsx');
     }
 
-    public function exportTahunan(Request $request)
+    public function rekapBulanan(Request $request)
     {
-        return Excel::download(new \App\Exports\AbsensiExport($request->all(), 'tahunan'), 'rekap_tahunan_' . now()->format('Ymd') . '.xlsx');
+        $kelasId = $request->input('kelas_id');
+        $month = $request->input('month', date('m'));
+        $year = $request->input('year', date('Y'));
+        $viewMode = $request->input('view_mode', 'sederhana'); // Default simple
+
+        $listKelas = Kelas::all();
+        $months = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni',
+            7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+        $years = range(date('Y'), 2020);
+        
+        $selectedKelas = $kelasId ? Kelas::find($kelasId) : null;
+        
+        $data = ['rekapData' => collect([]), 'summaryStats' => ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0], 'dates' => []];
+
+        if ($kelasId) {
+             $data = $this->getPrivateRekapBulananData($month, $year, $kelasId);
+        }
+
+        $rekapData = $data['rekapData'];
+        $summaryStats = $data['summaryStats'];
+        $dates = $data['dates'];
+
+        return view('absensi.rekap_bulanan', compact(
+            'kelasId', 'month', 'year', 'viewMode', 'listKelas', 'months', 'years', 'selectedKelas', 'rekapData', 'summaryStats', 'dates'
+        ));
+    }
+
+    public function rekapTahunan(Request $request) 
+    {
+        $kelasId = $request->input('kelas_id');
+        $year = $request->input('year', now()->year);
+        
+        $listKelas = Kelas::orderBy('kelas')->get();
+        $years = range(now()->year, now()->year - 5);
+        $months = range(1, 12);
+        
+        $rekapData = collect([]);
+        $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0];
+        $selectedKelas = null;
+
+        if ($kelasId) {
+             $data = $this->getPrivateRekapTahunanData($year, $kelasId);
+             $rekapData = $data['rekapData'];
+             $summaryStats = $data['summaryStats'];
+             $selectedKelas = Kelas::find($kelasId);
+        }
+
+        return view('absensi.rekap_tahunan', compact('rekapData', 'summaryStats', 'listKelas', 'years', 'year', 'kelasId', 'months', 'selectedKelas'));
+    }
+
+    public function exportRekapBulanan(Request $request)
+    {
+        $kelasId = $request->input('kelas_id');
+        $month = $request->input('month', now()->month);
+        $year = $request->input('year', now()->year);
+        $format = $request->input('format', 'excel');
+
+        if (!$kelasId) return back()->with('error', 'Pilih kelas terlebih dahulu.');
+
+        $data = $this->getPrivateRekapBulananData($month, $year, $kelasId);
+        $kelas = Kelas::find($kelasId);
+        $kelasName = $kelas ? $kelas->kelas : 'Semua Kelas';
+
+        if ($format === 'pdf') {
+             return view('absensi.print_rekap_bulanan', [
+                'rekapData' => $data['rekapData'],
+                'dates' => $data['dates'],
+                'month' => $month,
+                'year' => $year,
+                'kelas' => $kelasName
+            ]);
+        }
+        
+        return Excel::download(new \App\Exports\RekapBulananExport($data['rekapData'], $data['dates'], $month, $year, $kelasName), 'rekap_bulanan_' . $month . '_' . $year . '.xlsx');
+    }
+
+    public function exportRekapTahunan(Request $request)
+    {
+        $kelasId = $request->input('kelas_id');
+        $year = $request->input('year', now()->year);
+        $format = $request->input('format', 'excel');
+
+        if (!$kelasId) return back()->with('error', 'Pilih kelas terlebih dahulu.');
+
+         $data = $this->getPrivateRekapTahunanData($year, $kelasId);
+         $kelas = Kelas::find($kelasId);
+         $kelasName = $kelas ? $kelas->kelas : 'Semua Kelas';
+
+         if ($format === 'pdf') {
+             return view('absensi.print_rekap_tahunan', [
+                'rekapData' => $data['rekapData'],
+                'year' => $year,
+                'kelas' => $kelasName
+            ]);
+        }
+
+        return Excel::download(new \App\Exports\RekapTahunanExport($data['rekapData'], $year, $kelasName), 'rekap_tahunan_' . $year . '.xlsx');
+    }
+
+    private function getPrivateRekapBulananData($month, $year, $kelasId)
+    {
+        $tahunAktif = Tahun::aktif()->first();
+        $daysInMonth = \Carbon\Carbon::createFromDate($year, $month, 1)->daysInMonth;
+        $dates = range(1, $daysInMonth);
+        $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0];
+
+        $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
+            $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
+        })->orderBy('nama')->get();
+
+        $summaryStats['Total'] = $students->count();
+
+        // Corrected Query: Filter via Logbook relationship
+        $absensis = Absensi::with('logbook')
+            ->whereHas('logbook', function($q) use ($month, $year) {
+                $q->whereMonth('tanggal', $month)->whereYear('tanggal', $year);
+            })
+            ->whereHas('siswa.KelasSiswa', function($q) use ($kelasId, $tahunAktif) {
+                $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
+            })
+            ->get()
+            ->groupBy('siswa_id');
+
+        $rekapData = $students->map(function($student) use ($absensis, $dates, $year, $month, &$summaryStats) {
+                 $studentLogs = $absensis->get($student->id, collect([]));
+                 $dailyStatuses = [];
+                 $studentStats = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0];
+
+                 foreach ($dates as $day) {
+                     $dateStr = \Carbon\Carbon::createFromDate($year, $month, $day)->toDateString();
+                     
+                     // Corrected Filter: Check Logbook Date
+                     $logsForDay = $studentLogs->filter(function($log) use ($dateStr) {
+                        return $log->logbook && $log->logbook->tanggal === $dateStr;
+                     });
+
+                     $status = '-';
+                     if ($logsForDay->isNotEmpty()) {
+                         if ($logsForDay->contains('status', 'Alpha')) $status = 'Alpha';
+                         elseif ($logsForDay->contains('status', 'Sakit')) $status = 'Sakit';
+                         elseif ($logsForDay->contains('status', 'Izin')) $status = 'Izin';
+                         elseif ($logsForDay->contains('status', 'Hadir')) $status = 'Hadir';
+                     }
+                     
+                     $code = '-';
+                     if ($status == 'Hadir') { $code = 'H'; $studentStats['H']++; $summaryStats['Hadir']++; }
+                     elseif ($status == 'Sakit') { $code = 'S'; $studentStats['S']++; $summaryStats['Sakit']++; }
+                     elseif ($status == 'Izin') { $code = 'I'; $studentStats['I']++; $summaryStats['Izin']++; }
+                     elseif ($status == 'Alpha') { $code = 'A'; $studentStats['A']++; $summaryStats['Alpha']++; }
+
+                     $dailyStatuses[$day] = $code;
+                 }
+                 return (object) [
+                     'id' => $student->id, 'nama' => $student->nama,
+                     'statuses' => $dailyStatuses, 'stats' => $studentStats
+                 ];
+        });
+
+        return ['rekapData' => $rekapData, 'summaryStats' => $summaryStats, 'dates' => $dates];
+    }
+
+    private function getPrivateRekapTahunanData($year, $kelasId)
+    {
+        $tahunAktif = Tahun::aktif()->first();
+        $months = range(1, 12);
+        $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0];
+
+        $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
+            $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
+        })->orderBy('nama')->get();
+
+        $summaryStats['Total'] = $students->count();
+
+        // Corrected Query: Filter via Logbook relationship
+        $absensis = Absensi::with('logbook')
+            ->whereHas('logbook', function($q) use ($year) {
+                $q->whereYear('tanggal', $year);
+            })
+            ->whereHas('siswa.KelasSiswa', function($q) use ($kelasId, $tahunAktif) {
+                $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
+            })
+            ->get()
+            ->groupBy('siswa_id');
+
+        $rekapData = $students->map(function($student) use ($absensis, $months, &$summaryStats) {
+            $studentLogs = $absensis->get($student->id, collect([]));
+            $monthlyStats = [];
+            $totalStats = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0];
+
+            foreach ($months as $m) {
+                // Corrected Filter: Check Logbook Month
+                $logsMonth = $studentLogs->filter(function($log) use ($m) {
+                    return $log->logbook && \Carbon\Carbon::parse($log->logbook->tanggal)->month == $m;
+                });
+                $stats = [
+                    'H' => $logsMonth->where('status', 'Hadir')->count(),
+                    'S' => $logsMonth->where('status', 'Sakit')->count(),
+                    'I' => $logsMonth->where('status', 'Izin')->count(),
+                    'A' => $logsMonth->where('status', 'Alpha')->count(),
+                ];
+                $monthlyStats[$m] = $stats;
+                $totalStats['H'] += $stats['H']; $summaryStats['Hadir'] += $stats['H'];
+                $totalStats['S'] += $stats['S']; $summaryStats['Sakit'] += $stats['S'];
+                $totalStats['I'] += $stats['I']; $summaryStats['Izin'] += $stats['I'];
+                $totalStats['A'] += $stats['A']; $summaryStats['Alpha'] += $stats['A'];
+            }
+            return (object) [
+                'id' => $student->id, 'nama' => $student->nama,
+                'months' => $monthlyStats, 'total' => $totalStats
+            ];
+        });
+
+        return ['rekapData' => $rekapData, 'summaryStats' => $summaryStats];
     }
 }

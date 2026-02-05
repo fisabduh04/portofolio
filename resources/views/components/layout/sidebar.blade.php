@@ -13,6 +13,14 @@
                <span class="ms-3">Dashboard</span>
             </a>
          </li>
+         <li>
+            <a href="{{ route('sekolah.index') }}" class="flex items-center px-2 py-1.5 text-body rounded-base hover:bg-neutral-tertiary hover:text-fg-brand group">
+                               <svg class="w-5 h-5 transition duration-75 group-hover:text-fg-brand" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" />
+                </svg>
+               <span class="ms-3">Data Sekolah</span>
+            </a>
+         </li>
 
          <li>
              <a href="{{ route('operator.users.index') }}" class="flex items-center px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand">
@@ -36,9 +44,11 @@
                 </svg>
             </button>
             <ul id="dropdown-akademik" class="hidden py-2 space-y-2">
+
                 <li>
                     <a href="{{ route('tahun.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Tahun Akademik</a>
                 </li>
+
                 <li>
                     <a href="{{ route('jurusan.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Jurusan</a>
                 </li>

@@ -354,14 +354,14 @@
                                         </div>
                                     </th>
                                     
-                                    {{-- Status Verdict Badge --}}
+                                     {{-- Status Verdict Badge --}}
                                     <td class="px-6 py-4 text-center">
                                          @php
                                             $badgeClasses = match($data->daily_status) {
-                                                'Hadir' => 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800',
+                                                'Hadir' => 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
                                                 'Alpha' => 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
-                                                'Sakit' => 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800',
-                                                'Izin' => 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
+                                                'Sakit' => 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800',
+                                                'Izin' => 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800',
                                                 default => 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
                                             };
                                          @endphp
@@ -376,10 +376,10 @@
                                             @forelse($data->details as $index => $log)
                                                 @php
                                                     $sessionColor = match($log->status) {
-                                                        'Hadir' => 'bg-green-500 hover:bg-green-600 shadow-green-200',
+                                                        'Hadir' => 'bg-blue-500 hover:bg-blue-600 shadow-blue-200',
                                                         'Alpha' => 'bg-red-500 hover:bg-red-600 shadow-red-200',
-                                                        'Sakit' => 'bg-yellow-400 hover:bg-yellow-500 shadow-yellow-200',
-                                                        'Izin' => 'bg-blue-500 hover:bg-blue-600 shadow-blue-200',
+                                                        'Sakit' => 'bg-orange-400 hover:bg-orange-500 shadow-orange-200',
+                                                        'Izin' => 'bg-yellow-400 hover:bg-yellow-500 shadow-yellow-200',
                                                         default => 'bg-gray-400'
                                                     };
                                                     // Unique ID for Tooltip
@@ -399,7 +399,7 @@
                                                     <div class="text-xs space-y-0.5">
                                                         <p class="opacity-90">Guru: {{ $log->guru }}</p>
                                                         <p class="opacity-90">Jam: {{ $log->jam_ke }}</p>
-                                                        <p>Status: <span class="font-bold {{ $log->status == 'Alpha' ? 'text-red-300' : 'text-green-300' }}">{{ $log->status }}</span></p>
+                                                        <p>Status: <span class="font-bold {{ $log->status == 'Alpha' ? 'text-red-300' : 'text-blue-300' }}">{{ $log->status }}</span></p>
                                                         @if($log->is_piket_sub)
                                                             <p class="text-purple-300 mt-1 italic text-[10px]">Note: Guru Pengganti</p>
                                                         @endif
@@ -424,17 +424,17 @@
                                                 </span>
                                             @endif
                                             @if($data->stats['Sakit'] > 0) 
-                                                <span class="px-2 py-0.5 bg-yellow-50 text-yellow-600 rounded border border-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-900">
+                                                <span class="px-2 py-0.5 bg-orange-50 text-orange-600 rounded border border-orange-100 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-900">
                                                     {{ $data->stats['Sakit'] }} Sakit
                                                 </span>
                                             @endif
                                             @if($data->stats['Izin'] > 0) 
-                                                <span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900">
+                                                <span class="px-2 py-0.5 bg-yellow-50 text-yellow-600 rounded border border-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-900">
                                                     {{ $data->stats['Izin'] }} Izin
                                                 </span>
                                             @endif
                                             @if($data->stats['Hadir'] > 0)
-                                                <span class="px-2 py-0.5 bg-green-50 text-green-600 rounded border border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900">{{ $data->stats['Hadir'] }} Hadir</span>
+                                                <span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900">{{ $data->stats['Hadir'] }} Hadir</span>
                                             @endif
                                             @if(array_sum($data->stats) == 0)
                                                 <span class="text-gray-400">-</span>
@@ -458,10 +458,10 @@
                 </div>
 
                 <div class="mt-4 flex flex-wrap justify-end gap-x-6 gap-y-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-green-500 rounded-sm"></span> Hadir</div>
+                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-blue-500 rounded-sm"></span> Hadir</div>
                      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-red-500 rounded-sm"></span> Alpha</div>
-                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-yellow-400 rounded-sm"></span> Sakit</div>
-                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-blue-500 rounded-sm"></span> Izin</div>
+                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-orange-400 rounded-sm"></span> Sakit</div>
+                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-yellow-400 rounded-sm"></span> Izin</div>
                 </div>
             @endif
 

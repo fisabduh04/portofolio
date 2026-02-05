@@ -71,7 +71,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/absensi/rekap-harian', [AbsensiController::class, 'rekapHarian'])->name('absensi.rekap-harian');
         Route::get('/absensi/rekap-harian/export', [AbsensiController::class, 'exportRekapHarian'])->name('absensi.rekap-harian.export');
         Route::get('/absensi/rekap-bulanan', [AbsensiController::class, 'rekapBulanan'])->name('absensi.rekap-bulanan');
+        Route::get('/absensi/rekap-bulanan/export', [AbsensiController::class, 'exportRekapBulanan'])->name('absensi.rekap-bulanan.export');
         Route::get('/absensi/rekap-tahunan', [AbsensiController::class, 'rekapTahunan'])->name('absensi.rekap-tahunan');
+        Route::get('/absensi/rekap-tahunan/export', [AbsensiController::class, 'exportRekapTahunan'])->name('absensi.rekap-tahunan.export');
         Route::get('/absensi/export-harian', [AbsensiController::class, 'exportHarian'])->name('absensi.export-harian');
         Route::get('/absensi/export-bulanan', [AbsensiController::class, 'exportBulanan'])->name('absensi.export-bulanan');
         Route::get('/absensi/export-tahunan', [AbsensiController::class, 'exportTahunan'])->name('absensi.export-tahunan');
@@ -141,6 +143,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         // Kelas Siswa
         Route::get('/kelas-siswa-export', [KelasSiswaController::class, 'export'])->name('kelas-siswa-export');
         Route::post('kelas-siswa-import', [KelasSiswaController::class, 'import'])->name('kelas-siswa-import');
+        
+        // Sekolah (Data Induk)
+        Route::resource('sekolah', \App\Http\Controllers\SekolahController::class)->only(['index', 'store']);
         
         // MANAJEMEN USER (Operator/Admin)
         Route::prefix('users')->name('operator.users.')->group(function () {
