@@ -29,8 +29,7 @@
         <div>
             <x-breadcrumb :breadcrumbs="[
                 ['name' => 'Home', 'href' => route('dashboard.index')],
-                ['name' => 'Akademik', 'href' => '#'],
-                ['name' => 'Manajemen Akun', 'href' => route('operator.users.index')],
+                ['name' => 'Manajemen Akun', 'href' => '#'],
             ]" />
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Kelola akses, aktivasi akun, dan peran (role) pegawai dalam sistem.</p>
         </div>
@@ -78,8 +77,16 @@
                         </svg>
                     </div>
                     <input type="text" name="q" value="{{ $q }}" 
-                        class="block w-full p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                        class="block w-full p-2.5 ps-10 pr-36 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
                         placeholder="Cari Nama / Email / NUPTK..." oninput="this.form.submit()">
+                        
+                    {{-- Role Filter --}}
+                    <select name="filter_role" onchange="this.form.submit()" class="absolute right-0 top-0 h-full border-l border-gray-300 bg-gray-50 text-gray-900 text-sm rounded-r-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white w-32">
+                        <option value="" class="text-gray-500">Semua Role</option>
+                        @foreach(['admin', 'operator', 'guru', 'siswa', 'kepala'] as $rol)
+                            <option value="{{ $rol }}" {{ request('filter_role') == $rol ? 'selected' : '' }}>{{ ucfirst($rol) }}</option>
+                        @endforeach
+                    </select>
                 </form>
                 
                 <div class="flex items-center gap-2">
@@ -171,31 +178,6 @@
                                                     <svg class="w-2.5 h-2.5 opacity-60" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
                                                 @endif
                                             </button>
-
-                                            {{-- Dropdown for Role --}}
-                                            @if($canEdit)
-                                                <div id="roleDropdown-{{ $user->id }}" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-xl w-44 dark:bg-gray-700">
-                                                    <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                                                        @foreach(['admin','operator','guru','siswa','kepala'] as $r)
-                                                            @php
-                                                                // Hide role 'kepala' if auth is not kepala
-                                                                if ($r === 'kepala' && auth()->user()->role !== 'kepala') continue;
-                                                                // Hide roles higher than me (handled by backend but good UX to hide)
-                                                                // Keep it simple visually
-                                                            @endphp
-                                                            <li>
-                                                                <form action="{{ route('operator.users.update-role', $user->id) }}" method="POST">
-                                                                    @csrf @method('PATCH')
-                                                                    <input type="hidden" name="role" value="{{ $r }}">
-                                                                    <button type="submit" class="block w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white {{ $user->role === $r ? 'bg-gray-50 font-bold' : '' }}">
-                                                                        {{ ucfirst($r) }}
-                                                                    </button>
-                                                                </form>
-                                                            </li>
-                                                        @endforeach
-                                                    </ul>
-                                                </div>
-                                            @endif
                                         </div>
                                     @else
                                         <span class="text-xs text-gray-400 italic">Belum terdaftar</span>
@@ -330,4 +312,27 @@
             </div>
         </div>
     </section>
+    {{-- Dropdowns for Role Selection (Placed outside table to prevent clipping) --}}
+    @foreach ($pegawais as $p)
+        @php $user = $p->user; @endphp
+        @if($user && auth()->user()->can('manage', $user))
+            <div id="roleDropdown-{{ $user->id }}" class="z-50 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-xl w-44 dark:bg-gray-700">
+                <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+                    @foreach(['admin','operator','guru','siswa','kepala'] as $r)
+                        @php if ($r === 'kepala' && auth()->user()->role !== 'kepala') continue; @endphp
+                        <li>
+                            <form action="{{ route('operator.users.update-role', $user->id) }}" method="POST">
+                                @csrf @method('PATCH')
+                                <input type="hidden" name="role" value="{{ $r }}">
+                                <button type="submit" class="block w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white {{ $user->role === $r ? 'bg-gray-50 font-bold' : '' }}">
+                                    {{ ucfirst($r) }}
+                                </button>
+                            </form>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+    @endforeach
+
 </x-layout.layout>

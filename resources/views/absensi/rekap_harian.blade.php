@@ -1,166 +1,481 @@
 <x-layout.layout>
-<div class="container mx-auto px-4 py-8">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-            <x-breadcrumb :breadcrumbs="[
-                ['name' => 'Home', 'href' => route('dashboard.index')],
-                ['name' => 'Laporan Harian', 'href' => '#'],
-            ]" />
-            <h1 class="mt-2 text-2xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">Presensi Harian Seluruh Siswa</h1>
-            <p class="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">{{ \Carbon\Carbon::parse($date)->format('d F Y') }}</p>
-        </div>
-        <div class="flex items-center gap-3">
-             <x-btn href="{{ route('absensi.export-harian', request()->query()) }}" text="Export Excel" color="green" icon="save" size="sm" />
-             <a href="{{ route('absensi.rekap') }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                Kembali ke Laporan
-            </a>
-        </div>
-    </div>
-
-    {{-- Filter Bar --}}
-    <div class="p-6 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700 mb-8">
-        <form action="{{ route('absensi.rekap-harian') }}" method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="space-y-6">
+        {{-- Header --}}
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <label class="block mb-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Pilih Tanggal</label>
-                <input type="date" name="date" value="{{ $date }}" class="bg-gray-50 border border-gray-200 text-sm rounded-xl block w-full p-2.5 dark:bg-gray-900 dark:border-gray-700 dark:text-white">
+                <x-breadcrumb :breadcrumbs="[
+                    ['name' => 'Home', 'href' => route('dashboard.index')],
+                    ['name' => 'Rekapitulasi', 'href' => '#'],
+                    ['name' => 'Presensi Harian', 'href' => route('absensi.rekap-harian')],
+                ]" />
+                <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                    Rekapitulasi Presensi Harian
+                </h1>
+                <p class="text-gray-500 dark:text-gray-400">
+                    Monitoring kehadiran siswa dengan tampilan timeline visual.
+                </p>
             </div>
-
-            <div>
-                <label class="block mb-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Filter Kelas</label>
-                <select name="kelas_id" class="bg-gray-50 border border-gray-200 text-sm rounded-xl block w-full p-2.5 dark:bg-gray-900 dark:border-gray-700 dark:text-white">
-                    <option value="">Semua Kelas</option>
-                    @foreach($listKelas as $lk)
-                        <option value="{{ $lk->id }}" {{ $kelasId == $lk->id ? 'selected' : '' }}>{{ $lk->kelas }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="lg:col-span-2 flex items-end">
-                <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-lg shadow-primary-500/20">
-                    Tampilkan Data
+            @if($selectedKelas)
+            <div class="flex items-center gap-2">
+                 <button id="dropdownExportButton" data-dropdown-toggle="dropdownExport" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800 flex items-center gap-2" type="button">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Export Data
+                    <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
                 </button>
+                
+                <!-- Dropdown menu -->
+                <div id="dropdownExport" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
+                    <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownExportButton">
+                      <li>
+                        <a href="{{ route('absensi.rekap-harian.export', ['format' => 'excel'] + request()->all()) }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                                Export Excel
+                            </span>
+                        </a>
+                      </li>
+                      <li>
+                        <a href="{{ route('absensi.rekap-harian.export', ['format' => 'pdf'] + request()->all()) }}" target="_blank" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                             <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                Cetak PDF
+                            </span>
+                        </a>
+                      </li>
+                    </ul>
+                </div>
             </div>
-        </form>
-    </div>
-
-    {{-- Daily Status Table --}}
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-gray-50/50 dark:bg-gray-700/50 text-[10px] text-gray-400 uppercase font-black tracking-widest">
-                    <tr>
-                        <th class="px-6 py-4">Nama Siswa</th>
-                        <th class="px-6 py-4">Kelas</th>
-                        <th class="px-6 py-4 text-center">Sesi Terisi</th>
-                        <th class="px-6 py-4 text-center">Status Akhir Hari</th>
-                        <th class="px-6 py-4 text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                    @forelse($rekapData as $data)
-                    <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
-                        <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">{{ $data->nama }}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-[10px] font-bold text-gray-500">{{ $data->kelas }}</span>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $data->sessions }} Sesi</span>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            @if($data->status == 'Alpha')
-                                <span class="px-3 py-1 bg-rose-100 text-rose-800 rounded-lg text-[10px] font-black uppercase tracking-widest">Alpha</span>
-                            @elseif($data->status == 'Sakit')
-                                <span class="px-3 py-1 bg-orange-100 text-orange-800 rounded-lg text-[10px] font-black uppercase tracking-widest">Sakit</span>
-                            @elseif($data->status == 'Izin')
-                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-[10px] font-black uppercase tracking-widest">Izin</span>
-                            @elseif($data->status == 'Hadir')
-                                <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-[10px] font-black uppercase tracking-widest">Hadir</span>
-                            @else
-                                <span class="text-[10px] text-gray-300 font-bold uppercase tracking-widest italic">Belum Absensi</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <a href="#" class="text-primary-600 hover:text-primary-700 text-xs font-bold uppercase tracking-widest">Detail</a>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="5" class="px-6 py-20 text-center text-gray-400 font-bold uppercase tracking-widest">Data tidak tersedia untuk tanggal ini</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {{-- Detail Logs Table (Bottom) --}}
-    <div class="mt-12 mb-8">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white uppercase tracking-tight">Detail Jurnal Aktivitas Siswa</h2>
-                <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Rincian per mata pelajaran & sesi</p>
-            </div>
-            <div class="flex gap-2">
-                 <button onclick="document.getElementById('detail-table').classList.toggle('hidden')" class="px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50">
-                    Toggle View
-                </button>
-            </div>
+            @endif
         </div>
 
-        <div id="detail-table" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50/50 dark:bg-gray-700/50 text-[10px] text-gray-400 uppercase font-black tracking-widest">
-                        <tr>
-                            <th class="px-6 py-4">Waktu</th>
-                            <th class="px-6 py-4">Siswa</th>
-                            <th class="px-6 py-4">Mata Pelajaran</th>
-                            <th class="px-6 py-4">Guru</th>
-                            <th class="px-6 py-4 text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                        @forelse($detailLogs as $log)
-                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
-                            <td class="px-6 py-4">
-                                <span class="text-xs font-bold text-gray-500">{{ $log->logbook->jadwal->mulai ?? '-' }} - {{ $log->logbook->jadwal->akhir ?? '-' }}</span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-bold text-gray-900 dark:text-white">{{ $log->siswa->nama }}</span>
-                                    <span class="text-[10px] text-gray-400 font-bold">{{ $log->siswa->kelas->kelas ?? '-' }}</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                                    {{ $log->logbook->jadwal->mapel->nama_mapel ?? 'N/A' }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="text-xs text-gray-600 dark:text-gray-300">{{ $log->logbook->jadwal->pegawai->nama ?? '-' }}</span>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                @if($log->status == 'Alpha')
-                                    <span class="px-3 py-1 bg-rose-100 text-rose-800 rounded-lg text-[10px] font-black uppercase tracking-widest">A</span>
-                                @elseif($log->status == 'Sakit')
-                                    <span class="px-3 py-1 bg-orange-100 text-orange-800 rounded-lg text-[10px] font-black uppercase tracking-widest">S</span>
-                                @elseif($log->status == 'Izin')
-                                    <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-[10px] font-black uppercase tracking-widest">I</span>
-                                @elseif($log->status == 'Hadir')
-                                    <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-[10px] font-black uppercase tracking-widest">H</span>
-                                @else
-                                    <span class="text-[10px] text-gray-300 font-bold uppercase tracking-widest italic">-</span>
-                                @endif
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-gray-400 font-bold uppercase tracking-widest">Belum ada data detail untuk tanggal ini</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+        {{-- Filter Section --}}
+        <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+            <div class="mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                    Filter & Pencarian
+                </h3>
             </div>
+            <form action="{{ route('absensi.rekap-harian') }}" method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+                {{-- Tanggal --}}
+                <div class="lg:col-span-1">
+                    <label for="date" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Tanggal</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                            </svg>
+                        </div>
+                        <input type="date" name="date" id="date" value="{{ $date }}" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    </div>
+                </div>
+
+                {{-- Kelas --}}
+                <div class="lg:col-span-1">
+                    <label for="kelas_id" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Kelas</label>
+                    <select id="kelas_id" name="kelas_id" required
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <option value="">-- Pilih Kelas --</option>
+                        @foreach($listKelas as $lk)
+                            <option value="{{ $lk->id }}" @selected($kelasId == $lk->id)>{{ $lk->kelas }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Tipe Guru --}}
+                <div class="lg:col-span-1">
+                    <label for="type_guru" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Tipe Guru</label>
+                    <select id="type_guru" name="type_guru"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <option value="">Semua Tipe</option>
+                        <option value="mapel" @selected($typeGuru == 'mapel')>Guru Mata Pelajaran</option>
+                        <option value="piket" @selected($typeGuru == 'piket')>Guru Piket Harian</option>
+                    </select>
+                </div>
+
+                {{-- Guru (Opsional) --}}
+                <div class="lg:col-span-1">
+                    <label for="pegawai_id" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Nama Guru</label>
+                    <select id="pegawai_id" name="pegawai_id"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <option value="">-- Semua Guru --</option>
+                        @foreach($listPegawai as $lp)
+                            <option value="{{ $lp->id }}" @selected($pegawaiId == $lp->id)>{{ $lp->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                 {{-- Tampilan (View Mode) --}}
+                 <div class="lg:col-span-1">
+                    <label for="view_mode" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Mode Tampilan</label>
+                    <select id="view_mode" name="view_mode"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <option value="sederhana" @selected($viewMode == 'sederhana')>Sederhana (Visual)</option>
+                        <option value="detail" @selected($viewMode == 'detail')>Detail (Statistik Siswa)</option>
+                    </select>
+                </div>
+
+                {{-- Submit Group --}}
+                <div class="lg:col-span-1">
+                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 w-full dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-shadow">
+                        <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                        </svg>
+                        Tampilkan
+                    </button>
+                </div>
+            </form>
         </div>
+
+        @if($selectedKelas)
+            {{-- Statistik Cards (Modern Design) --}}
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {{-- Total Siswa --}}
+                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-gray-600 bg-gray-100 rounded-lg dark:bg-gray-700 dark:text-gray-300">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
+                            Total Siswa
+                        </p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Total'] }}</h3>
+                    </div>
+                </div>
+                
+                {{-- Hadir --}}
+                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-green-600 bg-green-100 rounded-lg dark:bg-green-900/30 dark:text-green-300">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
+                            Hadir
+                        </p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Hadir'] }}</h3>
+                    </div>
+                </div>
+
+                {{-- Sakit --}}
+                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-yellow-600 bg-yellow-100 rounded-lg dark:bg-yellow-900/30 dark:text-yellow-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
+                            Sakit
+                        </p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Sakit'] }}</h3>
+                    </div>
+                </div>
+
+                {{-- Izin --}}
+                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-blue-600 bg-blue-100 rounded-lg dark:bg-blue-900/30 dark:text-blue-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
+                            Izin
+                        </p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Izin'] }}</h3>
+                    </div>
+                </div>
+
+                {{-- Alpha --}}
+                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-red-600 bg-red-100 rounded-lg dark:bg-red-900/30 dark:text-red-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
+                            Alpha
+                        </p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Alpha'] }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Main Logic Explanation (Dismissible Alert) --}}
+            @if($summaryStats['Alpha'] > 0)
+            <div id="alert-additional-content-2" class="p-4 mb-4 text-red-800 border border-red-300 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800" role="alert">
+                <div class="flex items-center">
+                    <svg class="flex-shrink-0 w-4 h-4 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                    </svg>
+                    <span class="sr-only">Info</span>
+                    <h3 class="text-lg font-medium">Perhatian: Terdeteksi {{$summaryStats['Alpha']}} Siswa Alpha</h3>
+                </div>
+                <div class="mt-2 text-sm">
+                    Status harian dihitung secara ketat: Jika siswa memiliki <b>minimal 1 Sesi Alpha</b>, maka status harian otomatis dianggap <b>Alpha</b>.
+                </div>
+            </div>
+            @endif
+
+            {{-- VIEW CONDITIONAL --}}
+            @if($viewMode == 'detail')
+                 {{-- MODE DETAIL: TABEL STATISTIK SISWA (Quantifiable) --}}
+                 <div class="relative overflow-hidden bg-white border border-gray-200 shadow-sm sm:rounded-lg dark:bg-gray-800 dark:border-gray-700">
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                        <h3 class="font-bold text-gray-900 dark:text-white">Rincian Statistik Kehadiran Siswa</h3>
+                        <p class="text-xs text-gray-500">Jumlah kehadiran per status (Hadir, Sakit, Izin, Alpha) untuk hari ini.</p>
+                    </div>
+                     <table class="w-full text-sm text-center text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                            <tr>
+                                <th scope="col" class="px-6 py-4 text-left font-semibold tracking-wider">Siswa</th>
+                                <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20">Hadir</th>
+                                <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20">Sakit</th>
+                                <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20">Izin</th>
+                                <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20">Alpha</th>
+                                <th scope="col" class="px-6 py-4 text-left font-semibold tracking-wider">Detail Ketidakhadiran</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            @forelse($rekapData as $data)
+                                <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-200">
+                                     <th scope="row" class="px-6 py-4 text-left font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
+                                        {{ $data->nama }}
+                                    </th>
+                                    <td class="px-4 py-4">
+                                        @if($data->stats['Hadir'] > 0)
+                                            <span class="inline-flex items-center justify-center w-8 h-8 text-sm font-bold text-green-800 bg-green-100 rounded-full dark:bg-green-900 dark:text-green-300 border border-green-200">
+                                                {{ $data->stats['Hadir'] }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-300">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        @if($data->stats['Sakit'] > 0)
+                                            <span class="inline-flex items-center justify-center w-8 h-8 text-sm font-bold text-yellow-800 bg-yellow-100 rounded-full dark:bg-yellow-900 dark:text-yellow-300 border border-yellow-200">
+                                                {{ $data->stats['Sakit'] }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-300">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        @if($data->stats['Izin'] > 0)
+                                            <span class="inline-flex items-center justify-center w-8 h-8 text-sm font-bold text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300 border border-blue-200">
+                                                {{ $data->stats['Izin'] }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-300">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        @if($data->stats['Alpha'] > 0)
+                                            <span class="inline-flex items-center justify-center w-8 h-8 text-sm font-bold text-red-800 bg-red-100 rounded-full dark:bg-red-900 dark:text-red-300 border border-red-200 animate-pulse">
+                                                {{ $data->stats['Alpha'] }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-300">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-left text-xs">
+                                        @php
+                                            $alphaDetails = $data->details->where('status', 'Alpha');
+                                            $sakitDetails = $data->details->where('status', 'Sakit');
+                                            $izinDetails  = $data->details->where('status', 'Izin');
+                                            $hasDetails   = $alphaDetails->count() > 0 || $sakitDetails->count() > 0 || $izinDetails->count() > 0;
+                                        @endphp
+
+                                        @if($hasDetails)
+                                            <div class="flex flex-col gap-2 items-start">
+                                                {{-- Alpha --}}
+                                                @foreach($alphaDetails as $log)
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800">
+                                                        <span class="font-bold">{{ $log->mapel }}</span>
+                                                        <span class="font-normal opacity-80">({{ $log->guru }})</span>
+                                                    </span>
+                                                @endforeach
+
+                                                {{-- Sakit --}}
+                                                @foreach($sakitDetails as $log)
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-full border border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800">
+                                                        <span class="font-bold">{{ $log->mapel }}</span>
+                                                        <span class="font-normal opacity-80">({{ $log->guru }})</span>
+                                                    </span>
+                                                @endforeach
+
+                                                {{-- Izin --}}
+                                                @foreach($izinDetails as $log)
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
+                                                        <span class="font-bold">{{ $log->mapel }}</span>
+                                                        <span class="font-normal opacity-80">({{ $log->guru }})</span>
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-gray-300 text-xs italic">-</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500 bg-white dark:bg-gray-800">
+                                        Tidak ada data siswa.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+            @else
+                {{-- MODE SEDERHANA: VISUAL TIMELINE TABLE (Flowbite v4 Premium Style) --}}
+                <div class="relative overflow-hidden bg-white border border-gray-200 shadow-sm sm:rounded-lg dark:bg-gray-800 dark:border-gray-700">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                            <tr>
+                                <th scope="col" class="px-6 py-4 font-semibold tracking-wider">Siswa</th>
+                                <th scope="col" class="px-6 py-4 font-semibold tracking-wider text-center w-32">Status</th>
+                                <th scope="col" class="px-6 py-4 font-semibold tracking-wider">Timeline Aktivitas</th>
+                                <th scope="col" class="px-6 py-4 font-semibold tracking-wider text-right">Resume</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            @forelse($rekapData as $data)
+                                <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-200">
+                                    {{-- Nama Siswa --}}
+                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex flex-col">
+                                                <span class="text-sm font-semibold">{{ $data->nama }}</span>
+                                                @if($data->daily_status == 'Alpha')
+                                                    <span class="inline-flex items-center gap-1 mt-0.5 text-[10px] font-bold text-red-600 uppercase tracking-wide">
+                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/></svg>
+                                                        Perlu Tindakan
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </th>
+                                    
+                                    {{-- Status Verdict Badge --}}
+                                    <td class="px-6 py-4 text-center">
+                                         @php
+                                            $badgeClasses = match($data->daily_status) {
+                                                'Hadir' => 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800',
+                                                'Alpha' => 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
+                                                'Sakit' => 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800',
+                                                'Izin' => 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
+                                                default => 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
+                                            };
+                                         @endphp
+                                         <span class="{{ $badgeClasses }} text-xs font-semibold px-3 py-1 rounded-full border shadow-sm">
+                                            {{ $data->daily_status }}
+                                         </span>
+                                    </td>
+
+                                    {{-- Visual Timeline --}}
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            @forelse($data->details as $index => $log)
+                                                @php
+                                                    $sessionColor = match($log->status) {
+                                                        'Hadir' => 'bg-green-500 hover:bg-green-600 shadow-green-200',
+                                                        'Alpha' => 'bg-red-500 hover:bg-red-600 shadow-red-200',
+                                                        'Sakit' => 'bg-yellow-400 hover:bg-yellow-500 shadow-yellow-200',
+                                                        'Izin' => 'bg-blue-500 hover:bg-blue-600 shadow-blue-200',
+                                                        default => 'bg-gray-400'
+                                                    };
+                                                    // Unique ID for Tooltip
+                                                    $tooltipId = 'tooltip-'.$data->id.'-'.$index;
+                                                @endphp
+                                                
+                                                {{-- Interactive Dot/Block --}}
+                                                <div data-tooltip-target="{{ $tooltipId }}" class="group relative cursor-pointer">
+                                                    <div class="h-8 w-2 md:w-8 md:h-8 rounded-md {{ $sessionColor }} flex items-center justify-center text-white text-[10px] font-bold shadow-sm transition-all duration-200 ease-in-out hover:scale-110 hover:shadow-md ring-1 ring-white/20">
+                                                        <span class="hidden md:inline">{{ substr($log->status, 0, 1) }}</span>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Tooltip Content --}}
+                                                <div id="{{ $tooltipId }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+                                                    <div class="font-bold border-b border-gray-600 pb-1 mb-1">{{ $log->mapel }}</div>
+                                                    <div class="text-xs space-y-0.5">
+                                                        <p class="opacity-90">Guru: {{ $log->guru }}</p>
+                                                        <p class="opacity-90">Jam: {{ $log->jam_ke }}</p>
+                                                        <p>Status: <span class="font-bold {{ $log->status == 'Alpha' ? 'text-red-300' : 'text-green-300' }}">{{ $log->status }}</span></p>
+                                                        @if($log->is_piket_sub)
+                                                            <p class="text-purple-300 mt-1 italic text-[10px]">Note: Guru Pengganti</p>
+                                                        @endif
+                                                    </div>
+                                                    <div class="tooltip-arrow" data-popper-arrow></div>
+                                                </div>
+                                            @empty
+                                                <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-md text-gray-400 text-xs dark:bg-gray-700/50 dark:border-gray-600">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                    <span>Belum ada sesi</span>
+                                                </div>
+                                            @endforelse
+                                        </div>
+                                    </td>
+
+                                    {{-- Ringkasan Text --}}
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex flex-col items-end gap-1.5 text-xs font-medium">
+                                            @if($data->stats['Alpha'] > 0) 
+                                                <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded border border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900">
+                                                    {{ $data->stats['Alpha'] }} Alpha
+                                                </span>
+                                            @endif
+                                            @if($data->stats['Sakit'] > 0) 
+                                                <span class="px-2 py-0.5 bg-yellow-50 text-yellow-600 rounded border border-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-900">
+                                                    {{ $data->stats['Sakit'] }} Sakit
+                                                </span>
+                                            @endif
+                                            @if($data->stats['Izin'] > 0) 
+                                                <span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900">
+                                                    {{ $data->stats['Izin'] }} Izin
+                                                </span>
+                                            @endif
+                                            @if($data->stats['Hadir'] > 0)
+                                                <span class="px-2 py-0.5 bg-green-50 text-green-600 rounded border border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900">{{ $data->stats['Hadir'] }} Hadir</span>
+                                            @endif
+                                            @if(array_sum($data->stats) == 0)
+                                                <span class="text-gray-400">-</span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="px-6 py-12 text-center text-gray-500 bg-white dark:bg-gray-800">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            <p class="text-base font-medium">Tidak ada data ditampilkan</p>
+                                            <p class="text-sm text-gray-400">Pilih kelas atau sesuaikan filter di atas</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 flex flex-wrap justify-end gap-x-6 gap-y-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-green-500 rounded-sm"></span> Hadir</div>
+                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-red-500 rounded-sm"></span> Alpha</div>
+                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-yellow-400 rounded-sm"></span> Sakit</div>
+                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-blue-500 rounded-sm"></span> Izin</div>
+                </div>
+            @endif
+
+        @else
+            {{-- Empty State --}}
+             <div class="flex flex-col items-center justify-center p-12 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                </svg>
+                <h3 class="mb-2 text-lg font-medium text-gray-900 dark:text-white">Silakan Pilih Kelas</h3>
+                <p class="text-gray-500 dark:text-gray-400 text-center max-w-sm">
+                    Pilih kelas dan kriteria lainnya di atas untuk menampilkan timeline presensi harian.
+                </p>
+            </div>
+        @endif
     </div>
-</div>
 </x-layout.layout>

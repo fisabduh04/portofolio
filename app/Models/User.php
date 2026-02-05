@@ -20,6 +20,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'pegawai_id',
+        'is_active',
+        'foto',
+        'username',
     ];
 
     /**
@@ -43,5 +48,31 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    public function pegawai()
+    {
+        return $this->belongsTo(Pegawai::class);
+    }
+
+    public function isPiketToday()
+    {
+        if (in_array($this->role, ['admin', 'operator', 'kepala'])) {
+            return true;
+        }
+
+        if (!$this->pegawai_id) {
+            return false;
+        }
+
+        // Cek JadwalPiket hari ini
+        $hariIni = \Carbon\Carbon::now()->locale('id')->isoFormat('dddd');
+        $tahunAktif = \App\Models\Tahun::aktif()->first();
+
+        if (!$tahunAktif) return false;
+
+        return \App\Models\JadwalPiket::where('pegawai_id', $this->pegawai_id)
+            ->where('hari', $hariIni)
+            ->where('tahun_id', $tahunAktif->id)
+            ->exists();
     }
 }

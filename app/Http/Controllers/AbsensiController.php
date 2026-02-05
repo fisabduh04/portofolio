@@ -11,27 +11,38 @@ use App\Models\Kelas;
 use App\Models\KelasSiswa;
 use App\Models\Logbook;
 use App\Models\User;
+use App\Models\Tahun;
+use App\Models\Pegawai;
+use App\Models\Mapel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use App\Exports\RekapHarianExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AbsensiController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Menampilkan daftar sumber daya.
      */
     public function index()
     {
         $users = User::paginate(10);
-        return view('absensi.index',compact('users'));       
+        return view('absensi.index', compact('users'));       
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Menampilkan formulir untuk membuat sumber daya baru.
      */
     public function create(Request $request)
     {
         $jadwalId = $request->query('jadwal_id');
+        $mode = $request->query('mode', 'mapel'); // 'mapel' atau 'piket'
+        $date = $request->query('date', now()->toDateString()); // Default date: Today
+        
+        if ($mode === 'piket' && !auth()->user()->isPiketToday()) {
+             return redirect()->back()->with('error', 'Akses ditolak. Anda bukan guru piket hari ini.');
+        }
         
         if (!$jadwalId) {
             return redirect()->back()->with('error', 'Pilih jadwal terlebih dahulu.');
@@ -39,10 +50,16 @@ class AbsensiController extends Controller
 
         $jadwal = Jadwal::with(['kelas', 'mapel', 'pegawai'])->findOrFail($jadwalId);
         
-        // Cek apakah sudah ada logbook untuk jadwal ini hari ini
+        // Tentukan kategori berdasarkan mode
+        // Guru Mapel Normal -> 'mapel'
+        // Guru Piket (Pengganti) -> 'piket_sub'
+        $kategori = ($mode === 'piket') ? 'piket_sub' : 'mapel';
+
+        // Cek apakah sudah ada logbook untuk kategori ini
         $existingLogbook = Logbook::with(['absensis', 'jadwal'])
             ->where('jadwal_id', $jadwalId)
-            ->where('tanggal', now()->toDateString())
+            ->where('tanggal', $date)
+            ->where('kategori', $kategori) 
             ->first();
 
         // Ambil daftar siswa berdasarkan kelas dan tahun ajaran dari jadwal
@@ -51,11 +68,11 @@ class AbsensiController extends Controller
               ->where('tahun_id', $jadwal->tahun_id);
         })->orderBy('nama')->get();
 
-        return view('absensi.input', compact('jadwal', 'students', 'existingLogbook'));
+        return view('absensi.input', compact('jadwal', 'students', 'existingLogbook', 'mode', 'kategori', 'date'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Menyimpan sumber daya baru ke dalam penyimpanan.
      */
     public function store(Request $request)
     {
@@ -67,21 +84,44 @@ class AbsensiController extends Controller
             'attendance.*.status' => 'required|in:Hadir,Sakit,Izin,Alpha',
             'attendance.*.keterangan' => 'nullable|string',
             'foto.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'kategori' => 'required|in:mapel,piket_sub', // Validasi kategori
+            'tanggal' => 'required|date',
         ]);
+
+        $user = auth()->user();
+        
+        // --- AUTO-FIX: Coba hubungkan akun Admin/Operator ke Pegawai jika belum ada ---
+        if (!$user->pegawai_id && in_array($user->role, ['admin', 'operator', 'kepala'])) {
+            $matchingPegawai = Pegawai::where('email', $user->email) // Prioritas 1: Email sama
+                ->orWhere('name', 'LIKE', $user->name)               // Prioritas 2: Nama mirip
+                ->first();
+                
+            if ($matchingPegawai) {
+                $user->update(['pegawai_id' => $matchingPegawai->id]);
+                $user->refresh(); // Refresh model agar pegawai_id terisi
+                // Lanjut proses di bawah...
+            }
+        }
+        
+        if (!$user->pegawai_id) {
+            return redirect()->back()->with('type', 'error')->with('message', 'Akun anda tidak terhubung dengan data pegawai. Mohon hubungkan akun Anda dengan data pegawai di menu Manajemen Akun atau hubungi Developer.');
+        }
 
         try {
             DB::beginTransaction();
 
             $jadwal = Jadwal::findOrFail($request->jadwal_id);
+            $date = $request->input('tanggal', now()->toDateString());
 
-            // Cek Existing Logbook (Mode Edit/Update)
+            // Cek Logbook yang sudah ada (Mode Edit/Update) berdasarkan Kategori dan Tanggal
             $logbook = Logbook::where('jadwal_id', $jadwal->id)
-                ->where('tanggal', now()->toDateString())
+                ->where('tanggal', $date)
+                ->where('kategori', $request->kategori)
                 ->first();
 
-            // 1. Handle Photo Uploads
+            // 1. Tangani Unggah Foto
             $photos = [];
-            // Jika update, ambil foto lama dulu
+            // Jika update, ambil foto lama terlebih dahulu
             if ($logbook && $logbook->foto) {
                 $photos = json_decode($logbook->foto, true) ?? [];
             }
@@ -92,29 +132,30 @@ class AbsensiController extends Controller
                 }
             }
 
-            // 2. Create or Update Logbook
+            // 2. Buat atau Perbarui Logbook
             if ($logbook) {
-                // UPDATE
+                // PERBARUI
                 $logbook->update([
                     'materi' => $request->materi,
                     'catatan' => $request->catatan,
                     'foto' => json_encode($photos),
+                    'pegawai_id' => $user->pegawai_id, // Perbarui ke pelaksana saat ini
                 ]);
             } else {
-                // CREATE
+                // BUAT
                 $logbook = Logbook::create([
-                    'kategori' => 'mapel',
+                    'kategori' => $request->kategori, // Simpan kategori spesifik
                     'jadwal_id' => $jadwal->id,
                     'kelas_id' => $jadwal->kelas_id,
-                    'pegawai_id' => $jadwal->pegawai_id,
-                    'tanggal' => now()->toDateString(),
+                    'pegawai_id' => $user->pegawai_id, 
+                    'tanggal' => $date,
                     'materi' => $request->materi,
                     'catatan' => $request->catatan,
                     'foto' => json_encode($photos),
                 ]);
             }
 
-            // 3. Update/Create Student Attendance Entries
+            // 3. Perbarui/Buat Entri Presensi Siswa
             foreach ($request->attendance as $siswaId => $data) {
                 Absensi::updateOrCreate(
                     [
@@ -130,11 +171,11 @@ class AbsensiController extends Controller
 
             DB::commit();
 
-        $redirectTo = $request->input('redirect_to', route('jadwal.index'));
+            $redirectTo = $request->input('redirect_to', route('jadwal.index'));
 
-        return redirect($redirectTo)
-            ->with('type', 'success')
-            ->with('message', 'Presensi berhasil disimpan.');
+            return redirect($redirectTo)
+                ->with('type', 'success')
+                ->with('message', 'Presensi berhasil disimpan.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -146,8 +187,157 @@ class AbsensiController extends Controller
         }
     }
 
+    // --- PRESENSI HARIAN (PIKET) ---
+    public function createHarian(Request $request)
+    {
+        if (!auth()->user()->isPiketToday()) abort(403, 'Akses ditolak. Anda bukan guru piket hari ini.');
+
+        $kelasId = $request->query('kelas_id');
+        $type = $request->query('type', 'masuk'); // masuk atau pulang
+        
+        if (!$kelasId) {
+            return redirect()->back()->with('error', 'Pilih kelas terlebih dahulu.');
+        }
+
+        $kelas = Kelas::findOrFail($kelasId);
+        
+        // Cari jadwal untuk dikaitkan (Syarat: jadwal_id tidak boleh null)
+        // Kita ambil jadwal pertama hari ini untuk kelas tersebut
+        $jadwal = Jadwal::where('kelas_id', $kelasId)
+            ->where('hari', now()->locale('id')->isoFormat('dddd'))
+            ->orderBy('mulai')
+            ->first();
+
+        // Jika tidak ada jadwal hari ini, kita tidak bisa membuat entri logbook tanpa modifikasi DB
+        if (!$jadwal) {
+             return redirect()->back()->with('error', 'Tidak ada jadwal pelajaran untuk kelas ini hari ini (' . now()->locale('id')->isoFormat('dddd') . '). Absensi harian membutuhkan minimal 1 jadwal aktif.');
+        }
+
+        // Kategori: piket_masuk / piket_pulang
+        $kategori = 'piket_' . $type;
+
+        // Cek logbook harian
+        $existingLogbook = Logbook::with(['absensis'])
+            ->where('kelas_id', $kelasId)
+            ->where('tanggal', now()->toDateString())
+            ->where('kategori', $kategori)
+            ->first();
+
+        // Ambil Siswa Aktif di Kelas
+        $tahunAktif = Tahun::aktif()->first();
+        $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
+            $q->where('kelas_id', $kelasId)
+              ->where('tahun_id', $tahunAktif->id);
+        })->orderBy('nama')->get();
+
+        return view('absensi.harian.create', compact('kelas', 'students', 'existingLogbook', 'type', 'kategori', 'jadwal'));
+    }
+
+    public function storeHarian(Request $request)
+    {
+        if (!auth()->user()->isPiketToday()) abort(403, 'Akses ditolak.');
+
+         $request->validate([
+            'kelas_id' => 'required|exists:kelas,id',
+            'kategori' => 'required|in:piket_masuk,piket_pulang',
+            'attendance' => 'required|array',
+            'attendance.*.status' => 'required|in:Hadir,Sakit,Izin,Alpha',
+            'catatan' => 'nullable|string',
+        ]);
+
+        $user = auth()->user();
+        if (!$user->pegawai_id) {
+            return redirect()->back()->with('type', 'error')->with('message', 'Akun anda tidak terhubung dengan data pegawai.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+             // Cari jadwal untuk dikaitkan
+            $jadwal = Jadwal::where('kelas_id', $request->kelas_id)
+                ->where('hari', now()->locale('id')->isoFormat('dddd'))
+                ->orderBy('mulai')
+                ->first();
+
+            if (!$jadwal) {
+                 throw new \Exception('Tidak ada jadwal hari ini untuk dikaitkan.');
+            }
+
+            // Cek Logbook
+            $logbook = Logbook::with('absensis')
+                ->where('kelas_id', $request->kelas_id)
+                ->where('tanggal', now()->toDateString())
+                ->where('kategori', $request->kategori)
+                ->first();
+
+            // Tangani Unggah Foto
+            $photos = [];
+            if ($logbook && $logbook->foto) {
+                $photos = json_decode($logbook->foto, true) ?? [];
+            }
+
+            if ($request->hasFile('foto')) {
+                foreach ($request->file('foto') as $file) {
+                    $photos[] = $file->store('absensi/foto_harian', 'public');
+                }
+            }
+
+            if ($logbook) {
+                // Perbarui
+                $logbook->update([
+                    'catatan' => $request->catatan,
+                    'foto' => json_encode($photos),
+                    'pegawai_id' => $user->pegawai_id,
+                ]);
+            } else {
+                // Buat
+                $logbook = Logbook::create([
+                    'kategori' => $request->kategori,
+                    'jadwal_id' => $jadwal->id,
+                    'kelas_id' => $request->kelas_id,
+                    'pegawai_id' => $user->pegawai_id,
+                    'tanggal' => now()->toDateString(),
+                    'materi' => ($request->kategori == 'piket_masuk' ? 'Absensi Masuk' : 'Absensi Pulang'),
+                    'catatan' => $request->catatan,
+                    'foto' => json_encode($photos),
+                ]);
+            }
+
+            foreach ($request->attendance as $siswaId => $data) {
+                Absensi::updateOrCreate(
+                    [
+                        'logbook_id' => $logbook->id,
+                        'siswa_id' => $siswaId,
+                    ],
+                    [
+                        'status' => $data['status'],
+                        'keterangan' => $data['keterangan'] ?? null,
+                    ]
+                );
+            }
+
+            DB::commit();
+
+            return redirect()->route('absensi.harian.index')
+                ->with('type', 'success')
+                ->with('message', 'Presensi Harian Berhasil Disimpan.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('type', 'error')->with('message', 'Gagal: ' . $e->getMessage());
+        }
+    }
+
+    public function indexHarian()
+    {
+        if (!auth()->user()->isPiketToday()) abort(403, 'Akses ditolak.');
+
+        $kelas = Kelas::orderBy('kelas')->get();
+        return view('absensi.harian.index', compact('kelas'));
+    }
+
     /**
-     * Display the specified resource.
+     * Menampilkan sumber daya yang ditentukan.
      */
     public function show(Absensi $absensi)
     {
@@ -155,7 +345,7 @@ class AbsensiController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Menampilkan formulir untuk mengedit sumber daya yang ditentukan.
      */
     public function edit(Absensi $absensi)
     {
@@ -163,7 +353,7 @@ class AbsensiController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Memperbarui sumber daya yang ditentukan di penyimpanan.
      */
     public function update(Request $request, Absensi $absensi)
     {
@@ -171,7 +361,7 @@ class AbsensiController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Menghapus sumber daya yang ditentukan dari penyimpanan.
      */
     public function destroy(Absensi $absensi)
     {
@@ -188,6 +378,7 @@ class AbsensiController extends Controller
 
         $listKelas = Kelas::all();
         $listPegawai = Pegawai::all();
+        $listMapel = Mapel::all();
 
         if ($view == 'detail') {
             $query = Logbook::with(['jadwal.pegawai', 'jadwal.mapel', 'kelas', 'pegawai', 'absensis']);
@@ -201,8 +392,8 @@ class AbsensiController extends Controller
             }
 
             if ($kategori) {
-                // If kategori is mapel, we likely want to see subject logs
-                // If kategori is piket, we want to see piket_masuk/piket_pulang
+                // Jika kategori adalah mapel, kita ingin melihat log mata pelajaran
+                // Jika kategori adalah piket, kita ingin melihat piket_masuk/piket_pulang
                 if ($kategori == 'mapel') {
                     $query->where('kategori', 'mapel');
                 } else {
@@ -219,12 +410,14 @@ class AbsensiController extends Controller
             ));
         }
 
-        // --- SUMMARY VIEW LOGIC ---
+        // --- LOGIKA TAMPILAN RINGKASAN ---
         $query = Absensi::with(['siswa.kelas', 'logbook.jadwal.pegawai', 'logbook.jadwal.mapel']);
 
         if ($filterKelasId) {
             $query->whereHas('siswa', function($q) use ($filterKelasId) {
-                $q->where('kelas_id', $filterKelasId);
+                $q->whereHas('KelasSiswa', function($kq) use ($filterKelasId) {
+                    $kq->where('kelas_id', $filterKelasId);
+                });
             });
         }
 
@@ -245,7 +438,7 @@ class AbsensiController extends Controller
 
         $absensiData = $query->get();
 
-        // Calculate Stats
+        // Hitung Statistik
         $stats = [
             'Hadir' => $absensiData->where('status', 'Hadir')->count(),
             'Sakit' => $absensiData->where('status', 'Sakit')->count(),
@@ -254,7 +447,7 @@ class AbsensiController extends Controller
         ];
         $totalAbsensi = $absensiData->count();
 
-        // Daily Trend
+        // Tren Harian
         $dailyTrend = $absensiData->groupBy(function($item) {
             return $item->logbook->tanggal;
         })->map(function ($dayGroup, $date) {
@@ -292,9 +485,9 @@ class AbsensiController extends Controller
             ->sortByDesc('total_jurnal')
             ->values();
 
-         // Rekap Kelas Performance
+         // Rekap Performa Kelas
          $rekapKelas = $absensiData->groupBy(function($item) {
-             return $item->siswa->kelas->kelas ?? 'Unknown';
+             return $item->siswa->kelas->first()->kelas ?? 'Unknown';
          })->map(function ($group, $kelasName) {
              return (object) [
                  'kelas' => $kelasName,
@@ -305,7 +498,7 @@ class AbsensiController extends Controller
          })->values();
 
         return view('absensi.rekap', compact(
-            'view', 'kategori', 'filterKelasId', 'filterPegawaiId', 'listKelas', 'listPegawai',
+            'view', 'kategori', 'filterKelasId', 'filterPegawaiId', 'listKelas', 'listPegawai', 'listMapel',
             'stats', 'totalAbsensi', 'dailyTrend', 'topAlpha', 'rekapGuru', 'rekapKelas',
             'startDate', 'endDate'
         ));
@@ -316,24 +509,37 @@ class AbsensiController extends Controller
         $kelasId = $request->input('kelas_id');
         $month = $request->input('month', date('m'));
         $year = $request->input('year', date('Y'));
+        $kategori = $request->input('kategori', 'mapel');
         
         $listKelas = Kelas::all();
+        $listPegawai = Pegawai::all();
+        $listMapel = Mapel::all();
         $selectedKelas = $kelasId ? Kelas::find($kelasId) : null;
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
         
         $rekapData = collect([]);
 
         if ($kelasId) {
-             $students = Siswa::where('kelas_id', $kelasId)->orderBy('nama')->get();
+             $tahunAktif = Tahun::aktif()->first();
+             $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
+                $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
+             })->orderBy('nama')->get();
              $startDate = "$year-$month-01";
              $endDate = "$year-$month-$daysInMonth";
 
-             // Get raw attendance
-             $absensis = Absensi::whereHas('siswa', function($q) use($kelasId){
-                 $q->where('kelas_id', $kelasId);
+             // Ambil data presensi mentah dengan filter kategori
+             $absensis = Absensi::whereHas('siswa', function($q) use($kelasId, $tahunAktif){
+                 $q->whereHas('KelasSiswa', function($sq) use($kelasId, $tahunAktif){
+                     $sq->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
+                 });
              })
-             ->whereHas('logbook', function($q) use ($startDate, $endDate) {
+             ->whereHas('logbook', function($q) use ($startDate, $endDate, $kategori) {
                  $q->whereBetween('tanggal', [$startDate, $endDate]);
+                 if ($kategori == 'mapel') {
+                     $q->where('kategori', 'mapel');
+                 } else {
+                     $q->whereIn('kategori', ['piket_masuk', 'piket_pulang']);
+                 }
              })
              ->get();
 
@@ -351,7 +557,7 @@ class AbsensiController extends Controller
 
                      $status = null;
                      if ($dailyRecords->count() > 0) {
-                         // Priority: Alpha > Sakit > Izin > Hadir
+                         // Prioritas: Alpha > Sakit > Izin > Hadir
                          if ($dailyRecords->contains('status', 'Alpha')) {
                              $status = 'Alpha';
                          } elseif ($dailyRecords->contains('status', 'Sakit')) {
@@ -382,7 +588,7 @@ class AbsensiController extends Controller
         }
 
         return view('absensi.rekap_bulanan', compact(
-            'kelasId', 'month', 'year', 'listKelas', 'selectedKelas', 'rekapData', 'daysInMonth'
+            'kelasId', 'month', 'year', 'kategori', 'listKelas', 'listPegawai', 'listMapel', 'selectedKelas', 'rekapData', 'daysInMonth'
         ));
     }
 
@@ -398,10 +604,14 @@ class AbsensiController extends Controller
         $rekapData = collect([]);
 
         if ($kelasId && $tahunId) {
-            $students = Siswa::where('kelas_id', $kelasId)->orderBy('nama')->get();
+            $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunId) {
+                $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunId);
+            })->orderBy('nama')->get();
             
-            $absensis = Absensi::whereHas('siswa', function($q) use($kelasId){
-                    $q->where('kelas_id', $kelasId);
+            $absensis = Absensi::whereHas('siswa', function($q) use($kelasId, $tahunId){
+                    $q->whereHas('KelasSiswa', function($sq) use($kelasId, $tahunId){
+                        $sq->where('kelas_id', $kelasId)->where('tahun_id', $tahunId);
+                    });
                 })
                 ->whereHas('logbook', function($q) use ($tahunId) {
                     $q->whereHas('jadwal', function($sq) use ($tahunId) {
@@ -432,60 +642,191 @@ class AbsensiController extends Controller
     {
         $date = $request->input('date', date('Y-m-d'));
         $kelasId = $request->input('kelas_id');
+        $pegawaiId = $request->input('pegawai_id');
+        $typeGuru = $request->input('type_guru'); // 'mapel' or 'piket'
+        $viewMode = $request->input('view_mode', 'sederhana');
         
-        $listKelas = Kelas::all();
-        $query = Siswa::with(['kelas', 'absensis' => function($q) use ($date) {
-            $q->whereHas('logbook', function($l) use ($date) {
-                $l->where('tanggal', $date);
-            });
-        }]);
+        $listKelas = Kelas::orderBy('kelas')->get();
+        $listPegawai = Pegawai::orderBy('name')->get();
+        
+        $selectedKelas = $kelasId ? Kelas::find($kelasId) : null;
+        
+        $rekapData = collect([]);
+        $summaryStats = [
+            'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Total' => 0
+        ];
 
-        if ($kelasId) {
-            $query->where('kelas_id', $kelasId);
+        if ($request->has('kelas_id')) {
+            $data = $this->getPrivateRekapData($date, $kelasId, $pegawaiId, $typeGuru);
+            $rekapData = $data['rekapData'];
+            $summaryStats = $data['summaryStats'];
+            
+            // Re-calculate Summary Stats from the processed collection
+            // Because extract method returns collection, but we need aggregated stats
+            // Actually, let's just recalculate them from the collection to be safe and simple
+            $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Total' => 0]; // Reset for recalculation
+             foreach ($rekapData as $student) {
+                if ($student->daily_status != '-') {
+                     $summaryStats[$student->daily_status]++;
+                }
+                $summaryStats['Total']++;
+            }
         }
 
-        $students = $query->orderBy('kelas_id')->orderBy('nama')->get();
+        return view('absensi.rekap_harian', compact('listKelas', 'listPegawai', 'rekapData', 'summaryStats', 'date', 'kelasId', 'pegawaiId', 'typeGuru', 'selectedKelas', 'viewMode'));
+    }
 
-        $rekapData = $students->map(function($student) {
-            $absensis = $student->absensis;
-            $status = null;
-            if ($absensis->count() > 0) {
-                if ($absensis->contains('status', 'Alpha')) $status = 'Alpha';
-                elseif ($absensis->contains('status', 'Sakit')) $status = 'Sakit';
-                elseif ($absensis->contains('status', 'Izin')) $status = 'Izin';
-                else $status = 'Hadir';
-            }
-            return (object) [
-                'nama' => $student->nama,
-                'kelas' => $student->kelas->kelas ?? '-',
-                'status' => $status,
-                'sessions' => $absensis->count()
-            ];
-        });
+    public function exportRekapHarian(Request $request)
+    {
+        $date = $request->input('date', date('Y-m-d'));
+        $kelasId = $request->input('kelas_id');
+        $pegawaiId = $request->input('pegawai_id');
+        $typeGuru = $request->input('type_guru');
+        $format = $request->input('format', 'excel');
 
-        // Query for Separate Detail Table (Bottom View)
-        $detailLogs = Absensi::with(['siswa.kelas', 'logbook.jadwal.mapel', 'logbook.jadwal.pegawai'])
-            ->whereHas('logbook', function($q) use ($date) {
-                $q->where('tanggal', $date);
-            })
-            ->when($kelasId, function($q) use ($kelasId) {
-                $q->whereHas('siswa', function($s) use ($kelasId) {
-                    $s->where('kelas_id', $kelasId);
-                });
-            })
-            ->orderByDesc('created_at')
-            ->get();
+        if (!$kelasId) {
+            return back()->with('error', 'Silakan pilih kelas terlebih dahulu.');
+        }
 
-        return view('absensi.rekap_harian', compact('date', 'kelasId', 'listKelas', 'rekapData', 'detailLogs'));
+        $data = $this->getPrivateRekapData($date, $kelasId, $pegawaiId, $typeGuru);
+        $rekapData = $data['rekapData'];
+        $kelas = Kelas::find($kelasId);
+        $kelasName = $kelas ? $kelas->kelas : 'Semua Kelas';
+
+        if ($format === 'pdf') {
+            return view('absensi.print_rekap_harian', [
+                'rekapData' => $rekapData,
+                'date' => $date,
+                'kelas' => $kelasName
+            ]);
+        }
+
+        return Excel::download(new RekapHarianExport($rekapData, $date, $kelasName), 'rekap_harian_' . $date . '.xlsx');
+    }
+
+    private function getPrivateRekapData($date, $kelasId, $pegawaiId, $typeGuru)
+    {
+        $rekapData = collect([]);
+        $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Total' => 0];
+
+        if ($kelasId) {
+            $tahunAktif = Tahun::aktif()->first();
+            
+            // 1. Ambil Siswa
+            $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
+                $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
+            })->orderBy('nama')->get();
+
+            // 2. Ambil Absensi
+            $absensis = Absensi::with(['logbook.jadwal.mapel', 'logbook.jadwal.pegawai', 'logbook.pegawai'])
+                ->whereHas('siswa', function($q) use ($kelasId, $tahunAktif) {
+                        $q->whereHas('KelasSiswa', function($sq) use ($kelasId, $tahunAktif) {
+                            $sq->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
+                        });
+                })
+                ->whereHas('logbook', function($q) use ($date, $pegawaiId, $typeGuru) {
+                    $q->where('tanggal', $date);
+                    
+                    // Filter Pegawai Spesifik
+                    if ($pegawaiId) {
+                        $q->where('pegawai_id', $pegawaiId);
+                    }
+
+                    // Filter Tipe Guru (Mapel vs Piket)
+                    if ($typeGuru === 'mapel') {
+                        // Kategori 'mapel' atau 'piket_sub' (karena piket_sub adalah guru pengganti mapel)
+                        $q->whereIn('kategori', ['mapel', 'piket_sub']);
+                    } elseif ($typeGuru === 'piket') {
+                        // Piket Harian Murni
+                        $q->whereIn('kategori', ['piket_masuk', 'piket_pulang']);
+                    }
+                })
+                ->get();
+
+            // 3. Proses Data
+            $rekapData = $students->map(function($student) use ($absensis) {
+                $studentLogs = $absensis->where('siswa_id', $student->id);
+                
+                $stats = [
+                    'Hadir' => $studentLogs->where('status', 'Hadir')->count(),
+                    'Sakit' => $studentLogs->where('status', 'Sakit')->count(),
+                    'Izin' =>  $studentLogs->where('status', 'Izin')->count(),
+                    'Alpha' => $studentLogs->where('status', 'Alpha')->count(),
+                ];
+
+                $details = $studentLogs->map(function($log) {
+                    $kategori = $log->logbook->kategori;
+                    $mapel = '-';
+                    $guru = $log->logbook->pegawai->name ?? '-';
+                    $isPiketSub = false;
+
+                    if ($kategori == 'mapel') {
+                        $mapel = $log->logbook->jadwal->mapel->mapel ?? 'Mapel';
+                    } elseif ($kategori == 'piket_sub') {
+                        $mapel = ($log->logbook->jadwal->mapel->mapel ?? 'Mapel') . ' (Guru Pengganti)';
+                        $isPiketSub = true;
+                    } elseif ($kategori == 'piket_masuk') {
+                        $mapel = 'Piket Masuk';
+                    } elseif ($kategori == 'piket_pulang') {
+                        $mapel = 'Piket Pulang';
+                    }
+
+                    return (object) [
+                        'jam_ke' => $log->logbook->jadwal->mulai ?? '-',
+                        'mapel' => $mapel,
+                        'guru' => $guru,
+                        'status' => $log->status,
+                        'catatan' => $log->logbook->catatan,
+                        'is_piket_sub' => $isPiketSub
+                    ];
+                })->sortBy('jam_ke');
+
+                // Logic Verdict Strict
+                $dailyStatus = 'Hadir'; 
+                
+                if ($stats['Alpha'] > 0) {
+                    $dailyStatus = 'Alpha';
+                } elseif ($stats['Sakit'] > 0) {
+                    $dailyStatus = 'Sakit';
+                } elseif ($stats['Izin'] > 0) {
+                    $dailyStatus = 'Izin';
+                } elseif ($studentLogs->count() == 0) {
+                    $dailyStatus = '-';
+                }
+
+                // Collect subjects for non-present statuses
+                $statDetails = [
+                    'Alpha' => $details->where('status', 'Alpha')->pluck('mapel')->unique()->values()->toArray(),
+                    'Sakit' => $details->where('status', 'Sakit')->pluck('mapel')->unique()->values()->toArray(),
+                    'Izin' => $details->where('status', 'Izin')->pluck('mapel')->unique()->values()->toArray(),
+                ];
+
+                return (object) [
+                    'id' => $student->id,
+                    'nama' => $student->nama,
+                    'daily_status' => $dailyStatus,
+                    'stats' => $stats,
+                    'stat_details' => $statDetails,
+                    'details' => $details
+                ];
+            });
+        }
+        
+        return ['rekapData' => $rekapData, 'summaryStats' => $summaryStats];
     }
 
     public function piket()
     {
+        if (!auth()->user()->isPiketToday()) {
+             return redirect()->route('dashboard.index')->with('error', 'Akses ditolak. Anda bukan guru piket hari ini.');
+        }
         return view('absensi.piket');
     }
 
     public function piketCheckIn(Request $request)
     {
+        if (!auth()->user()->isPiketToday()) abort(403);
+
         $request->validate([
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -512,6 +853,8 @@ class AbsensiController extends Controller
 
     public function piketCheckOut(Request $request)
     {
+        if (!auth()->user()->isPiketToday()) abort(403);
+
         $request->validate([
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);

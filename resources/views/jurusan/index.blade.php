@@ -1,6 +1,7 @@
 <x-layout.layout>
     <x-breadcrumb :breadcrumbs="[
         ['name' => 'Home', 'href' => route('dashboard.index')],
+        ['name' => 'Akademik', 'href' => '#'],
         ['name' => 'Jurusan', 'href' => route('jurusan.index')]
     ]" />
 

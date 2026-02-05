@@ -3,8 +3,8 @@
         <div>
             <x-breadcrumb :breadcrumbs="[
                 ['name' => 'Home', 'href' => route('dashboard.index')],
-                ['name' => 'Akademik', 'href' => '#'],
-                ['name' => 'Jadwal Guru Piket', 'href' => route('jadwal-piket.index')],
+                ['name' => 'Jadwal', 'href' => '#'],
+                ['name' => 'Jadwal Piket', 'href' => route('jadwal-piket.index')],
             ]" />
             <p class="text-xs font-medium text-gray-500 ml-1 mt-1">Tahun Ajaran: {{ $tahunAktif->tahun ?? '-' }} {{ $tahunAktif->semester ?? '' }}</p>
         </div>

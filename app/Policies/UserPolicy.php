@@ -34,8 +34,8 @@ class UserPolicy
             return true;
         }
 
-        // 4. General Rule: Actor must have Strictly Higher rank than Target
-        return $actorRank > $targetRank;
+        // 4. General Rule: Actor must have Higher OR Equal rank than Target
+        return $actorRank >= $targetRank;
     }
     
     // Alias for updating role

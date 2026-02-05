@@ -28,6 +28,11 @@ class UserProvisioningController extends Controller
                         ->orWhere('nuptk', 'like', "%{$q}%");
                 });
             })
+            ->when($request->filter_role, function ($query) use ($request) {
+                 $query->whereHas('user', function ($q) use ($request) {
+                     $q->where('role', $request->filter_role);
+                 });
+            })
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();
@@ -57,10 +62,10 @@ class UserProvisioningController extends Controller
         $targetRank = $this->getRank($data['role']);
         $myRank     = $this->getRank($request->user()->role);
 
-        // Jika Rank saya lebih kecil atau sama dengan Rank yang mau dibuat, TOLAK.
+        // Jika Rank saya lebih kecil dari Rank yang mau dibuat, TOLAK.
         // Kecuali saya adalah 'kepala'.
-        if ($myRank <= $targetRank && $request->user()->role !== 'kepala') {
-             return back()->with('error', 'Anda tidak memiliki wewenang untuk membuat user dengan role setara atau lebih tinggi.');
+        if ($myRank < $targetRank && $request->user()->role !== 'kepala') {
+             return back()->with('error', 'Anda tidak memiliki wewenang untuk membuat user dengan role lebih tinggi dari Anda.');
         }
 
         // Cek apakah pegawai ini sudah punya akun sebelumnya?
@@ -141,8 +146,8 @@ class UserProvisioningController extends Controller
         $newRoleRank = $this->getRank($data['role']);
         $myRank      = $this->getRank($request->user()->role);
 
-        if ($request->user()->role !== 'kepala' && $myRank <= $newRoleRank) {
-             return back()->with('error', 'Tindakan Ditolak: Anda tidak bisa menaikkan role ke tingkat yang setara atau lebih tinggi dari Anda.');
+        if ($request->user()->role !== 'kepala' && $myRank < $newRoleRank) {
+             return back()->with('error', 'Tindakan Ditolak: Anda tidak bisa menaikkan role ke tingkat yang lebih tinggi dari Anda.');
         }
 
         $user->update(['role' => $data['role']]);

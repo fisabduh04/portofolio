@@ -1,8 +1,8 @@
 <x-layout.layout>
     <x-breadcrumb :breadcrumbs="[
         ['name' => 'Home', 'href' => route('dashboard.index')],
-        ['name' => 'Akademik', 'href' => ''],
-        ['name' => 'Presensi Harian', 'href' => route('jadwal.presensiHarian')],
+        ['name' => 'Presensi', 'href' => '#'],
+        ['name' => 'Presensi Siswa', 'href' => route('jadwal.presensiHarian')],
     ]" />
 
     <div class="mt-8">
@@ -58,7 +58,7 @@
             <div>
                 Menampilkan jadwal untuk hari <span class="font-bold">{{ $dayName }}</span>, tanggal <span class="font-bold">{{ \Carbon\Carbon::parse($date)->isoFormat('D MMMM Y') }}</span>.
                 @if(auth()->user()->role == 'guru')
-                    @if(isset($isPiket) && $isPiket)
+                    @if(isset($isPiket) && $isPiket && $viewMode == 'all')
                         <span class="font-bold text-indigo-700 dark:text-indigo-400">[MODE GURU PIKET]</span> Anda melihat seluruh jadwal sekolah. <br class="hidden sm:inline">
                         <span class="text-xs font-normal text-gray-600 dark:text-gray-400 mt-1 block sm:inline">
                             Jadwal mengajar Anda ditandai dengan label <span class="px-1.5 py-0.5 text-[10px] font-bold text-indigo-700 bg-indigo-100 rounded border border-indigo-200">KELAS SAYA</span> dan border biru.
@@ -94,7 +94,7 @@
                                 <th scope="col" class="px-6 py-4 rounded-tl-lg">Jam / Waktu</th>
                                 <th scope="col" class="px-6 py-4">Kelas</th>
                                 <th scope="col" class="px-6 py-4">Mata Pelajaran</th>
-                                @if(auth()->user()->role != 'guru' || (isset($isPiket) && $isPiket))
+                                @if(auth()->user()->role != 'guru' || (isset($isPiket) && $isPiket && $viewMode == 'all'))
                                     <th scope="col" class="px-6 py-4">Guru Pengajar</th>
                                 @endif
                                 <th scope="col" class="px-6 py-4">Status Presensi</th>
@@ -139,7 +139,7 @@
                                         <div class="text-xs text-gray-500 mt-1 italic">{{ Str::limit($jadwal->ket, 30) }}</div>
                                     @endif
                                 </td>
-                                @if(auth()->user()->role != 'guru' || (isset($isPiket) && $isPiket))
+                                @if(auth()->user()->role != 'guru' || (isset($isPiket) && $isPiket && $viewMode == 'all'))
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-2">
                                             <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300">

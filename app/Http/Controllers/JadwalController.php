@@ -35,12 +35,19 @@ class JadwalController extends Controller
     public function index(Request $request)
     {
         try {
-            $sort = $request->input('sort', 'hari');
-            $direction = $request->input('direction', 'desc');
-            $perpage = $request->input('per_Page', 10);
+            $sort = $request->input('sort');
+            if (empty($sort)) {
+                $sort = 'hari';
+            }
+            $direction = $request->input('direction');
+            if (empty($direction) || !in_array(strtolower($direction), ['asc', 'desc'])) {
+                $direction = 'asc'; // Default to asc for easier reading, or desc based on preference
+            }
+            $perpage = $request->input('per_page', 10);
             $search = $request->input('search', '');
             $filter_tahun = $request->input('filter_tahun', null);
             $filter_kelas = $request->input('filter_kelas', null);
+            $filter_hari = $request->input('filter_hari', null);
 
             $tahun = Cache::remember('dropdown_tahun', 3600, function () {
                 return Tahun::aktif()->select('id', 'tahun', 'semester')->get();
@@ -90,6 +97,10 @@ class JadwalController extends Controller
                 $query->where('kelas_id', $filter_kelas);
             }
 
+            if (!empty($filter_hari) && $filter_hari !== 'all') {
+                $query->where('hari', $filter_hari);
+            }
+
             if ($sort === 'kelas') {
                 $query->join('kelas', 'kelas.id', '=', 'jadwals.kelas_id')
                       ->orderBy('kelas.kelas', $direction)
@@ -102,6 +113,9 @@ class JadwalController extends Controller
                 $query->join('mapels', 'mapels.id', '=', 'jadwals.mapel_id')
                       ->orderBy('mapels.mapel', $direction)
                       ->select('jadwals.*');
+            } elseif ($sort === 'hari') {
+                // Custom sort for Days of Week (Chronological)
+                $query->orderByRaw("FIELD(hari, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu') $direction");
             } else {
                 $query->orderBy($sort, $direction);
             }
@@ -132,7 +146,7 @@ class JadwalController extends Controller
         // --------------------------------------------------
 
         return view('jadwal.index', compact(
-            'tahun','kelas','filter_kelas','filter_tahun',
+            'tahun','kelas','filter_kelas','filter_tahun','filter_hari',
             'mapel','hari','pegawai','jadwals',
             'sort','direction','perpage','search',
             'jadwalBentrokIds', 

@@ -121,15 +121,23 @@
      * Bridge: Menangkap Session Laravel
      */
     window.addEventListener('load', () => {
-        // Cara Lama
+        // Safe PHP-to-JS Injection using json_encode
+        
+        // 1. Handle standard 'message' key
         @if(session()->has('message'))
-            window.notif("{{ session('message') }}", "{{ session('type', 'success') }}");
+            window.notif(
+                {!! json_encode(session('message')) !!}, 
+                {!! json_encode(session('type', 'success')) !!}
+            );
         @endif
 
-        // Shorthand with('success', ...)
+        // 2. Handle shorthand keys (success, error, warning, info)
         @foreach(['success', 'error', 'warning', 'info'] as $type)
             @if(session()->has($type) && $type !== 'message')
-                window.notif("{{ session($type) }}", "{{ $type }}");
+                window.notif(
+                    {!! json_encode(session($type)) !!}, 
+                    {!! json_encode($type) !!}
+                );
             @endif
         @endforeach
     });

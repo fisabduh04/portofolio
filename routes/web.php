@@ -69,6 +69,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::middleware(['role:kepala,admin,operator'])->group(function () {
         Route::get('/absensi/rekap', [AbsensiController::class, 'rekap'])->name('absensi.rekap');
         Route::get('/absensi/rekap-harian', [AbsensiController::class, 'rekapHarian'])->name('absensi.rekap-harian');
+        Route::get('/absensi/rekap-harian/export', [AbsensiController::class, 'exportRekapHarian'])->name('absensi.rekap-harian.export');
         Route::get('/absensi/rekap-bulanan', [AbsensiController::class, 'rekapBulanan'])->name('absensi.rekap-bulanan');
         Route::get('/absensi/rekap-tahunan', [AbsensiController::class, 'rekapTahunan'])->name('absensi.rekap-tahunan');
         Route::get('/absensi/export-harian', [AbsensiController::class, 'exportHarian'])->name('absensi.export-harian');
@@ -80,16 +81,20 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/absensi/piket', [AbsensiController::class, 'piket'])->name('absensi.piket');
         Route::post('/absensi/piket/check-in', [AbsensiController::class, 'piketCheckIn'])->name('absensi.piket.check-in');
         Route::post('/absensi/piket/check-out', [AbsensiController::class, 'piketCheckOut'])->name('absensi.piket.check-out');
+
+
     });
 
     // 3. AKSES KHUSUS GURU & ADMIN (Presensi) - MOVED UP TO FIX ROUTE PRECEDENCE
     Route::middleware(['role:guru,admin,operator,kepala'])->group(function () {
         Route::get('/jadwal', [JadwalController::class, 'index'])->name('jadwal.index');
         Route::get('/jadwal/presensi-harian', [JadwalController::class, 'presensiHarianGuru'])->name('jadwal.presensiHarian');
+        // Absensi Harian Routes (Guru Piket)
+        Route::get('/absensi/harian', [AbsensiController::class, 'indexHarian'])->name('absensi.harian.index');
+        Route::get('/absensi/harian/create', [AbsensiController::class, 'createHarian'])->name('absensi.harian.create');
+        Route::post('/absensi/harian', [AbsensiController::class, 'storeHarian'])->name('absensi.harian.store');
+
         Route::resource('absensi', AbsensiController::class);
-        
-        // Guru Piket Actions
-        Route::get('/absensi/piket', [AbsensiController::class, 'piket'])->name('absensi.piket');
     });
 
     // 4. AKSES KHUSUS ADMIN & OPERATOR (Manajemen Data Master)

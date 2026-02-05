@@ -29,4 +29,9 @@ class Siswa extends Model
         ->withPivot('tahun_id')
         ->withTimestamps();
     }
+
+    public function absensis()
+    {
+        return $this->hasMany(Absensi::class);
+    }
 }

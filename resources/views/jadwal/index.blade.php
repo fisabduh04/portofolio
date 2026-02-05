@@ -1,8 +1,8 @@
 <x-layout.layout>
     <x-breadcrumb :breadcrumbs="[
-        ['name' => 'Home', 'href' => ''],
-        ['name' => 'Akademik', 'href' => ''],
-        ['name' => 'Jadwal Mata Pelajaran', 'href' => 'jadwal'],
+        ['name' => 'Home', 'href' => route('dashboard.index')],
+        ['name' => 'Jadwal', 'href' => '#'],
+        ['name' => 'Jadwal Mata Pelajaran', 'href' => route('jadwal.index')],
     ]" />
 
 
@@ -34,12 +34,28 @@
     @endif
 
     {{-- Main Content --}}
-    <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-base overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-base shadow-sm mt-4">
+        <div class="p-4 sm:p-6">
         
         {{-- Header Section --}}
-        <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4 border-b border-gray-200 dark:border-gray-700">
-            <div class="w-full md:w-auto">
-                <span class="text-sm font-medium text-gray-500 dark:text-gray-400 font-sans">Total Data: {{ $jadwals->total() }}</span>
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+            <div class="w-full md:w-auto flex items-center gap-2">
+                <form action="{{ route('jadwal.index') }}" method="GET" class="flex items-center gap-2">
+                    {{-- Keep other filters --}}
+                    @foreach(request()->except(['per_page', 'page']) as $key => $value)
+                        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                    @endforeach
+                    
+                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Show</span>
+                    <select name="per_page" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block py-1 px-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        @foreach([10, 25, 50, 100] as $p)
+                            <option value="{{ $p }}" {{ request('per_page', 10) == $p ? 'selected' : '' }}>{{ $p }}</option>
+                        @endforeach
+                    </select>
+                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">entries</span>
+                </form>
+                <div class="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-2"></div>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400 font-sans">Total: {{ $jadwals->total() }}</span>
             </div>
             <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
                 {{-- Primary Action: Tambah --}}
@@ -58,38 +74,9 @@
             </div>
         </div>
 
-        {{-- Panel Setup Data Baru (Slide Down) --}}
-        <div id="tahunbulk" class="hidden bg-gray-50 p-4 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600 transition-all">
-            <div class="flex items-center gap-2 mb-4">
-                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">1</div>
-                <h4 class="font-bold text-sm text-gray-800 dark:text-white">Setup Data Baru</h4>
-            </div>
-            
-            <div class="flex flex-col md:flex-row gap-4 items-end">
-                <div class="w-full md:w-1/3">
-                    <label for="tahun_bulk" class="block mb-2 text-xs font-semibold text-gray-900 dark:text-white">Pilih Tahun Ajaran Default</label>
-                    <select id="tahun_bulk" name="tahun_id" form="bulkFormJadwal"
-                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                        <option value="">-- Pilih Tahun Ajaran --</option>
-                        @foreach ($tahun as $t)
-                            <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
-                                {{ $t->tahun }} - {{ $t->semester }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                     <x-btn type="submit" form="bulkFormJadwal" id="btnSimpanBarisBaru" text="Simpan Semua Baris" icon="check" color="green" />
-                </div>
-            </div>
-        </div>
-
-
-        {{-- Secondary Toolbar --}}
-        <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-            {{-- Right: Search & Filters --}}
-            <div class="w-full flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-                <form action="/jadwal" method="GET" id="searchForm" class="flex flex-wrap items-center w-full gap-3">
+        {{-- Filters & Search Section --}}
+        <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 mb-6">
+             <form action="/jadwal" method="GET" id="searchForm" class="flex flex-wrap items-center w-full gap-3">
                     {{-- Search --}}
                     <div class="relative w-full md:w-auto md:flex-1">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -105,7 +92,7 @@
                     {{-- Filter Tahun --}}
                     <select id="tahun" name="filter_tahun" onchange="this.form.submit()"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-32 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <option value="">Tahun</option>
+                        <option value="" {{ request('filter_tahun') == '' ? 'selected' : '' }}>Semua Tahun</option>
                         @foreach ($tahun as $t)
                             <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
                                 {{ $t->tahun }}
@@ -116,13 +103,28 @@
                     {{-- Filter Kelas --}}
                     <select id="kelas" name="filter_kelas" onchange="this.form.submit()"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-32 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <option value="">Kelas</option>
+                        <option value="" {{ request('filter_kelas') == '' ? 'selected' : '' }}>Semua Kelas</option>
                         @foreach ($kelas as $k)
                             <option value="{{ $k->id }}" {{ request('filter_kelas') == $k->id ? 'selected' : '' }}>
                                 {{ $k->kelas }}
                             </option>
                         @endforeach
                     </select>
+
+                    {{-- Filter Hari --}}
+                    <select id="hari" name="filter_hari" onchange="this.form.submit()"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-32 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="" {{ request('filter_hari') == '' ? 'selected' : '' }}>Semua Hari</option>
+                        @foreach ($hari as $h)
+                            <option value="{{ $h }}" {{ request('filter_hari') == $h ? 'selected' : '' }}>
+                                {{ $h }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    {{-- Persist Sort Params --}}
+                    <input type="hidden" name="sort" value="{{ request('sort', 'hari') }}">
+                    <input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">
 
                     {{-- Actions Dropdown --}}
                     <div class="relative">
@@ -154,7 +156,6 @@
                         </div>
                     </div>
                 </form>
-            </div>
         </div>
         {{-- Hidden Logic Forms --}}
         <form id="bulkDeleteForm" action="{{ route('jadwal.bulkDelete') }}" method="POST" class="hidden">@csrf @method('DELETE')</form>
@@ -178,9 +179,9 @@
         @endphp
 
         {{-- Table --}}
-        <div class="overflow-x-auto">
+        <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
             <table id="data" class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b dark:border-gray-700">
+                <thead class="text-xs text-heading uppercase bg-neutral-secondary">
                     <tr>
                          <th scope="col" class="p-4">
                             <div class="flex items-center">
@@ -190,11 +191,66 @@
                         </th>
                         <th scope="col" class="px-4 py-3 text-center">NO</th>
                         <th scope="col" class="px-4 py-3 text-center">AKSI</th>
-                        <th scope="col" class="px-4 py-3">KELAS</th>
-                        <th scope="col" class="px-4 py-3">HARI</th>
-                        <th scope="col" class="px-4 py-3">MAPEL</th>
-                        <th scope="col" class="px-4 py-3">GURU</th>
-                        <th scope="col" class="px-4 py-3 text-center">JAM</th>
+                        <th scope="col" class="px-4 py-3">
+                            <a href="{{ route('jadwal.index', array_merge(request()->query(), ['sort' => 'kelas', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center gap-1 hover:text-blue-600 group">
+                                KELAS
+                                <span class="text-gray-400 group-hover:text-blue-500">
+                                    @if(request('sort') == 'kelas')
+                                        <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ request('direction') == 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path></svg>
+                                    @else
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+                                    @endif
+                                </span>
+                            </a>
+                        </th>
+                        <th scope="col" class="px-4 py-3">
+                            <a href="{{ route('jadwal.index', array_merge(request()->query(), ['sort' => 'hari', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center gap-1 hover:text-blue-600 group">
+                                HARI
+                                <span class="text-gray-400 group-hover:text-blue-500">
+                                    @if(request('sort') == 'hari')
+                                        <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ request('direction') == 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path></svg>
+                                    @else
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+                                    @endif
+                                </span>
+                            </a>
+                        </th>
+                        <th scope="col" class="px-4 py-3">
+                            <a href="{{ route('jadwal.index', array_merge(request()->query(), ['sort' => 'mapel', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center gap-1 hover:text-blue-600 group">
+                                MAPEL
+                                <span class="text-gray-400 group-hover:text-blue-500">
+                                    @if(request('sort') == 'mapel')
+                                        <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ request('direction') == 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path></svg>
+                                    @else
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+                                    @endif
+                                </span>
+                            </a>
+                        </th>
+                        <th scope="col" class="px-4 py-3">
+                            <a href="{{ route('jadwal.index', array_merge(request()->query(), ['sort' => 'pegawai', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center gap-1 hover:text-blue-600 group">
+                                GURU
+                                <span class="text-gray-400 group-hover:text-blue-500">
+                                    @if(request('sort') == 'pegawai')
+                                        <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ request('direction') == 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path></svg>
+                                    @else
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+                                    @endif
+                                </span>
+                            </a>
+                        </th>
+                        <th scope="col" class="px-4 py-3 text-center">
+                             <a href="{{ route('jadwal.index', array_merge(request()->query(), ['sort' => 'jam', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center justify-center gap-1 hover:text-blue-600 group">
+                                JAM
+                                <span class="text-gray-400 group-hover:text-blue-500">
+                                    @if(request('sort') == 'jam')
+                                        <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ request('direction') == 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path></svg>
+                                    @else
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
+                                    @endif
+                                </span>
+                            </a>
+                        </th>
                         <th scope="col" class="px-4 py-3 text-center">WAKTU</th>
                         <th scope="col" class="px-4 py-3 text-center">STATUS</th>
                     </tr>
@@ -203,7 +259,7 @@
                     
                     {{-- Template Row Baru --}}
                     <template id="tplNewJadwalRow">
-                        <tr class="bg-blue-50 hover:bg-blue-100 new-row border-b dark:bg-blue-900/20 dark:border-gray-700">
+                        <tr class="bg-blue-50 hover:bg-blue-100 new-row border-b border-default dark:bg-blue-900/20 dark:border-gray-700">
                             <td class="p-4 w-4"></td>
                             <td class="px-4 py-3 text-blue-600 font-bold text-center">BARU</td>
                             <td class="px-4 py-3 text-center">
@@ -242,7 +298,7 @@
                     @forelse ($jadwals as $j)
                         @php
                             $isConflict = isset($jadwalBentrokIds) && in_array($j->id, $jadwalBentrokIds);
-                            $rowClass = $isConflict ? 'bg-red-50 dark:bg-red-900/30 border-b dark:border-gray-700' : 'border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600';
+                            $rowClass = $isConflict ? 'bg-red-50 dark:bg-red-900/30 border-b border-default dark:border-gray-700' : 'border-b border-default dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600';
                         @endphp
                         
                         <tr class="{{ $rowClass }}" id="row-{{ $j->id }}">
@@ -258,7 +314,7 @@
                             <td class="px-4 py-3 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     {{-- Absen Button --}}
-                                    <a href="{{ route('absensi.create', ['jadwal_id' => $j->id]) }}" 
+                                    <a href="{{ route('absensi.create', ['jadwal_id' => $j->id, 'mode' => request('mode')]) }}" 
                                        class="p-2 inline-flex items-center justify-center text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                                        title="Input Presensi">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
@@ -294,9 +350,9 @@
                         </tr>
 
                         {{-- Inline Edit Row (Hidden by default) --}}
-                         <tr id="edit-form-{{ $j->id }}" class="hidden bg-blue-50 border-b dark:bg-blue-900/10 dark:border-gray-700">
+                         <tr id="edit-form-{{ $j->id }}" class="hidden bg-blue-50 border-b border-default dark:bg-blue-900/10 dark:border-gray-700">
                             <td class="p-4 w-4">
-                                <form action="jadwal/{{ $j->id }}" method="POST" id="form-edit-{{ $j->id }}">
+                                <form action="{{ route('jadwal.update', $j->id) }}?{{ request()->getQueryString() }}" method="POST" id="form-edit-{{ $j->id }}">
     @csrf @method('PUT')
     <input type="hidden" name="tahun_id" value="{{ $j->tahun_id }}">
 </form>
@@ -352,11 +408,42 @@
             </table>
         </div>
 
+        </div>
+
         {{-- Pagination --}}
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            {{ $jadwals->appends(request()->query())->links() }}
+        <div class="flex flex-col items-center justify-end gap-4 mt-6 sm:flex-row">
+            <div class="w-full sm:w-auto">
+                {{ $jadwals->appends(request()->query())->links() }}
+            </div>
+        </div>
+
+        {{-- Slide Down Panel (Setup Data Baru) --}}
+        <div id="tahunbulk" class="hidden mt-6 bg-gray-50 p-6 rounded-base border border-default dark:bg-gray-700 dark:border-gray-600 transition-all">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">1</div>
+                <h4 class="font-bold text-sm text-gray-800 dark:text-white">Setup Data Baru</h4>
+            </div>
+            
+            <div class="flex flex-col md:flex-row gap-4 items-end">
+                <div class="w-full md:w-1/3">
+                    <label for="tahun_bulk" class="block mb-2 text-xs font-semibold text-gray-900 dark:text-white">Pilih Tahun Ajaran Default</label>
+                    <select id="tahun_bulk" name="tahun_id" form="bulkFormJadwal"
+                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+                        <option value="">-- Pilih Tahun Ajaran --</option>
+                        @foreach ($tahun as $t)
+                            <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
+                                {{ $t->tahun }} - {{ $t->semester }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                     <x-btn type="submit" form="bulkFormJadwal" id="btnSimpanBarisBaru" text="Simpan Semua Baris" icon="check" color="green" />
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
     {{-- Delete Modals (Per Row) --}}
     @foreach($jadwals as $j)
