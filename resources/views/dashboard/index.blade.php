@@ -108,12 +108,9 @@
             </div>
         </div>
 
-        {{-- Tahun Akademik Livewire (Existing) --}}
+        {{-- (Existing) --}}
         <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
-             <div class="flex items-center justify-between mb-4">
-                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Status Tahun Akademik</h3>
-             </div>
-            @livewire('tahun.data')
+             
         </div>
 
     </div>

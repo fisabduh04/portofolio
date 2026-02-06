@@ -1,8 +1,10 @@
 <div>
 
+    @props(['disabled' => false, 'label' => false, 'icon' => false])
+
     @php
     $value = old($name, $value ?? '');
-
+    $hasIcon = $icon !== false;
     @endphp
 
     @if ($label)
@@ -10,12 +12,18 @@
     @endif
     
     <div class="relative">
+        @if($hasIcon)
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-500 dark:text-gray-400">
+                {!! $icon !!}
+            </div>
+        @endif
+
         <input {{ $attributes }} 
             type="{{ $type }}" 
             id="{{ $id }}" 
             name="{{ $name ?? ''}}" 
             value="{{ $value}}"
-            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 {{ $type === 'password' ? 'pr-10' : '' }} @error($name) bg-red-50 border border-red-500 text-red-900 placeholder-red-700 text-sm rounded-base focus:ring-red-500 dark:bg-gray-700 focus:border-red-500 block w-full p-2.5 dark:text-red-500 dark:placeholder-red-500 dark:border-red-500 @enderror"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 {{ $hasIcon ? 'pl-10' : '' }} dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 {{ $type === 'password' ? 'pr-10' : '' }} @error($name) bg-red-50 border border-red-500 text-red-900 placeholder-red-700 text-sm rounded-xl focus:ring-red-500 dark:bg-gray-700 focus:border-red-500 block w-full p-2.5 dark:text-red-500 dark:placeholder-red-500 dark:border-red-500 @enderror"
             placeholder="{{ $placeholder }}" 
         />
 
