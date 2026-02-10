@@ -516,5 +516,7 @@ class JadwalController extends Controller
 
         return view('jadwal.presensiHarianGuru', compact('jadwals', 'date', 'dayName', 'activeYear', 'isPiket', 'viewMode'));
     }
-}
 
+
+
+}

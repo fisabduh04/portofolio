@@ -123,6 +123,13 @@ Route::middleware(['auth', 'active'])->group(function () {
             ->whereNumber('jadwal'); 
             
         Route::resource('jadwal-piket', JadwalPiketController::class);
+        
+        // Hari Libur Routes
+        Route::get('/hari-libur', [\App\Http\Controllers\HariLiburController::class, 'index'])->name('hari-libur.index');
+        Route::post('/hari-libur/weekly', [\App\Http\Controllers\HariLiburController::class, 'updateWeekly'])->name('hari-libur.updateWeekly');
+        Route::post('/hari-libur', [\App\Http\Controllers\HariLiburController::class, 'store'])->name('hari-libur.store');
+        Route::put('/hari-libur/{id}', [\App\Http\Controllers\HariLiburController::class, 'update'])->name('hari-libur.update');
+        Route::delete('/hari-libur/{id}', [\App\Http\Controllers\HariLiburController::class, 'destroy'])->name('hari-libur.destroy');
 
 
         // Specific routes for resources that are not full resource controllers

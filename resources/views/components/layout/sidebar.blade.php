@@ -64,7 +64,7 @@
                     <a href="{{ route('pegawai.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Pegawai</a>
                 </li>
                 <li>
-                    <a href="{{ route('kelas.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Kelas</a>
+                    <a href="{{ route('kelas.index') }}" class="flex itlems-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Kelas</a>
                 </li>
                 <li>
                     <a href="{{ route('mapel.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Mata Pelajaran</a>
@@ -126,6 +126,9 @@
                 </li>
                 <li>
                     <a href="{{ route('jadwal-piket.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Jadwal Piket</a>
+                </li>
+                <li>
+                    <a href="{{ route('hari-libur.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Jadwal Libur</a>
                 </li>
             </ul>
          </li>

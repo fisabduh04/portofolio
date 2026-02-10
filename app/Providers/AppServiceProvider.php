@@ -5,6 +5,12 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Pagination\Paginator;
+use App\Models\Sekolah;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
+use App\Policies\UserPolicy;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,26 +22,35 @@ class AppServiceProvider extends ServiceProvider
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
+   
+
     public function boot(): void
     {
-        // Register Policies
-        \Illuminate\Support\Facades\Gate::policy(\App\Models\User::class, \App\Policies\UserPolicy::class);
-
+        // 1. Tetap jalankan registrasi policy dan paginator
+        Gate::policy(User::class, UserPolicy::class);
         Paginator::useTailwind();
-        
-        // Definisikan path logo global dan data Sekolah
-        $logo = asset('img/logo.png');
-        try {
-            $sekolah = \App\Models\Sekolah::first();
-        } catch (\Exception $e) {
-            $sekolah = null;
-        }
 
-        // Bagikan variabel ke semua view
-        View::share('logo', $logo);
-        View::share('sekolah', $sekolah);
+        // 2. Optimasi: Hanya jalankan query jika aplikasi TIDAK sedang berjalan di terminal (CLI/Migration)
+        // Ini mencegah error saat Anda menjalankan 'php artisan migrate' di server baru
+        if (!$this->app->runningInConsole()) {
+            
+            // 3. Gunakan Cache agar tidak membebani database di SETIAP refresh halaman
+            $sekolah = Cache::rememberForever('global_sekolah_data', function () {
+                try {
+                    return Sekolah::first();
+                } catch (\Exception $e) {
+                    return null;
+                }
+            });
+
+            // 4. Logika Logo: Jika ada di DB pakai DB, jika tidak pakai default
+            $logo = ($sekolah && $sekolah->logo) 
+                    ? asset('storage/' . $sekolah->logo) 
+                    : asset('img/logo.png');
+
+            View::share('sekolah', $sekolah);
+            View::share('logo', $logo);
+        }
     }
+        
 }

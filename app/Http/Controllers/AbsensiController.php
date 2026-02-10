@@ -612,7 +612,9 @@ class AbsensiController extends Controller
                 ->get();
 
             // 3. Proses Data
-            $rekapData = $students->map(function($student) use ($absensis) {
+            $isLibur = \App\Models\HariLibur::isLibur($date, $tahunAktif->id);
+
+            $rekapData = $students->map(function($student) use ($absensis, $isLibur) {
                 $studentLogs = $absensis->where('siswa_id', $student->id);
                 
                 $stats = [
@@ -659,7 +661,7 @@ class AbsensiController extends Controller
                 } elseif ($stats['Izin'] > 0) {
                     $dailyStatus = 'Izin';
                 } elseif ($studentLogs->count() == 0) {
-                    $dailyStatus = '-';
+                    $dailyStatus = $isLibur ? 'Libur' : '-';
                 }
 
                 // Collect subjects for non-present statuses
@@ -898,11 +900,17 @@ class AbsensiController extends Controller
                      });
 
                      $status = '-';
+                     $isLibur = \App\Models\HariLibur::isLibur($dateStr, $tahunAktif->id);
+
                      if ($logsForDay->isNotEmpty()) {
                          if ($logsForDay->contains('status', 'Alpha')) $status = 'Alpha';
                          elseif ($logsForDay->contains('status', 'Sakit')) $status = 'Sakit';
                          elseif ($logsForDay->contains('status', 'Izin')) $status = 'Izin';
                          elseif ($logsForDay->contains('status', 'Hadir')) $status = 'Hadir';
+                     } else {
+                         if ($isLibur) {
+                             $status = 'Libur';
+                         }
                      }
                      
                      $code = '-';
@@ -910,6 +918,7 @@ class AbsensiController extends Controller
                      elseif ($status == 'Sakit') { $code = 'S'; $studentStats['S']++; $summaryStats['Sakit']++; }
                      elseif ($status == 'Izin') { $code = 'I'; $studentStats['I']++; $summaryStats['Izin']++; }
                      elseif ($status == 'Alpha') { $code = 'A'; $studentStats['A']++; $summaryStats['Alpha']++; }
+                     elseif ($status == 'Libur') { $code = 'L'; }
 
                      $dailyStatuses[$day] = $code;
                  }
