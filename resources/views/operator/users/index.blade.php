@@ -171,12 +171,19 @@
                                                 $colorClass = $roleColors[$user->role] ?? $roleColors['siswa'];
                                             @endphp
                                             
-                                            <button type="button" @if(!$canEdit) disabled @endif data-dropdown-toggle="roleDropdown-{{ $user->id }}" 
-                                                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {{ $colorClass }} border border-transparent @if($canEdit) hover:border-current cursor-pointer hover:shadow-sm @else opacity-80 cursor-not-allowed @endif transition-all">
+                                            <button type="button" 
+                                                @can('updateRole', $user)
+                                                    data-dropdown-toggle="roleDropdown-{{ $user->id }}" 
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {{ $colorClass }} border border-transparent hover:border-current cursor-pointer hover:shadow-sm transition-all"
+                                                @else
+                                                    disabled
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {{ $colorClass }} border border-transparent opacity-80 cursor-not-allowed transition-all"
+                                                @endcan
+                                                >
                                                 {{ ucfirst($user->role) }}
-                                                @if($canEdit)
+                                                @can('updateRole', $user)
                                                     <svg class="w-2.5 h-2.5 opacity-60" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
-                                                @endif
+                                                @endcan
                                             </button>
                                         </div>
                                     @else
@@ -188,13 +195,23 @@
                                 <td class="px-6 py-4 text-center">
                                     @if($hasAccount)
                                         <div class="flex flex-col items-center gap-2">
-                                            <form action="{{ route('operator.users.toggle-active', $user->id) }}" method="POST">
-                                                @csrf @method('PATCH')
-                                                <label class="relative inline-flex items-center {{ $canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
-                                                    <input type="checkbox" value="" class="sr-only peer" onchange="this.form.submit()" {{ $user->is_active ? 'checked' : '' }} {{ !$canEdit ? 'disabled' : '' }}>
-                                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                                                </label>
-                                            </form>
+                                            @can('toggleStatus', $user)
+                                                <form action="{{ route('operator.users.toggle-active', $user->id) }}" method="POST">
+                                                    @csrf @method('PATCH')
+                                                    <label class="relative inline-flex items-center cursor-pointer">
+                                                        <input type="checkbox" value="" class="sr-only peer" onchange="this.form.submit()" {{ $user->is_active ? 'checked' : '' }}>
+                                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                                    </label>
+                                                </form>
+                                            @else
+                                                <div class="opacity-50 cursor-not-allowed" title="Anda tidak memiliki akses untuk mengubah status user ini">
+                                                    <label class="relative inline-flex items-center cursor-not-allowed">
+                                                        <input type="checkbox" disabled class="sr-only peer" {{ $user->is_active ? 'checked' : '' }}>
+                                                        <div class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                                    </label>
+                                                </div>
+                                            @endcan
+
                                             <span class="text-[10px] font-medium {{ $user->is_active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400' }}">
                                                 {{ $user->is_active ? 'Web Access: ON' : 'Web Access: OFF' }}
                                             </span>
@@ -207,21 +224,21 @@
                                 {{-- Column: Aksi --}}
                                 <td class="px-6 py-4 text-center">
                                     @if($hasAccount)
-                                        @if($canEdit)
-                                            <div class="flex items-center justify-center gap-2">
-                                                {{-- Resend Reset Link --}}
-                                                @if($user->is_active)
-                                                    <form action="{{ route('operator.users.resend-reset') }}" method="POST" class="inline">
-                                                        @csrf
-                                                        <input type="hidden" name="email" value="{{ $user->email }}">
-                                                        <button type="submit" class="text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-gray-100" title="Kirim Ulang Reset Password">
-                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-                                                        </button>
-                                                    </form>
-                                                @endif
-                                            </div>
-                                        @else
-                                            <span class="text-xs text-gray-300">Locked</span>
+                                        {{-- Resend Reset Link --}}
+                                        @if($user->is_active)
+                                            @can('manage', $user)
+                                                <form action="{{ route('operator.users.resend-reset') }}" method="POST" class="inline">
+                                                    @csrf
+                                                    <input type="hidden" name="email" value="{{ $user->email }}">
+                                                    <button type="submit" class="text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-gray-100" title="Kirim Ulang Reset Password">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span class="text-gray-300 cursor-not-allowed" title="Akses Dibatasi">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                                </span>
+                                            @endcan
                                         @endif
                                     @else
                                         {{-- Buat Akun Button --}}

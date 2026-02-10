@@ -8,6 +8,14 @@ use Illuminate\Auth\Access\Response;
 class UserPolicy
 {
     /**
+     * Determine if the user can view the list of models.
+     */
+    public function viewAny(User $actor): bool
+    {
+        return in_array($actor->role, ['admin', 'operator', 'kepala']);
+    }
+
+    /**
      * Determine if the authenticated user can manage (update role, toggle active) the target user.
      */
     public function manage(User $actor, User $target): bool
