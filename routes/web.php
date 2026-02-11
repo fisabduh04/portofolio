@@ -19,7 +19,7 @@ use App\Http\Controllers\AttendanceRuleController;
 use App\Http\Controllers\AbsensiExportController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\PegawaiAttendanceController;
-
+use App\Http\Controllers\PayrollController;
 
 
 
@@ -97,13 +97,13 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         // PEGAWAI ATTENDANCE SYSTEM
         Route::resource('attendance/rules', AttendanceRuleController::class, ['as' => 'attendance']);
-        Route::get('attendance/dashboard', [\App\Http\Controllers\PegawaiAttendanceController::class, 'index'])->name('attendance.index');
-        Route::get('attendance/create', [\App\Http\Controllers\PegawaiAttendanceController::class, 'create'])->name('attendance.create');
-        Route::post('attendance/store', [\App\Http\Controllers\PegawaiAttendanceController::class, 'store'])->name('attendance.store');
-        Route::post('attendance/process', [\App\Http\Controllers\PegawaiAttendanceController::class, 'process'])->name('attendance.process');
-        Route::get('attendance/report', [\App\Http\Controllers\PegawaiAttendanceController::class, 'report'])->name('attendance.report');
-        Route::get('attendance/payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('attendance.payroll.index');
-        Route::get('attendance/payroll/{id}/slip', [\App\Http\Controllers\PayrollController::class, 'slip'])->name('attendance.payroll.slip');
+        Route::get('attendance/dashboard', [PegawaiAttendanceController::class, 'index'])->name('attendance.index');
+        Route::get('attendance/create', [PegawaiAttendanceController::class, 'create'])->name('attendance.create');
+        Route::post('attendance/store', [PegawaiAttendanceController::class, 'store'])->name('attendance.store');
+        Route::post('attendance/process', [PegawaiAttendanceController::class, 'process'])->name('attendance.process');
+        Route::get('attendance/report', [PegawaiAttendanceController::class, 'report'])->name('attendance.report');
+        Route::get('attendance/payroll', [PayrollController::class, 'index'])->name('attendance.payroll.index');
+        Route::get('attendance/payroll/{id}/slip', [PayrollController::class, 'slip'])->name('attendance.payroll.slip');
 
 
 
@@ -175,7 +175,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('kelas-siswa-import', [KelasSiswaController::class, 'import'])->name('kelas-siswa-import');
         
         // Sekolah (Data Induk)
-        Route::resource('sekolah', \App\Http\Controllers\SekolahController::class)->only(['index', 'store']);
+        Route::resource('sekolah', SekolahController::class)->only(['index', 'store']);
         
         // MANAJEMEN USER (Operator/Admin)
         Route::prefix('users')->name('operator.users.')->group(function () {
