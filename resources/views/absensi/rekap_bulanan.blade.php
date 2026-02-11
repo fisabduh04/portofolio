@@ -3,7 +3,7 @@
         {{-- Header --}}
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <x-breadcrumb :breadcrumbs="[
+                <x-breadcrumb :title="'Laporan Presensi Bulanan'" :breadcrumbs="[
                     ['name' => 'Home', 'href' => route('dashboard.index')],
                     ['name' => 'Rekapitulasi', 'href' => '#'],
                     ['name' => 'Laporan Presensi Bulanan', 'href' => route('absensi.rekap-bulanan')],
@@ -13,40 +13,6 @@
                     Rekapitulasi kehadiran siswa dalam satu bulan penuh.
                 </p>
             </div>
-            {{-- Export Button (Placeholder for now, consistent with Harian) --}}
-            @if($selectedKelas)
-            <div class="flex items-center gap-2">
-                 <button id="dropdownExportButton" data-dropdown-toggle="dropdownExport" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800 flex items-center gap-2" type="button">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Export Data
-                    <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
-                    </svg>
-                </button>
-                
-                <!-- Dropdown menu -->
-                <div id="dropdownExport" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
-                    <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownExportButton">
-                      <li>
-                        <a href="{{ route('absensi.rekap-bulanan.export', ['format' => 'excel'] + request()->all()) }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                            <span class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
-                                Export Excel
-                            </span>
-                        </a>
-                      </li>
-                      <li>
-                        <a href="{{ route('absensi.rekap-bulanan.export', ['format' => 'pdf'] + request()->all()) }}" target="_blank" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                             <span class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                                Cetak PDF
-                            </span>
-                        </a>
-                      </li>
-                    </ul>
-                </div>
-            </div>
-            @endif
         </div>
 
         {{-- Filter Section --}}
@@ -92,6 +58,16 @@
                     </select>
                 </div>
 
+                {{-- Type Guru --}}
+                <div class="lg:col-span-1">
+                    <label for="type_guru" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Jenis Laporan</label>
+                    <select id="type_guru" name="type_guru"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <option value="mapel" @selected(($typeGuru ?? 'mapel') == 'mapel')>Guru Mata Pelajaran</option>
+                        <option value="piket" @selected(($typeGuru ?? 'mapel') == 'piket')>Guru Piket</option>
+                    </select>
+                </div>
+
                 {{-- Mode Tampilan --}}
                 <div class="lg:col-span-1">
                     <label for="view_mode" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Mode Tampilan</label>
@@ -99,17 +75,46 @@
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         <option value="sederhana" @selected($viewMode == 'sederhana')>Sederhana (Matrix)</option>
                         <option value="detail" @selected($viewMode == 'detail')>Detail (Rincian Absensi)</option>
+                        <option value="detail_harian" @selected($viewMode == 'detail_harian')>Detail Harian (Sesi)</option>
                     </select>
                 </div>
 
-                {{-- Submit --}}
-                <div class="lg:col-span-1">
-                     <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 w-full dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-shadow">
+                {{-- Buttons Group --}}
+                <div class="lg:col-span-1 flex gap-2">
+                     <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 w-full dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-shadow">
                         <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
                         </svg>
                         Tampilkan
                     </button>
+                    
+                    @if($selectedKelas)
+                    <button id="dropdownExportButton" data-dropdown-toggle="dropdownExport" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-3 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800 flex items-center justify-center shadow-sm" type="button" title="Export Menu">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </button>
+                    
+                    <!-- Dropdown menu -->
+                    <div id="dropdownExport" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
+                        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownExportButton">
+                          <li>
+                            <a href="{{ route('absensi.rekap-bulanan.export', ['format' => 'excel', 'type_guru' => $typeGuru ?? 'mapel'] + request()->except(['format', 'type_guru'])) }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                                    Export Excel
+                                </span>
+                            </a>
+                          </li>
+                          <li>
+                            <a href="{{ route('absensi.rekap-bulanan.export', ['format' => 'pdf', 'type_guru' => $typeGuru ?? 'mapel'] + request()->except(['format', 'type_guru'])) }}" target="_blank" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                 <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    Cetak PDF
+                                </span>
+                            </a>
+                          </li>
+                        </ul>
+                    </div>
+                    @endif
                 </div>
             </form>
         </div>
@@ -207,10 +212,16 @@
                                     </th>
                                     @foreach($dates as $d)
                                         @php
-                                            $status = $student->statuses[$d] ?? '-';
+                                            $dayData = $student->statuses[$d] ?? ['code' => '-', 'is_libur' => false];
+                                            $status = $dayData['code'];
                                             $dotClass = 'bg-gray-100 border border-gray-200'; // Default empty
                                             $tooltipText = "Tgl $d: Tidak Ada Data";
                                             
+                                            if($dayData['is_libur']) {
+                                                $dotClass = 'bg-gray-300 border-gray-400 opacity-50';
+                                                $tooltipText = "Tgl $d: Libur";
+                                            }
+
                                             if($status == 'H') {
                                                 $dotClass = 'bg-blue-500 border-blue-500 shadow-sm shadow-blue-200'; 
                                                 $tooltipText = "Tgl $d: Hadir";
@@ -228,7 +239,7 @@
                                                 $tooltipText = "Tgl $d: Alpha";
                                             }
                                         @endphp
-                                        <td class="px-0.5 py-2 text-center relative group/cell border-r border-gray-50 dark:border-gray-800">
+                                        <td class="px-0.5 py-2 text-center relative group/cell border-r border-gray-50 dark:border-gray-800 {{ $dayData['is_libur'] ? 'bg-gray-50 dark:bg-gray-800/50' : '' }}">
                                             <div class="flex items-center justify-center">
                                                 <div class="w-3 h-3 rounded-full {{ $dotClass }} transition-transform hover:scale-150 cursor-pointer" title="{{ $tooltipText }}"></div>
                                             </div>
@@ -253,8 +264,74 @@
                         </table>
                     </div>
                 </div>
+
+            @elseif($viewMode == 'detail_harian')
+                {{-- Detail Harian (Sesi Count) View --}}
+                <div class="relative overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-center text-gray-500 dark:text-gray-400 border-collapse">
+                            <thead class="text-xs text-center text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400 sticky top-0 z-20 shadow-sm">
+                                <tr>
+                                    <th scope="col" class="px-3 py-3 text-left sticky left-0 bg-gray-100 dark:bg-gray-700 z-30 w-48 border-r border-gray-200 dark:border-gray-600 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                        Nama Siswa
+                                    </th>
+                                    @foreach($dates as $d)
+                                        <th scope="col" class="px-1 py-3 min-w-[60px] font-medium border-r border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                                            {{ $d }}
+                                        </th>
+                                    @endforeach
+                                    <th scope="col" class="px-2 py-3 bg-blue-50 dark:bg-blue-900/20 border-l-2 border-gray-300 dark:border-gray-600 font-bold w-12 text-blue-700">H</th>
+                                    <th scope="col" class="px-2 py-3 bg-red-50 dark:bg-red-900/20 font-bold w-12 text-red-700">A</th>
+                                    <th scope="col" class="px-2 py-3 bg-gray-100 dark:bg-gray-800 font-bold w-12 text-gray-700">T</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                @forelse($rekapData as $student)
+                                <tr class="bg-white dark:bg-gray-800 hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors">
+                                    <th scope="row" class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white sticky left-0 bg-white dark:bg-gray-800 z-20 border-r border-gray-200 dark:border-gray-600 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                        {{ $student->nama }}
+                                    </th>
+                                    @foreach($dates as $d)
+                                        @php
+                                            $dayData = $student->statuses[$d] ?? ['counts' => [], 'is_libur' => false];
+                                            $counts = $dayData['counts'];
+                                            $isLibur = $dayData['is_libur'];
+                                            $hasData = array_sum($counts) > 0;
+                                        @endphp
+                                        <td class="px-1 py-2 text-center text-[10px] sm:text-xs border-r border-gray-100 dark:border-gray-700 {{ $isLibur ? 'bg-gray-100 dark:bg-gray-700' : '' }}">
+                                            @if($isLibur && !$hasData)
+                                                <span class="text-gray-400 font-bold">L</span>
+                                            @elseif($hasData)
+                                                <div class="flex flex-col items-center gap-0.5 leading-none">
+                                                    @if($counts['H'] > 0) <span class="text-blue-600 font-bold whitespace-nowrap">{{ $counts['H'] }}H</span> @endif
+                                                    @if($counts['A'] > 0) <span class="text-red-600 font-bold whitespace-nowrap">{{ $counts['A'] }}A</span> @endif
+                                                    @if($counts['S'] > 0) <span class="text-orange-600 font-bold whitespace-nowrap">{{ $counts['S'] }}S</span> @endif
+                                                    @if($counts['I'] > 0) <span class="text-yellow-600 font-bold whitespace-nowrap">{{ $counts['I'] }}I</span> @endif
+                                                </div>
+                                            @else
+                                                <span class="text-gray-300">-</span>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                    {{-- Total Columns --}}
+                                    <td class="px-2 py-2 text-center font-bold text-blue-700 bg-blue-50 dark:bg-blue-900/20 border-l-2 border-gray-200">{{ $student->stats['H'] }}</td>
+                                    <td class="px-2 py-2 text-center font-bold text-red-700 bg-red-50 dark:bg-red-900/20">{{ $student->stats['A'] }}</td>
+                                    <td class="px-2 py-2 text-center font-bold text-gray-700 bg-gray-100 dark:bg-gray-800">{{ array_sum($student->stats) }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="{{ count($dates) + 4 }}" class="px-6 py-8 text-center text-gray-500">
+                                        Data tidak tersedia
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             @else
-                {{-- Table (Detail Mode - Rincian Absensi) --}}
+                {{-- Detail (Detail Mode - Rincian Absensi Existing) --}}
                 <div class="relative overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg border border-gray-200 dark:border-gray-700">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
                         <div>
@@ -287,7 +364,8 @@
                                         <td class="px-6 py-4 text-left text-xs">
                                             @php
                                                 $absentDates = [];
-                                                foreach($student->statuses as $date => $status) {
+                                                foreach($student->statuses as $date => $data) {
+                                                    $status = $data['code']; // Access code from array
                                                     if(in_array($status, ['S', 'I', 'A'])) {
                                                         $absentDates[] = ['date' => $date, 'status' => $status];
                                                     }

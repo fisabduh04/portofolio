@@ -13,6 +13,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\JadwalPiketController;
 use App\Http\Controllers\KelasSiswaController;
+use App\Http\Controllers\UserProvisioningController;
+use App\Http\Controllers\HariLiburController;
+
+
 
 // Override Fortify Password Reset to Block Inactive Users
 Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])
@@ -75,6 +79,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/absensi/rekap-tahunan', [AbsensiController::class, 'rekapTahunan'])->name('absensi.rekap-tahunan');
         Route::get('/absensi/rekap-tahunan/export', [AbsensiController::class, 'exportRekapTahunan'])->name('absensi.rekap-tahunan.export');
         Route::get('/absensi/export-harian', [AbsensiController::class, 'exportHarian'])->name('absensi.export-harian');
+        Route::get('/absensi/rekap-periode', [AbsensiController::class, 'rekapPeriode'])->name('absensi.rekap-periode');
+        Route::get('/absensi/export-periode', [AbsensiController::class, 'exportRekapPeriode'])->name('absensi.export-periode');
         Route::get('/absensi/export-bulanan', [AbsensiController::class, 'exportBulanan'])->name('absensi.export-bulanan');
         Route::get('/absensi/export-tahunan', [AbsensiController::class, 'exportTahunan'])->name('absensi.export-tahunan');
         Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
@@ -125,11 +131,11 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::resource('jadwal-piket', JadwalPiketController::class);
         
         // Hari Libur Routes
-        Route::get('/hari-libur', [\App\Http\Controllers\HariLiburController::class, 'index'])->name('hari-libur.index');
-        Route::post('/hari-libur/weekly', [\App\Http\Controllers\HariLiburController::class, 'updateWeekly'])->name('hari-libur.updateWeekly');
-        Route::post('/hari-libur', [\App\Http\Controllers\HariLiburController::class, 'store'])->name('hari-libur.store');
-        Route::put('/hari-libur/{id}', [\App\Http\Controllers\HariLiburController::class, 'update'])->name('hari-libur.update');
-        Route::delete('/hari-libur/{id}', [\App\Http\Controllers\HariLiburController::class, 'destroy'])->name('hari-libur.destroy');
+        Route::get('/hari-libur', [HariLiburController::class, 'index'])->name('hari-libur.index');
+        Route::post('/hari-libur/weekly', [HariLiburController::class, 'updateWeekly'])->name('hari-libur.updateWeekly');
+        Route::post('/hari-libur', [HariLiburController::class, 'store'])->name('hari-libur.store');
+        Route::put('/hari-libur/{id}', [HariLiburController::class, 'update'])->name('hari-libur.update');
+        Route::delete('/hari-libur/{id}', [HariLiburController::class, 'destroy'])->name('hari-libur.destroy');
 
 
         // Specific routes for resources that are not full resource controllers
@@ -156,11 +162,11 @@ Route::middleware(['auth', 'active'])->group(function () {
         
         // MANAJEMEN USER (Operator/Admin)
         Route::prefix('users')->name('operator.users.')->group(function () {
-             Route::get('/', [App\Http\Controllers\Operator\UserProvisioningController::class, 'index'])->name('index'); // operator.users.index
-             Route::post('/', [App\Http\Controllers\Operator\UserProvisioningController::class, 'store'])->name('store');
-             Route::patch('/{user}/active', [App\Http\Controllers\Operator\UserProvisioningController::class, 'toggleActive'])->name('toggle-active');
-             Route::patch('/{user}/role', [App\Http\Controllers\Operator\UserProvisioningController::class, 'updateRole'])->name('update-role');
-             Route::post('/resend-reset', [App\Http\Controllers\Operator\UserProvisioningController::class, 'resendReset'])->name('resend-reset');
+             Route::get('/', [UserProvisioningController::class, 'index'])->name('index'); // operator.users.index
+             Route::post('/', [UserProvisioningController::class, 'store'])->name('store');
+             Route::patch('/{user}/active', [UserProvisioningController::class, 'toggleActive'])->name('toggle-active');
+             Route::patch('/{user}/role', [UserProvisioningController::class, 'updateRole'])->name('update-role');
+             Route::post('/resend-reset', [UserProvisioningController::class, 'resendReset'])->name('resend-reset');
         });
 
         // Jadwal specific routes

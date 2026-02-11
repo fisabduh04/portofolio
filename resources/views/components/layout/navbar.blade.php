@@ -9,8 +9,8 @@
             </svg>
          </button>
         <a href="{{ route('dashboard.index') }}" class="flex ms-2 md:me-24">
-          <img src="{{ $school->logo ?? asset('img/logo.png') }}" class="h-6 me-3" alt="SMK AL-MIFTAH Logo" />
-          <span class="self-center text-lg font-semibold whitespace-nowrap dark:text-white">SMK AL-MIFTAH</span>
+          <img src="{{ $logo ?? asset('img/logo.png') }}" class="h-6 me-3" alt="{{ $sekolah->nama_sekolah ?? 'SMK AL-MIFTAH' }} Logo" />
+          <span class="self-center text-lg font-semibold whitespace-nowrap dark:text-white">{{ $sekolah->nama_sekolah ?? 'SMK AL-MIFTAH' }}</span>
         </a>
       </div>
       <div class="flex items-center">

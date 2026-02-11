@@ -517,6 +517,10 @@ class AbsensiController extends Controller
         $listKelas = Kelas::orderBy('kelas')->get();
         $listPegawai = Pegawai::orderBy('name')->get();
         
+        // Professional Fix: Fetch Holiday Info
+        $activeYear = \App\Models\Tahun::aktif()->first();
+        $holiday = $activeYear ? \App\Models\HariLibur::getHoliday($date, $activeYear->id) : null;
+
         $selectedKelas = $kelasId ? Kelas::find($kelasId) : null;
         
         $rekapData = collect([]);
@@ -532,16 +536,30 @@ class AbsensiController extends Controller
             // Re-calculate Summary Stats from the processed collection
             // Because extract method returns collection, but we need aggregated stats
             // Actually, let's just recalculate them from the collection to be safe and simple
-            $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Total' => 0]; // Reset for recalculation
+            // Re-calculate Summary Stats from the processed collection
+            // Because extract method returns collection, but we need aggregated stats
+            // Actually, let's just recalculate them from the collection to be safe and simple
+            
+            // Professional Fix: Initialize ALL possible keys including 'Libur' to prevent Undefined Array Key error
+            $summaryStats = [
+                'Hadir' => 0, 
+                'Sakit' => 0, 
+                'Izin' => 0, 
+                'Alpha' => 0, 
+                'Libur' => 0, // Explicitly handle 'Libur' status
+                'Total' => 0
+            ]; 
+
              foreach ($rekapData as $student) {
-                if ($student->daily_status != '-') {
+                // Defensive Coding: Only count if status exists in our summary array
+                if ($student->daily_status != '-' && array_key_exists($student->daily_status, $summaryStats)) {
                      $summaryStats[$student->daily_status]++;
                 }
                 $summaryStats['Total']++;
             }
         }
 
-        return view('absensi.rekap_harian', compact('listKelas', 'listPegawai', 'rekapData', 'summaryStats', 'date', 'kelasId', 'pegawaiId', 'typeGuru', 'selectedKelas', 'viewMode'));
+        return view('absensi.rekap_harian', compact('listKelas', 'listPegawai', 'rekapData', 'summaryStats', 'date', 'kelasId', 'pegawaiId', 'typeGuru', 'selectedKelas', 'viewMode', 'holiday'));
     }
 
     public function exportRekapHarian(Request $request)
@@ -565,17 +583,20 @@ class AbsensiController extends Controller
             return view('absensi.print_rekap_harian', [
                 'rekapData' => $rekapData,
                 'date' => $date,
-                'kelas' => $kelasName
+                'kelas' => $kelasName,
+                'typeGuru' => $typeGuru
             ]);
         }
 
-        return Excel::download(new RekapHarianExport($rekapData, $date, $kelasName), 'rekap_harian_' . $date . '.xlsx');
+        return Excel::download(new RekapHarianExport($rekapData, $date, $kelasName, $typeGuru), 'rekap_harian_' . $date . '.xlsx');
     }
 
     private function getPrivateRekapData($date, $kelasId, $pegawaiId, $typeGuru)
     {
         $rekapData = collect([]);
-        $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Total' => 0];
+        $rekapData = collect([]);
+        // Professional Fix: Add 'Libur' key
+        $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Libur' => 0, 'Total' => 0];
 
         if ($kelasId) {
             $tahunAktif = Tahun::aktif()->first();
@@ -765,6 +786,7 @@ class AbsensiController extends Controller
         $month = $request->input('month', date('m'));
         $year = $request->input('year', date('Y'));
         $viewMode = $request->input('view_mode', 'sederhana'); // Default simple
+        $typeGuru = $request->input('type_guru', 'mapel'); // Default mapel
 
         $listKelas = Kelas::all();
         $months = [
@@ -778,7 +800,7 @@ class AbsensiController extends Controller
         $data = ['rekapData' => collect([]), 'summaryStats' => ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0], 'dates' => []];
 
         if ($kelasId) {
-             $data = $this->getPrivateRekapBulananData($month, $year, $kelasId);
+             $data = $this->getPrivateRekapBulananData($month, $year, $kelasId, $typeGuru);
         }
 
         $rekapData = $data['rekapData'];
@@ -786,7 +808,7 @@ class AbsensiController extends Controller
         $dates = $data['dates'];
 
         return view('absensi.rekap_bulanan', compact(
-            'kelasId', 'month', 'year', 'viewMode', 'listKelas', 'months', 'years', 'selectedKelas', 'rekapData', 'summaryStats', 'dates'
+            'kelasId', 'month', 'year', 'viewMode', 'listKelas', 'months', 'years', 'selectedKelas', 'rekapData', 'summaryStats', 'dates', 'typeGuru'
         ));
     }
 
@@ -794,6 +816,8 @@ class AbsensiController extends Controller
     {
         $kelasId = $request->input('kelas_id');
         $year = $request->input('year', now()->year);
+        $viewMode = $request->input('view_mode', 'detail_harian');
+        $typeGuru = $request->input('type_guru', 'mapel');
         
         $listKelas = Kelas::orderBy('kelas')->get();
         $years = range(now()->year, now()->year - 5);
@@ -804,13 +828,13 @@ class AbsensiController extends Controller
         $selectedKelas = null;
 
         if ($kelasId) {
-             $data = $this->getPrivateRekapTahunanData($year, $kelasId);
+             $data = $this->getPrivateRekapTahunanData($year, $kelasId, $typeGuru);
              $rekapData = $data['rekapData'];
              $summaryStats = $data['summaryStats'];
              $selectedKelas = Kelas::find($kelasId);
         }
 
-        return view('absensi.rekap_tahunan', compact('rekapData', 'summaryStats', 'listKelas', 'years', 'year', 'kelasId', 'months', 'selectedKelas'));
+        return view('absensi.rekap_tahunan', compact('rekapData', 'summaryStats', 'listKelas', 'years', 'year', 'kelasId', 'months', 'selectedKelas', 'viewMode', 'typeGuru'));
     }
 
     public function exportRekapBulanan(Request $request)
@@ -819,10 +843,11 @@ class AbsensiController extends Controller
         $month = $request->input('month', now()->month);
         $year = $request->input('year', now()->year);
         $format = $request->input('format', 'excel');
+        $typeGuru = $request->input('type_guru', 'mapel');
 
         if (!$kelasId) return back()->with('error', 'Pilih kelas terlebih dahulu.');
 
-        $data = $this->getPrivateRekapBulananData($month, $year, $kelasId);
+        $data = $this->getPrivateRekapBulananData($month, $year, $kelasId, $typeGuru);
         $kelas = Kelas::find($kelasId);
         $kelasName = $kelas ? $kelas->kelas : 'Semua Kelas';
 
@@ -836,7 +861,7 @@ class AbsensiController extends Controller
             ]);
         }
         
-        return Excel::download(new \App\Exports\RekapBulananExport($data['rekapData'], $data['dates'], $month, $year, $kelasName), 'rekap_bulanan_' . $month . '_' . $year . '.xlsx');
+        return Excel::download(new \App\Exports\RekapBulananExport($data['rekapData'], $data['dates'], $month, $year, $kelasName, $typeGuru), 'rekap_bulanan_' . $month . '_' . $year . '.xlsx');
     }
 
     public function exportRekapTahunan(Request $request)
@@ -844,10 +869,11 @@ class AbsensiController extends Controller
         $kelasId = $request->input('kelas_id');
         $year = $request->input('year', now()->year);
         $format = $request->input('format', 'excel');
+        $typeGuru = $request->input('type_guru', 'mapel');
 
         if (!$kelasId) return back()->with('error', 'Pilih kelas terlebih dahulu.');
 
-         $data = $this->getPrivateRekapTahunanData($year, $kelasId);
+         $data = $this->getPrivateRekapTahunanData($year, $kelasId, $typeGuru);
          $kelas = Kelas::find($kelasId);
          $kelasName = $kelas ? $kelas->kelas : 'Semua Kelas';
 
@@ -859,10 +885,10 @@ class AbsensiController extends Controller
             ]);
         }
 
-        return Excel::download(new \App\Exports\RekapTahunanExport($data['rekapData'], $year, $kelasName), 'rekap_tahunan_' . $year . '.xlsx');
+        return Excel::download(new \App\Exports\RekapTahunanExport($data['rekapData'], $year, $kelasName, $typeGuru), 'rekap_tahunan_' . $year . '.xlsx');
     }
 
-    private function getPrivateRekapBulananData($month, $year, $kelasId)
+    private function getPrivateRekapBulananData($month, $year, $kelasId, $typeGuru = 'mapel')
     {
         $tahunAktif = Tahun::aktif()->first();
         $daysInMonth = \Carbon\Carbon::createFromDate($year, $month, 1)->daysInMonth;
@@ -877,8 +903,14 @@ class AbsensiController extends Controller
 
         // Corrected Query: Filter via Logbook relationship
         $absensis = Absensi::with('logbook')
-            ->whereHas('logbook', function($q) use ($month, $year) {
+            ->whereHas('logbook', function($q) use ($month, $year, $typeGuru) {
                 $q->whereMonth('tanggal', $month)->whereYear('tanggal', $year);
+                
+                if ($typeGuru === 'mapel') {
+                    $q->whereIn('kategori', ['mapel', 'piket_sub']);
+                } elseif ($typeGuru === 'piket') {
+                    $q->whereIn('kategori', ['piket_masuk', 'piket_pulang']);
+                }
             })
             ->whereHas('siswa.KelasSiswa', function($q) use ($kelasId, $tahunAktif) {
                 $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
@@ -886,7 +918,7 @@ class AbsensiController extends Controller
             ->get()
             ->groupBy('siswa_id');
 
-        $rekapData = $students->map(function($student) use ($absensis, $dates, $year, $month, &$summaryStats) {
+        $rekapData = $students->map(function($student) use ($absensis, $dates, $year, $month, &$summaryStats, $tahunAktif) {
                  $studentLogs = $absensis->get($student->id, collect([]));
                  $dailyStatuses = [];
                  $studentStats = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0];
@@ -901,12 +933,22 @@ class AbsensiController extends Controller
 
                      $status = '-';
                      $isLibur = \App\Models\HariLibur::isLibur($dateStr, $tahunAktif->id);
+                     $counts = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0];
 
                      if ($logsForDay->isNotEmpty()) {
+                         // Determine Dominant Status for Simple View
                          if ($logsForDay->contains('status', 'Alpha')) $status = 'Alpha';
                          elseif ($logsForDay->contains('status', 'Sakit')) $status = 'Sakit';
                          elseif ($logsForDay->contains('status', 'Izin')) $status = 'Izin';
                          elseif ($logsForDay->contains('status', 'Hadir')) $status = 'Hadir';
+
+                         // Count Sessions for Detailed View
+                         foreach ($logsForDay as $log) {
+                             if ($log->status == 'Hadir') $counts['H']++;
+                             elseif ($log->status == 'Sakit') $counts['S']++;
+                             elseif ($log->status == 'Izin') $counts['I']++;
+                             elseif ($log->status == 'Alpha') $counts['A']++;
+                         }
                      } else {
                          if ($isLibur) {
                              $status = 'Libur';
@@ -920,7 +962,11 @@ class AbsensiController extends Controller
                      elseif ($status == 'Alpha') { $code = 'A'; $studentStats['A']++; $summaryStats['Alpha']++; }
                      elseif ($status == 'Libur') { $code = 'L'; }
 
-                     $dailyStatuses[$day] = $code;
+                     $dailyStatuses[$day] = [
+                        'code' => $code,
+                        'is_libur' => $isLibur,
+                        'counts' => $counts
+                     ];
                  }
                  return (object) [
                      'id' => $student->id, 'nama' => $student->nama,
@@ -931,7 +977,7 @@ class AbsensiController extends Controller
         return ['rekapData' => $rekapData, 'summaryStats' => $summaryStats, 'dates' => $dates];
     }
 
-    private function getPrivateRekapTahunanData($year, $kelasId)
+    private function getPrivateRekapTahunanData($year, $kelasId, $typeGuru = 'mapel')
     {
         $tahunAktif = Tahun::aktif()->first();
         $months = range(1, 12);
@@ -945,8 +991,14 @@ class AbsensiController extends Controller
 
         // Corrected Query: Filter via Logbook relationship
         $absensis = Absensi::with('logbook')
-            ->whereHas('logbook', function($q) use ($year) {
+            ->whereHas('logbook', function($q) use ($year, $typeGuru) {
                 $q->whereYear('tanggal', $year);
+
+                if ($typeGuru === 'mapel') {
+                    $q->whereIn('kategori', ['mapel', 'piket_sub']);
+                } elseif ($typeGuru === 'piket') {
+                    $q->whereIn('kategori', ['piket_masuk', 'piket_pulang']);
+                }
             })
             ->whereHas('siswa.KelasSiswa', function($q) use ($kelasId, $tahunAktif) {
                 $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
@@ -976,12 +1028,204 @@ class AbsensiController extends Controller
                 $totalStats['I'] += $stats['I']; $summaryStats['Izin'] += $stats['I'];
                 $totalStats['A'] += $stats['A']; $summaryStats['Alpha'] += $stats['A'];
             }
+            
+            // Get detailed absent logs for the whole year
+            $details = $studentLogs->filter(function($log) {
+                return in_array($log->status, ['Sakit', 'Izin', 'Alpha']);
+            })->map(function($log) {
+                return [
+                    'date' => $log->logbook->tanggal,
+                    'status' => $log->status,
+                    'month' => \Carbon\Carbon::parse($log->logbook->tanggal)->month
+                ];
+            })->values();
+
             return (object) [
                 'id' => $student->id, 'nama' => $student->nama,
-                'months' => $monthlyStats, 'total' => $totalStats
+                'months' => $monthlyStats, 'total' => $totalStats, 'details' => $details
             ];
         });
 
         return ['rekapData' => $rekapData, 'summaryStats' => $summaryStats];
+    }
+
+    public function rekapPeriode(Request $request) 
+    {
+        $kelasId = $request->input('kelas_id');
+        $startDate = $request->input('start_date', now()->subMonth()->toDateString());
+        $endDate = $request->input('end_date', now()->toDateString());
+        $viewMode = $request->input('view_mode', 'ringkasan');
+        $typeGuru = $request->input('type_guru', 'mapel');
+        
+        $listKelas = Kelas::orderBy('kelas')->get();
+        
+        $rekapData = collect([]);
+        $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0];
+        $selectedKelas = null;
+        $dates = [];
+
+        if ($kelasId) {
+             $data = $this->getPrivateRekapPeriodeData($startDate, $endDate, $kelasId, $typeGuru);
+             $rekapData = $data['rekapData'];
+             $summaryStats = $data['summaryStats'];
+             $dates = $data['dates'];
+             $selectedKelas = Kelas::find($kelasId);
+        }
+
+        return view('absensi.rekap_periode', compact('rekapData', 'summaryStats', 'listKelas', 'startDate', 'endDate', 'kelasId', 'selectedKelas', 'viewMode', 'dates', 'typeGuru'));
+    }
+
+    public function exportRekapPeriode(Request $request)
+    {
+        $kelasId = $request->input('kelas_id');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $typeGuru = $request->input('type_guru', 'mapel');
+        
+        if (!$kelasId) return back()->with('error', 'Pilih kelas terlebih dahulu.');
+
+        $kelas = Kelas::find($kelasId);
+        $kelasName = $kelas ? $kelas->kelas : 'Semua Kelas';
+
+        return Excel::download(new \App\Exports\AbsensiExport(['kelas_id' => $kelasId, 'start_date' => $startDate, 'end_date' => $endDate, 'type_guru' => $typeGuru], 'periode'), 'rekap_periode_' . $startDate . '_to_' . $endDate . '.xlsx');
+    }
+
+    private function getPrivateRekapPeriodeData($startDate, $endDate, $kelasId, $typeGuru = 'mapel')
+    {
+        $tahunAktif = Tahun::aktif()->first();
+        $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0];
+
+        $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
+            $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
+        })->orderBy('nama')->get();
+
+        $summaryStats['Total'] = $students->count();
+
+        // Generate date range
+        $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+        $dates = [];
+        foreach ($period as $date) {
+            $dates[] = $date->format('Y-m-d');
+        }
+
+        $absensis = Absensi::with('logbook')
+            ->whereHas('logbook', function($q) use ($startDate, $endDate) {
+                $q->whereBetween('tanggal', [$startDate, $endDate])
+                  ->whereIn('kategori', ['mapel', 'piket_sub']);
+            })
+            ->whereHas('siswa.KelasSiswa', function($q) use ($kelasId, $tahunAktif) {
+                $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
+            })
+            ->get()
+            ->groupBy('siswa_id');
+
+        $rekapData = $students->map(function($student) use ($absensis, &$summaryStats, $dates, $tahunAktif) {
+            $studentLogs = $absensis->get($student->id, collect([]));
+            $dailyLogs = [];
+            
+            // 1. Statistik Per Sesi (Existing)
+            $sessionStats = [
+                'H' => $studentLogs->where('status', 'Hadir')->count(),
+                'S' => $studentLogs->where('status', 'Sakit')->count(),
+                'I' => $studentLogs->where('status', 'Izin')->count(),
+                'A' => $studentLogs->where('status', 'Alpha')->count(),
+            ];
+
+            // 2. Statistik Per Hari (New)
+            $dailyTotal = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0];
+
+            // Map data for daily views and calculate daily totals
+            foreach ($dates as $dateStr) {
+                 $logsForDay = $studentLogs->filter(function($log) use ($dateStr) {
+                    return $log->logbook && $log->logbook->tanggal === $dateStr;
+                 });
+
+                 $status = '-';
+                 $isLibur = \App\Models\HariLibur::isLibur($dateStr, $tahunAktif->id);
+                 $counts = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0];
+
+                 if ($logsForDay->isNotEmpty()) {
+                     // Determine Dominant Status (Strict Logic)
+                     if ($logsForDay->contains('status', 'Alpha')) {
+                         $status = 'Alpha';
+                         $dailyTotal['A']++;
+                     } elseif ($logsForDay->contains('status', 'Sakit')) {
+                         $status = 'Sakit';
+                         $dailyTotal['S']++;
+                     } elseif ($logsForDay->contains('status', 'Izin')) {
+                         $status = 'Izin';
+                         $dailyTotal['I']++;
+                     } elseif ($logsForDay->where('status', 'Hadir')->count() == $logsForDay->count()) {
+                         // Hanya H jika SEMUA sesi Hadir
+                         $status = 'Hadir';
+                         $dailyTotal['H']++;
+                     } else {
+                         // Campuran H dan lainnya (atau belum lengkap)
+                         $status = '-';
+                     }
+
+                     // Count Sessions
+                     foreach ($logsForDay as $log) {
+                         if ($log->status == 'Hadir') $counts['H']++;
+                         elseif ($log->status == 'Sakit') $counts['S']++;
+                         elseif ($log->status == 'Izin') $counts['I']++;
+                         elseif ($log->status == 'Alpha') $counts['A']++;
+                     }
+                 } else {
+                     if ($isLibur) {
+                         $status = 'Libur';
+                     }
+                 }
+                 
+                 $code = '-';
+                 if ($status == 'Hadir') $code = 'H';
+                 elseif ($status == 'Sakit') $code = 'S';
+                 elseif ($status == 'Izin') $code = 'I';
+                 elseif ($status == 'Alpha') $code = 'A';
+                 elseif ($status == 'Libur') $code = 'L';
+
+                 $dailyLogs[$dateStr] = [
+                    'code' => $code,
+                    'is_libur' => $isLibur,
+                    'counts' => $counts
+                 ];
+            }
+
+            // Update Global Summary Stats
+            $summaryStats['Hadir'] += $sessionStats['H'];
+            $summaryStats['Sakit'] += $sessionStats['S'];
+            $summaryStats['Izin'] += $sessionStats['I'];
+            $summaryStats['Alpha'] += $sessionStats['A'];
+
+            // Get detailed absent logs list (for 'detail' view)
+            $details = $studentLogs->filter(function($log) {
+                return in_array($log->status, ['Sakit', 'Izin', 'Alpha']);
+            })->map(function($log) {
+                // Determine Mapel Name
+                $kategori = $log->logbook->kategori;
+                $mapelName = 'Lain-lain';
+
+                if ($kategori === 'mapel' || $kategori === 'piket_sub') {
+                    $mapelName = $log->logbook->jadwal->mapel->mapel ?? 'Mata Pelajaran';
+                } elseif ($kategori === 'piket_masuk') {
+                    $mapelName = 'Piket Masuk';
+                } elseif ($kategori === 'piket_pulang') {
+                    $mapelName = 'Piket Pulang';
+                }
+
+                return [
+                    'date' => $log->logbook->tanggal,
+                    'status' => $log->status,
+                    'mapel' => $mapelName,
+                ];
+            })->sortBy('date')->values();
+
+            return (object) [
+                'id' => $student->id, 'nama' => $student->nama,
+                'total' => $sessionStats, 'daily_total' => $dailyTotal, 'details' => $details, 'daily_logs' => $dailyLogs
+            ];
+        });
+
+        return ['rekapData' => $rekapData, 'summaryStats' => $summaryStats, 'dates' => $dates];
     }
 }

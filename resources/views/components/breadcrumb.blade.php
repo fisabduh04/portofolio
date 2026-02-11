@@ -1,3 +1,5 @@
+@props(['breadcrumbs', 'title' => null, 'hideTitle' => false])
+
 <div class="mb-4 mt-1 col-span-full">
     <nav class="flex mb-3" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
@@ -26,7 +28,9 @@
             @endforeach
         </ol>
     </nav>
+    @if(!$hideTitle)
     <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white mt-1">
-        {{ end($breadcrumbs)['name'] }}
+        {{ $title ?? end($breadcrumbs)['name'] }}
     </h1>
+    @endif
 </div>

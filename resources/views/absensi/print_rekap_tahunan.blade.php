@@ -22,7 +22,7 @@
 
     <!-- Header / Kop Surat -->
     <div class="flex items-center gap-4 mb-4 border-b-4 border-double border-black pb-2">
-        <img src="{{ asset('img/logo.png') }}" class="w-20 h-20 object-contain" alt="Logo">
+        <img src="{{ $logo ?? asset('img/logo.png') }}" class="w-20 h-20 object-contain" alt="Logo">
         <div class="flex-1 text-center">
             <h1 class="text-2xl font-bold uppercase tracking-wider">SMK AL-MIFTAH</h1>
             <p class="text-sm">Jln. Pesantren No. 03 , Desa Panyeppen , Kec. Mumbulsari , Kab. Jember , Prov. Jawa Timur</p>

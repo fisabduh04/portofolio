@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Sekolah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class SekolahController extends Controller
 {
@@ -14,6 +16,11 @@ class SekolahController extends Controller
      */
     public function index()
     {
+        // 1. Otorisasi: Hanya Admin, Kepala Sekolah, dan Operator yang boleh akses halaman ini
+        if (!in_array(auth()->user()->role, ['admin', 'kepala', 'operator'])) {
+            abort(403, 'Anda tidak memiliki akses untuk melihat konfigurasi sekolah.');
+        }
+
         $sekolah = Sekolah::first();
 
         // Jika belum ada data, kita kirim object kosong/baru
@@ -29,10 +36,22 @@ class SekolahController extends Controller
      */
     public function store(Request $request)
     {
-        // Validasi input sesuai standar Dapodik
+        // 1. Otorisasi: Hanya Admin, Kepala Sekolah, dan Operator yang boleh mengubah data
+        if (!in_array(auth()->user()->role, ['admin', 'kepala', 'operator'])) {
+            abort(403, 'Anda tidak memiliki akses untuk mengubah data sekolah.');
+        }
+
+        // 2. Validasi Ketat (MIME Types & Sanitasi)
+        // Kita gunakan strip_tags untuk membersihkan input text dari potensi XSS
+        $input = $request->all();
+        array_walk_recursive($input, function (&$input) {
+            $input = strip_tags($input);
+        });
+        $request->merge($input);
+
         $validated = $request->validate([
             'nama_sekolah' => 'required|string|max:255',
-            'npsn' => 'required|numeric|digits:8', // Dapodik: 8 digit angka
+            'npsn' => 'required|numeric|digits:8', 
             'status_sekolah' => 'required|in:Negeri,Swasta',
             'bentuk_pendidikan' => 'nullable|string',
             'alamat' => 'required|string',
@@ -40,54 +59,65 @@ class SekolahController extends Controller
             'no_telp' => 'nullable|string',
             'lintang' => 'nullable|numeric',
             'bujur' => 'nullable|numeric',
-            // File uploads
-            'logo' => 'nullable|image|max:2048', // Max 2MB
-            'kop_surat' => 'nullable|image|max:2048',
+            // File uploads dengan validasi MIME yang ketat
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', 
+            'kop_surat' => 'nullable|image|mimes:jpeg,png,jpg,png|max:2048',
         ]);
 
-        // Cek data lama
-        $sekolah = Sekolah::first();
-        if (!$sekolah) {
-            $sekolah = new Sekolah();
-        }
-
-        // Handle File Upload Logo
-        if ($request->hasFile('logo')) {
-            // Hapus lama jika ada
-            if ($sekolah->logo) {
-                Storage::delete($sekolah->logo);
-            }
-            $validated['logo'] = $request->file('logo')->store('sekolah-images', 'public');
-        }
-
-        // Handle File Upload Kop Surat
-        if ($request->hasFile('kop_surat')) {
-             if ($sekolah->kop_surat) {
-                Storage::delete($sekolah->kop_surat);
-            }
-            $validated['kop_surat'] = $request->file('kop_surat')->store('sekolah-images', 'public');
-        }
-
-        // Update / Create
-        // Kita gunakan fill untuk mass assignment ke semua field yang dikirim (selain file yang sudah dihandle manual)
-        // Pastikan field lain di request yang tidak tervalidasi tapi ada di database masuk ke $validated atau request->all()
-        // Untuk aman, gunakan $request->except(['logo', 'kop_surat', '_token']) + path file
+        // 3. Database Transaction untuk Data Integrity
+        try {
+            DB::transaction(function () use ($request, $validated) {
+                // Cek data lama
+                $sekolah = Sekolah::first();
+                if (!$sekolah) {
+                    $sekolah = new Sekolah();
+                }
         
-        $data = $request->except(['logo', 'kop_surat', '_token', '_method']);
-        // Merge file paths
-        if (isset($validated['logo'])) $data['logo'] = $validated['logo'];
-        if (isset($validated['kop_surat'])) $data['kop_surat'] = $validated['kop_surat'];
+                // Handle File Upload Logo
+                if ($request->hasFile('logo')) {
+                    if ($sekolah->logo) {
+                        Storage::delete($sekolah->logo);
+                    }
+                    $validated['logo'] = $request->file('logo')->store('sekolah-images', 'public');
+                }
+        
+                // Handle File Upload Kop Surat
+                if ($request->hasFile('kop_surat')) {
+                     if ($sekolah->kop_surat) {
+                        Storage::delete($sekolah->kop_surat);
+                    }
+                    $validated['kop_surat'] = $request->file('kop_surat')->store('sekolah-images', 'public');
+                }
+        
+                // Update / Create
+                $data = $request->except(['logo', 'kop_surat', '_token', '_method']);
+                
+                // Perbaikan: Konversi string kosong menjadi NULL agar tidak error di Database (terutama kolom decimal/numeric)
+                $data = array_map(function($value) {
+                    return $value === '' ? null : $value;
+                }, $data);
 
-        // Simpan
-        if ($sekolah->exists) {
-            $sekolah->update($data);
-        } else {
-            $sekolah = Sekolah::create($data);
+                // Merge file paths
+                if (isset($validated['logo'])) $data['logo'] = $validated['logo'];
+                if (isset($validated['kop_surat'])) $data['kop_surat'] = $validated['kop_surat'];
+        
+                // --- LANGKAH DETIL SINKRONISASI CACHE ---
+                
+                // 1. Simpan perubahan ke Database
+                if ($sekolah->exists) {
+                    $sekolah->update($data);
+                } else {
+                    $sekolah = Sekolah::create($data);
+                }
+        
+                // 2. Hapus Cache (Reset)
+                Cache::forget('global_sekolah_data');
+            });
+
+            return redirect()->route('sekolah.index')->with('success', 'Data Sekolah berhasil diperbarui dan diamankan.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage())->withInput();
         }
-
-        // Hapus cache agar data global terupdate otomatis
-        \Illuminate\Support\Facades\Cache::forget('sekolah_data');
-
-        return redirect()->route('sekolah.index')->with('success', 'Data Sekolah berhasil diperbarui.');
     }
 }

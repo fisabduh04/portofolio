@@ -2,7 +2,11 @@
     <thead>
         <tr>
             <td colspan="6" style="text-align: center; font-weight: bold; font-size: 16px;">
-                REKAPITULASI PRESENSI HARIAN - {{ $kelas }}
+                REKAPITULASI PRESENSI HARIAN 
+                @if(isset($typeGuru) && $typeGuru)
+                    ({{ $typeGuru == 'piket' ? 'GURU PIKET' : 'GURU MAPEL' }})
+                @endif
+                - {{ $kelas }}
             </td>
         </tr>
         <tr>

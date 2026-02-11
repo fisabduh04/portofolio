@@ -91,11 +91,11 @@
 
                     {{-- Filter Tahun --}}
                     <select id="tahun" name="filter_tahun" onchange="this.form.submit()"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-32 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-64 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <option value="" {{ request('filter_tahun') == '' ? 'selected' : '' }}>Semua Tahun</option>
                         @foreach ($tahun as $t)
                             <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
-                                {{ $t->tahun }}
+                                {{ $t->tahun }} - {{ $t->semester }}
                             </option>
                         @endforeach
                     </select>

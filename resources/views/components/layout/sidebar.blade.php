@@ -2,8 +2,8 @@
    <div class="h-full px-3 py-4 overflow-y-auto bg-neutral-primary-soft border-e border-default">
       <div class="flex items-center justify-between mb-5">
         <a href="{{ route('dashboard.index') }}" class="flex items-center ps-2.5">
-            <img src="{{ asset('img/logo.png') }}" class="h-6 me-3" alt="SMK AL-MIFTAH Logo" />
-            <span class="self-center text-lg text-heading font-semibold whitespace-nowrap">SMK AL-MIFTAH</span>
+            <img src="{{ $logo ?? asset('img/logo.png') }}" class="h-6 me-3" alt="{{ $sekolah->nama_sekolah ?? 'SMK AL-MIFTAH' }} Logo" />
+            <span class="self-center text-lg text-heading font-semibold whitespace-nowrap">{{ $sekolah->nama_sekolah ?? 'SMK AL-MIFTAH' }}</span>
         </a>
         <button type="button" data-drawer-hide="top-bar-sidebar" aria-controls="top-bar-sidebar" class="text-body bg-transparent hover:bg-neutral-tertiary rounded-lg text-sm w-8 h-8 md:hidden inline-flex justify-center items-center">
             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
@@ -156,6 +156,9 @@
                  </li>
                  <li>
                      <a href="{{ route('absensi.rekap-tahunan') }}" class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base pl-11 group {{ request()->routeIs('absensi.rekap-tahunan') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}">Tahunan</a>
+                 </li>
+                 <li>
+                     <a href="{{ route('absensi.rekap-periode') }}" class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base pl-11 group {{ request()->routeIs('absensi.rekap-periode') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}">Laporan Periode</a>
                  </li>
                  
              </ul>

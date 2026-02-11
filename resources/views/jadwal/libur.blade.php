@@ -164,7 +164,7 @@
                                                     <x-btn type="button" color="yellow" size="xs" icon="pencil" 
                                                         data-modal-target="edit-libur-modal" 
                                                         data-modal-toggle="edit-libur-modal"
-                                                        onclick="editLibur('{{ $libur->id }}', '{{ $libur->keterangan }}', '{{ $libur->tanggal_mulai }}', '{{ $libur->tanggal_akhir }}')" />
+                                                        onclick="editLibur('{{ $libur->id }}', '{{ $libur->keterangan }}', '{{ \Carbon\Carbon::parse($libur->tanggal_mulai)->format('Y-m-d') }}', '{{ $libur->tanggal_akhir ? \Carbon\Carbon::parse($libur->tanggal_akhir)->format('Y-m-d') : '' }}')" />
                                                         
                                                     <x-btn type="submit" color="red" size="xs" icon="trash" />
                                                 </form>

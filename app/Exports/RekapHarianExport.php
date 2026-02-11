@@ -13,12 +13,14 @@ class RekapHarianExport implements FromView, ShouldAutoSize, WithStyles
     protected $data;
     protected $date;
     protected $kelasName;
+    protected $typeGuru;
 
-    public function __construct($data, $date, $kelasName)
+    public function __construct($data, $date, $kelasName, $typeGuru = 'mapel')
     {
         $this->data = $data;
         $this->date = $date;
         $this->kelasName = $kelasName;
+        $this->typeGuru = $typeGuru;
     }
 
     public function view(): View
@@ -26,7 +28,8 @@ class RekapHarianExport implements FromView, ShouldAutoSize, WithStyles
         return view('absensi.export_rekap_harian', [
             'rekapData' => $this->data,
             'date' => $this->date,
-            'kelas' => $this->kelasName
+            'kelas' => $this->kelasName,
+            'typeGuru' => $this->typeGuru
         ]);
     }
 

@@ -41,6 +41,16 @@ class AbsensiExport implements FromCollection
             $query->whereHas('siswa', fn($q) => $q->where('kelas_id', $this->filters['kelas_id']));
         }
 
+        // Filter Type Guru
+        $typeGuru = $this->filters['type_guru'] ?? 'mapel';
+        $query->whereHas('logbook', function($q) use ($typeGuru) {
+            if ($typeGuru === 'mapel') {
+                $q->whereIn('kategori', ['mapel', 'piket_sub']);
+            } elseif ($typeGuru === 'piket') {
+                $q->whereIn('kategori', ['piket_masuk', 'piket_pulang']);
+            }
+        });
+
         return $query->get()->map(function($absensi) {
             return [
                 'Tanggal' => $absensi->logbook->tanggal ?? '-',

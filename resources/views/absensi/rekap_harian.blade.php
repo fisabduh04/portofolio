@@ -3,49 +3,15 @@
         {{-- Header --}}
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <x-breadcrumb :breadcrumbs="[
+                <x-breadcrumb :title="'Rekapitulasi Presensi Harian'" :breadcrumbs="[
                     ['name' => 'Home', 'href' => route('dashboard.index')],
                     ['name' => 'Rekapitulasi', 'href' => '#'],
                     ['name' => 'Presensi Harian', 'href' => route('absensi.rekap-harian')],
                 ]" />
-                <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    Rekapitulasi Presensi Harian
-                </h1>
                 <p class="text-gray-500 dark:text-gray-400">
                     Monitoring kehadiran siswa dengan tampilan timeline visual.
                 </p>
             </div>
-            @if($selectedKelas)
-            <div class="flex items-center gap-2">
-                 <button id="dropdownExportButton" data-dropdown-toggle="dropdownExport" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800 flex items-center gap-2" type="button">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Export Data
-                    <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
-                </button>
-                
-                <!-- Dropdown menu -->
-                <div id="dropdownExport" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
-                    <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownExportButton">
-                      <li>
-                        <a href="{{ route('absensi.rekap-harian.export', ['format' => 'excel'] + request()->all()) }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                            <span class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
-                                Export Excel
-                            </span>
-                        </a>
-                      </li>
-                      <li>
-                        <a href="{{ route('absensi.rekap-harian.export', ['format' => 'pdf'] + request()->all()) }}" target="_blank" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                             <span class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                                Cetak PDF
-                            </span>
-                        </a>
-                      </li>
-                    </ul>
-                </div>
-            </div>
-            @endif
         </div>
 
         {{-- Filter Section --}}
@@ -116,14 +82,42 @@
                     </select>
                 </div>
 
-                {{-- Submit Group --}}
-                <div class="lg:col-span-1">
-                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 w-full dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-shadow">
+                {{-- Buttons Group --}}
+                <div class="lg:col-span-1 flex gap-2">
+                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 w-full dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-shadow">
                         <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
                         </svg>
                         Tampilkan
                     </button>
+
+                    @if($selectedKelas)
+                    <button id="dropdownExportButton" data-dropdown-toggle="dropdownExport" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-3 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800 flex items-center justify-center shadow-sm" type="button" title="Export Menu">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </button>
+                    
+                    <!-- Dropdown menu -->
+                    <div id="dropdownExport" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
+                        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownExportButton">
+                            <li>
+                            <a href="{{ route('absensi.rekap-harian.export', ['format' => 'excel', 'type_guru' => $typeGuru] + request()->except(['format', 'type_guru'])) }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                                    Export Excel
+                                </span>
+                            </a>
+                            </li>
+                            <li>
+                            <a href="{{ route('absensi.rekap-harian.export', ['format' => 'pdf', 'type_guru' => $typeGuru] + request()->except(['format', 'type_guru'])) }}" target="_blank" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                                    <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    Cetak PDF
+                                </span>
+                            </a>
+                            </li>
+                        </ul>
+                    </div>
+                    @endif
                 </div>
             </form>
         </div>
@@ -198,20 +192,35 @@
             </div>
 
             {{-- Main Logic Explanation (Dismissible Alert) --}}
-            @if($summaryStats['Alpha'] > 0)
-            <div id="alert-additional-content-2" class="p-4 mb-4 text-red-800 border border-red-300 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800" role="alert">
-                <div class="flex items-center">
-                    <svg class="flex-shrink-0 w-4 h-4 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-                    </svg>
-                    <span class="sr-only">Info</span>
-                    <h3 class="text-lg font-medium">Perhatian: Terdeteksi {{$summaryStats['Alpha']}} Siswa Alpha</h3>
+
+            {{-- Info Hari Libur (Major Banner) --}}
+            @if($holiday)
+                <div class="p-6 mb-6 text-center bg-blue-50 border border-blue-200 rounded-xl dark:bg-blue-900/20 dark:border-blue-800">
+                    <div class="inline-flex items-center justify-center w-16 h-16 mb-4 text-blue-600 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Hari Libur: {{ $holiday->keterangan }}</h2>
+                    <p class="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
+                        Pada hari ini kegiatan belajar mengajar diliburkan sesuai jadwal akademik.
+                    </p>
+                    
+                    @if($summaryStats['Hadir'] > 0)
+                        <div class="mt-6 p-4 bg-white rounded-lg border border-gray-200 inline-block text-left dark:bg-gray-800 dark:border-gray-700">
+                             <p class="text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                Aktivitas Terdeteksi:
+                             </p>
+                             <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Meskipun libur, terdapat <b>{{ $summaryStats['Hadir'] }} siswa</b> yang tercatat hadir (kegiatan ekstrakurikuler/tambahan).
+                                <button type="button" onclick="document.getElementById('main-rekap-content').classList.toggle('hidden')" class="text-blue-600 hover:underline ml-1">Lihat Detail</button>
+                             </p>
+                        </div>
+                    @endif
                 </div>
-                <div class="mt-2 text-sm">
-                    Status harian dihitung secara ketat: Jika siswa memiliki <b>minimal 1 Sesi Alpha</b>, maka status harian otomatis dianggap <b>Alpha</b>.
-                </div>
-            </div>
             @endif
+
+            {{-- Main Content Wrapper --}}
+            <div id="main-rekap-content" class="{{ ($holiday && $summaryStats['Hadir'] == 0) ? 'hidden' : '' }}">
 
             {{-- VIEW CONDITIONAL --}}
             @if($viewMode == 'detail')
@@ -477,5 +486,6 @@
                 </p>
             </div>
         @endif
+            </div> {{-- End Main Content Wrapper --}}
     </div>
 </x-layout.layout>

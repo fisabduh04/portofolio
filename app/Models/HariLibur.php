@@ -44,7 +44,14 @@ class HariLibur extends Model
      * @param string|Carbon $date
      * @return bool
      */
-    public static function isLibur($date, $tahunId = null)
+    /**
+     * Get holiday details for a given date.
+     * 
+     * @param string|Carbon $date
+     * @param int|null $tahunId
+     * @return HariLibur|null
+     */
+    public static function getHoliday($date, $tahunId = null)
     {
         $date = Carbon::parse($date);
         $dayName = $date->locale('id')->isoFormat('dddd');
@@ -60,33 +67,39 @@ class HariLibur extends Model
 
         foreach ($holidays as $libur) {
             // 1. GLOBAL DATE RANGE CHECK
-            // If the holiday record has specific valid dates, the current date MUST be within them.
-            // This applies to both "Weekly" (e.g. only Sunday in Jan) and "Special" holidays.
             if ($libur->tanggal_mulai) {
                 $start = $libur->tanggal_mulai;
-                $end = $libur->tanggal_akhir ?? $start; // If end is null, assume single day
+                $end = $libur->tanggal_akhir ?? $start;
 
                 if (!$date->between($start, $end)) {
-                    continue; // Skip this rule if we are outside its valid range
+                    continue; 
                 }
             }
 
             // 2. CHECK RULE TYPE
             if ($libur->hari) {
-                // Weekly Holiday Rule (e.g., "Every Minggu")
                 if (strtolower($libur->hari) === strtolower($dayName)) {
-                    return true;
+                    return $libur;
                 }
             } else {
-                // Special Holiday Rule (Date-based only)
-                // If we passed Step 1 (Date Range Check) and 'hari' is null, it means we matched the special date.
-                // (Note: For special holidays without 'hari', logic relies entirely on Step 1)
                 if ($libur->tanggal_mulai) {
-                     return true;
+                     return $libur;
                 }
             }
         }
 
-        return false;
+        // 3. WEEKEND CHECK (Default Sunday) - Optional, but good to have explicit
+        if ($dayName === 'Minggu') {
+             // Create dummy holiday object for Sunday if no DB rule overrides/defines it
+             // But usually user defines Minggu as holiday in DB. 
+             // Let's stick to DB rules for now to be safe.
+        }
+
+        return null;
+    }
+
+    public static function isLibur($date, $tahunId = null)
+    {
+        return self::getHoliday($date, $tahunId) !== null;
     }
 }

@@ -18,11 +18,16 @@
         {{-- Kop Surat / Header --}}
         <div class="flex items-center gap-4 mb-6 border-b-2 border-gray-800 pb-4">
             <div class="w-16 h-16 shrink-0">
-                <img src="{{ asset('img/logo.png') }}" alt="Logo" class="w-full h-full object-contain">
+                <img src="{{ $logo ?? asset('img/logo.png') }}" alt="Logo" class="w-full h-full object-contain">
             </div>
             <div class="flex-1 text-center">
                 <h1 class="text-2xl font-bold uppercase tracking-wider text-gray-900 leading-tight">SMK AL-MIFTAH</h1>
-                <h2 class="text-lg font-semibold uppercase text-gray-700 tracking-wide mt-1">Laporan Rekapitulasi Presensi Harian</h2>
+                <h2 class="text-lg font-semibold uppercase text-gray-700 tracking-wide mt-1">
+                    Laporan Rekapitulasi Presensi Harian
+                    @if(isset($typeGuru) && $typeGuru)
+                        <span class="text-blue-600">({{ $typeGuru == 'piket' ? 'Guru Piket' : 'Guru Mapel' }})</span>
+                    @endif
+                </h2>
                 <div class="flex justify-center gap-4 text-sm text-gray-600 mt-2">
                     <p>Kelas: <span class="font-bold text-gray-800">{{ $kelas }}</span></p>
                     <p>|</p>
