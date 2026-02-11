@@ -157,17 +157,13 @@
                                         </td>
                                         <td class="px-6 py-4 text-center">
                                             <div class="flex items-center justify-center gap-2">
-                                                <form action="{{ route('hari-libur.destroy', $libur->id) }}" method="POST" onsubmit="return confirm('Hapus hari libur ini?');" class="flex gap-2">
-                                                    @csrf
-                                                    @method('DELETE')
+                                                <x-btn type="button" color="yellow" size="xs" icon="pencil" 
+                                                    data-modal-target="edit-libur-modal" 
+                                                    data-modal-toggle="edit-libur-modal"
+                                                    onclick="editLibur('{{ $libur->id }}', '{{ $libur->keterangan }}', '{{ \Carbon\Carbon::parse($libur->tanggal_mulai)->format('Y-m-d') }}', '{{ $libur->tanggal_akhir ? \Carbon\Carbon::parse($libur->tanggal_akhir)->format('Y-m-d') : '' }}')" />
                                                     
-                                                    <x-btn type="button" color="yellow" size="xs" icon="pencil" 
-                                                        data-modal-target="edit-libur-modal" 
-                                                        data-modal-toggle="edit-libur-modal"
-                                                        onclick="editLibur('{{ $libur->id }}', '{{ $libur->keterangan }}', '{{ \Carbon\Carbon::parse($libur->tanggal_mulai)->format('Y-m-d') }}', '{{ $libur->tanggal_akhir ? \Carbon\Carbon::parse($libur->tanggal_akhir)->format('Y-m-d') : '' }}')" />
-                                                        
-                                                    <x-btn type="submit" color="red" size="xs" icon="trash" />
-                                                </form>
+                                                <x-btn type="button" color="red" size="xs" icon="trash" data-modal-target="popup-modal-{{ $libur->id }}" data-modal-toggle="popup-modal-{{ $libur->id }}" />
+                                                <x-modal.hapus :id="$libur->id" :action="route('hari-libur.destroy', $libur->id)" />
                                             </div>
                                         </td>
                                     </tr>
