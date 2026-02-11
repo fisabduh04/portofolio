@@ -15,6 +15,11 @@ use App\Http\Controllers\JadwalPiketController;
 use App\Http\Controllers\KelasSiswaController;
 use App\Http\Controllers\Operator\UserProvisioningController;
 use App\Http\Controllers\HariLiburController;
+use App\Http\Controllers\AttendanceRuleController;
+use App\Http\Controllers\AbsensiExportController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\PegawaiAttendanceController;
+
 
 
 
@@ -71,24 +76,36 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     // 2. AKSES REKAPITULASI (Kepala Sekolah, Admin, Operator) - Must be before resource routes
     Route::middleware(['role:kepala,admin,operator'])->group(function () {
-        Route::get('/absensi/rekap', [App\Http\Controllers\AbsensiReportController::class, 'rekap'])->name('absensi.rekap');
-        Route::get('/absensi/rekap-harian', [App\Http\Controllers\AbsensiReportController::class, 'rekapHarian'])->name('absensi.rekap-harian');
-        Route::get('/absensi/rekap-harian/export', [App\Http\Controllers\AbsensiExportController::class, 'exportRekapHarian'])->name('absensi.rekap-harian.export');
-        Route::get('/absensi/rekap-bulanan', [App\Http\Controllers\AbsensiReportController::class, 'rekapBulanan'])->name('absensi.rekap-bulanan');
-        Route::get('/absensi/rekap-bulanan/export', [App\Http\Controllers\AbsensiExportController::class, 'exportRekapBulanan'])->name('absensi.rekap-bulanan.export');
-        Route::get('/absensi/rekap-tahunan', [App\Http\Controllers\AbsensiReportController::class, 'rekapTahunan'])->name('absensi.rekap-tahunan');
-        Route::get('/absensi/rekap-tahunan/export', [App\Http\Controllers\AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.rekap-tahunan.export');
-        Route::get('/absensi/export-harian', [App\Http\Controllers\AbsensiExportController::class, 'exportHarian'])->name('absensi.export-harian');
-        Route::get('/absensi/rekap-periode', [App\Http\Controllers\AbsensiReportController::class, 'rekapPeriode'])->name('absensi.rekap-periode');
-        Route::get('/absensi/export-periode', [App\Http\Controllers\AbsensiExportController::class, 'exportRekapPeriode'])->name('absensi.export-periode');
-        Route::get('/absensi/export-bulanan', [App\Http\Controllers\AbsensiExportController::class, 'exportBulanan'])->name('absensi.export-bulanan');
-        Route::get('/absensi/export-tahunan', [App\Http\Controllers\AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.export-tahunan'); // Fixed to point to existing export method
+        Route::get('/absensi/rekap', [AbsensiReportController::class, 'rekap'])->name('absensi.rekap');
+        Route::get('/absensi/rekap-harian', [AbsensiReportController::class, 'rekapHarian'])->name('absensi.rekap-harian');
+        Route::get('/absensi/rekap-harian/export', [AbsensiExportController::class, 'exportRekapHarian'])->name('absensi.rekap-harian.export');
+        Route::get('/absensi/rekap-bulanan', [AbsensiReportController::class, 'rekapBulanan'])->name('absensi.rekap-bulanan');
+        Route::get('/absensi/rekap-bulanan/export', [AbsensiExportController::class, 'exportRekapBulanan'])->name('absensi.rekap-bulanan.export');
+        Route::get('/absensi/rekap-tahunan', [AbsensiReportController::class, 'rekapTahunan'])->name('absensi.rekap-tahunan');
+        Route::get('/absensi/rekap-tahunan/export', [AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.rekap-tahunan.export');
+        Route::get('/absensi/export-harian', [AbsensiExportController::class, 'exportHarian'])->name('absensi.export-harian');
+        Route::get('/absensi/rekap-periode', [AbsensiReportController::class, 'rekapPeriode'])->name('absensi.rekap-periode');
+        Route::get('/absensi/export-periode', [AbsensiExportController::class, 'exportRekapPeriode'])->name('absensi.export-periode');
+        Route::get('/absensi/export-bulanan', [AbsensiExportController::class, 'exportBulanan'])->name('absensi.export-bulanan');
+        Route::get('/absensi/export-tahunan', [AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.export-tahunan'); // Fixed to point to existing export method
         Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
         
         // Piket Routes
         Route::get('/absensi/piket', [AbsensiController::class, 'piket'])->name('absensi.piket');
         Route::post('/absensi/piket/check-in', [AbsensiController::class, 'piketCheckIn'])->name('absensi.piket.check-in');
         Route::post('/absensi/piket/check-out', [AbsensiController::class, 'piketCheckOut'])->name('absensi.piket.check-out');
+
+        // PEGAWAI ATTENDANCE SYSTEM
+        Route::resource('attendance/rules', AttendanceRuleController::class, ['as' => 'attendance']);
+        Route::get('attendance/dashboard', [\App\Http\Controllers\PegawaiAttendanceController::class, 'index'])->name('attendance.index');
+        Route::get('attendance/create', [\App\Http\Controllers\PegawaiAttendanceController::class, 'create'])->name('attendance.create');
+        Route::post('attendance/store', [\App\Http\Controllers\PegawaiAttendanceController::class, 'store'])->name('attendance.store');
+        Route::post('attendance/process', [\App\Http\Controllers\PegawaiAttendanceController::class, 'process'])->name('attendance.process');
+        Route::get('attendance/report', [\App\Http\Controllers\PegawaiAttendanceController::class, 'report'])->name('attendance.report');
+        Route::get('attendance/payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('attendance.payroll.index');
+        Route::get('attendance/payroll/{id}/slip', [\App\Http\Controllers\PayrollController::class, 'slip'])->name('attendance.payroll.slip');
+
+
 
 
     });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\PegawaiExport;
 use App\Imports\PegawaiImport;
 use App\Models\pegawai;
+use App\Models\AttendanceRule;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
@@ -51,7 +52,8 @@ class PegawaiController extends Controller
      */
     public function create()
     {
-        return view('pegawai.input-pegawai');
+        $attendanceRules = AttendanceRule::all();
+        return view('pegawai.input-pegawai', compact('attendanceRules'));
     }
 
     /**
@@ -63,6 +65,8 @@ class PegawaiController extends Controller
             'name' => 'required',
             'nuptk' => 'required',
             'foto' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+            'attendance_rule_id' => 'nullable|exists:attendance_rules,id',
+            'fingerprint_id' => 'nullable|string|max:50',
         ]);
 
         $data = $request->all();
@@ -89,7 +93,8 @@ class PegawaiController extends Controller
     public function edit($id)
     {
         $pegawai = pegawai::findOrFail($id);
-        return view('pegawai.input-pegawai', compact('pegawai'));
+        $attendanceRules = AttendanceRule::all();
+        return view('pegawai.input-pegawai', compact('pegawai', 'attendanceRules'));
     }
 
     /**
@@ -103,6 +108,8 @@ class PegawaiController extends Controller
             'name' => 'required',
             'nuptk' => 'required',
             'foto' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+            'attendance_rule_id' => 'nullable|exists:attendance_rules,id',
+            'fingerprint_id' => 'nullable|string|max:50',
         ]);
 
         $data = $request->all();

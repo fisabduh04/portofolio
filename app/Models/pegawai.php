@@ -13,7 +13,7 @@ class Pegawai extends Model
         'name', 'status', 'aktif', 'email', 'nuptk', 'jk', 'kotalahir', 'tanggallahir', 'jenisptk', 
         'agama', 'alamat', 'rt', 'rw', 'hp', 'skpengangkatan', 'lembagapengangkatan', 'PangkatGolongan', 
         'sumbergaji', 'ibukandung', 'kawin', 'suamiistri', 'pekerjaansuamiIstri', 'npwp', 'nonik', 
-        'nokk', 'foto', 'deskripsi', 'password'
+        'nokk', 'foto', 'deskripsi', 'password', 'fingerprint_id', 'attendance_rule_id'
     ];
 
     public function user()
@@ -24,5 +24,20 @@ class Pegawai extends Model
     public function jadwals()
     {
         return $this->hasMany(Jadwal::class);
+    }
+
+    public function attendanceRule()
+    {
+        return $this->belongsTo(AttendanceRule::class);
+    }
+
+    public function attendanceLogs()
+    {
+        return $this->hasMany(AttendanceLog::class);
+    }
+
+    public function pegawaiAbsensis()
+    {
+        return $this->hasMany(PegawaiAbsensi::class);
     }
 }

@@ -61,10 +61,10 @@
                     <a href="{{ route('jurusan.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Jurusan</a>
                 </li>
                 <li>
-                    <a href="{{ route('pegawai.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Pegawai</a>
+                    <a href="{{ route('pegawai.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Data Pegawai</a>
                 </li>
                 <li>
-                    <a href="{{ route('kelas.index') }}" class="flex itlems-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Kelas</a>
+                    <a href="{{ route('kelas.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Kelas</a>
                 </li>
                 <li>
                     <a href="{{ route('mapel.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Mata Pelajaran</a>
@@ -77,6 +77,39 @@
                 </li>
                 <li>
                     <a href="{{ route('jadwal.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Jadwal</a>
+                </li>
+            </ul>
+         </li>
+
+         <!-- Menu Kepegawaian Baru -->
+         <li>
+            <button type="button" 
+                class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand" 
+                aria-controls="dropdown-kepegawaian" 
+                data-collapse-toggle="dropdown-kepegawaian">
+                <svg class="w-5 h-5 transition duration-75 group-hover:text-fg-brand" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span class="flex-1 text-left ms-3 rtl:text-right whitespace-nowrap">Kepegawaian</span>
+                <svg class="w-3 h-3 group-hover:text-fg-brand" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" />
+                </svg>
+            </button>
+            <ul id="dropdown-kepegawaian" class="hidden py-2 space-y-2">
+                <li>
+                    <a href="{{ route('attendance.rules.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Aturan Kehadiran</a>
+                </li>
+                <li>
+                    <a href="{{ route('attendance.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Dashboard Absensi</a>
+                </li>
+                <li>
+                    <a href="{{ route('attendance.payroll.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Payroll & Gaji</a>
+                </li>
+                <li>
+                    <a href="{{ route('attendance.report') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Laporan Absensi</a>
                 </li>
             </ul>
          </li>

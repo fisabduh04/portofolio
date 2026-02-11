@@ -113,6 +113,7 @@
                                 <input type="date" name="tanggallahir" value="{{ old('tanggallahir', $pegawai->tanggallahir ?? '') }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                             </div>
                             <div>
+                            <div>
                                 <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Jenis Kelamin</label>
                                 <div class="flex items-center gap-6 mt-2">
                                     <div class="flex items-center">
@@ -133,8 +134,50 @@
                                     @endforeach
                                 </select>
                             </div>
-                        </div>
-                    </div>
+
+                             <!-- Attendance Configuration -->
+                             <div class="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                                <h5 class="font-bold text-gray-900 dark:text-white mb-4">Konfigurasi Absensi</h5>
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Aturan Kehadiran</label>
+                                <select name="attendance_rule_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    <option value="">-- Pilih Aturan --</option>
+                                    @foreach($attendanceRules as $rule)
+                                        <option value="{{ $rule->id }}" {{ (old('attendance_rule_id', $pegawai->attendance_rule_id ?? '') == $rule->id) ? 'selected' : '' }}>
+                                            {{ $rule->name }} ({{ $rule->jam_masuk }} - {{ $rule->jam_pulang }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500">Tentukan jam kerja dan gaji harian.</p>
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">ID Fingerprint</label>
+                                <input type="text" name="fingerprint_id" value="{{ old('fingerprint_id', $pegawai->fingerprint_id ?? '') }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="ID Mesin">
+                            </div>
+
+                             <!-- Attendance Configuration -->
+                             <div class="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                                <h5 class="font-bold text-gray-900 dark:text-white mb-4">Konfigurasi Absensi</h5>
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Aturan Kehadiran</label>
+                                <select name="attendance_rule_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    <option value="">-- Pilih Aturan --</option>
+                                    @foreach($attendanceRules as $rule)
+                                        <option value="{{ $rule->id }}" {{ (old('attendance_rule_id', $pegawai->attendance_rule_id ?? '') == $rule->id) ? 'selected' : '' }}>
+                                            {{ $rule->name }} ({{ $rule->jam_masuk }} - {{ $rule->jam_pulang }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500">Tentukan jam kerja dan gaji harian.</p>
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">ID Fingerprint</label>
+                                <input type="text" name="fingerprint_id" value="{{ old('fingerprint_id', $pegawai->fingerprint_id ?? '') }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="ID Mesin">
+                            </div>
 
                     <!-- TAB 2: KEPEGAWAIAN -->
                     <div class="hidden p-6 bg-white rounded-base border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700" id="kepegawaian" role="tabpanel" aria-labelledby="kepegawaian-tab">
