@@ -175,7 +175,6 @@ Route::middleware(['auth', 'active'])->group(function () {
 
 });
 
-// RUTE UJI COBA (Hanya untuk Developer/Tanpa Auth jika diperlukan)
-Route::get('/coba', [CobaController::class, 'index']);
-Route::get('/coba3', [CobaController::class, 'tampil3']);
-Route::get('/coba2', [CobaController::class, 'tampil2']);
+
+
+
