@@ -9,7 +9,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Siswa extends Model
 {
     use HasFactory;
-    protected $guarded=[];
+    protected $fillable = [
+        'nama', 'nipd', 'jk', 'nisn', 'status', 'aktif', 'tempatlahir', 'tanggallahir', 'nik', 'agama', 
+        'alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'jenis_tinggal', 
+        'alat_transportasi', 'telepon', 'hp', 'email', 'skhun', 'penerima_kps', 'nokps', 
+        'ayah', 'tahunlahirayah', 'pendidikanayah', 'pekerjaanayah', 'penghasilanayah', 'nikayah', 
+        'namaibu', 'tahunlahiribu', 'pendidikanibu', 'pekerjaanibu', 'penghasilanibu', 'nikibu', 
+        'namawali', 'tahunlahirwali', 'pendidikanwali', 'pekerjaanwali', 'penghasilanwali', 'nikwali', 
+        'rombelsaatini', 'nopesertaunas', 'noijazah', 'penerimakip', 'nomorkip', 'namadikip', 
+        'nomorkks', 'noaktalahir', 'bank', 'nomor_rekening_bank', 'rekening_atas_nama', 'layakpip', 
+        'alasanlayakpip', 'kebutuhankhusus', 'sekolahasal', 'anakke', 'lintang', 'bujur', 'nokk', 
+        'beratbadan', 'tinggibadan', 'lingkarkepala', 'jmlsaudara', 'jarakrumah', 'deskripsi', 'foto'
+    ];
 
 
     public function KelasSiswa(){

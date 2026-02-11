@@ -13,7 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\JadwalPiketController;
 use App\Http\Controllers\KelasSiswaController;
-use App\Http\Controllers\UserProvisioningController;
+use App\Http\Controllers\Operator\UserProvisioningController;
 use App\Http\Controllers\HariLiburController;
 
 
@@ -71,18 +71,18 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     // 2. AKSES REKAPITULASI (Kepala Sekolah, Admin, Operator) - Must be before resource routes
     Route::middleware(['role:kepala,admin,operator'])->group(function () {
-        Route::get('/absensi/rekap', [AbsensiController::class, 'rekap'])->name('absensi.rekap');
-        Route::get('/absensi/rekap-harian', [AbsensiController::class, 'rekapHarian'])->name('absensi.rekap-harian');
-        Route::get('/absensi/rekap-harian/export', [AbsensiController::class, 'exportRekapHarian'])->name('absensi.rekap-harian.export');
-        Route::get('/absensi/rekap-bulanan', [AbsensiController::class, 'rekapBulanan'])->name('absensi.rekap-bulanan');
-        Route::get('/absensi/rekap-bulanan/export', [AbsensiController::class, 'exportRekapBulanan'])->name('absensi.rekap-bulanan.export');
-        Route::get('/absensi/rekap-tahunan', [AbsensiController::class, 'rekapTahunan'])->name('absensi.rekap-tahunan');
-        Route::get('/absensi/rekap-tahunan/export', [AbsensiController::class, 'exportRekapTahunan'])->name('absensi.rekap-tahunan.export');
-        Route::get('/absensi/export-harian', [AbsensiController::class, 'exportHarian'])->name('absensi.export-harian');
-        Route::get('/absensi/rekap-periode', [AbsensiController::class, 'rekapPeriode'])->name('absensi.rekap-periode');
-        Route::get('/absensi/export-periode', [AbsensiController::class, 'exportRekapPeriode'])->name('absensi.export-periode');
-        Route::get('/absensi/export-bulanan', [AbsensiController::class, 'exportBulanan'])->name('absensi.export-bulanan');
-        Route::get('/absensi/export-tahunan', [AbsensiController::class, 'exportTahunan'])->name('absensi.export-tahunan');
+        Route::get('/absensi/rekap', [App\Http\Controllers\AbsensiReportController::class, 'rekap'])->name('absensi.rekap');
+        Route::get('/absensi/rekap-harian', [App\Http\Controllers\AbsensiReportController::class, 'rekapHarian'])->name('absensi.rekap-harian');
+        Route::get('/absensi/rekap-harian/export', [App\Http\Controllers\AbsensiExportController::class, 'exportRekapHarian'])->name('absensi.rekap-harian.export');
+        Route::get('/absensi/rekap-bulanan', [App\Http\Controllers\AbsensiReportController::class, 'rekapBulanan'])->name('absensi.rekap-bulanan');
+        Route::get('/absensi/rekap-bulanan/export', [App\Http\Controllers\AbsensiExportController::class, 'exportRekapBulanan'])->name('absensi.rekap-bulanan.export');
+        Route::get('/absensi/rekap-tahunan', [App\Http\Controllers\AbsensiReportController::class, 'rekapTahunan'])->name('absensi.rekap-tahunan');
+        Route::get('/absensi/rekap-tahunan/export', [App\Http\Controllers\AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.rekap-tahunan.export');
+        Route::get('/absensi/export-harian', [App\Http\Controllers\AbsensiExportController::class, 'exportHarian'])->name('absensi.export-harian');
+        Route::get('/absensi/rekap-periode', [App\Http\Controllers\AbsensiReportController::class, 'rekapPeriode'])->name('absensi.rekap-periode');
+        Route::get('/absensi/export-periode', [App\Http\Controllers\AbsensiExportController::class, 'exportRekapPeriode'])->name('absensi.export-periode');
+        Route::get('/absensi/export-bulanan', [App\Http\Controllers\AbsensiExportController::class, 'exportBulanan'])->name('absensi.export-bulanan');
+        Route::get('/absensi/export-tahunan', [App\Http\Controllers\AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.export-tahunan'); // Fixed to point to existing export method
         Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
         
         // Piket Routes
