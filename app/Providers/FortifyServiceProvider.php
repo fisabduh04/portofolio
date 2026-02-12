@@ -77,4 +77,5 @@ class FortifyServiceProvider extends ServiceProvider
             $request->session()->get('login.id')
         );
     });
-}}
+    }
+}

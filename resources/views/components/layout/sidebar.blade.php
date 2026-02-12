@@ -203,25 +203,7 @@
              </ul>
          </li>
 
-         <li>
-             <button type="button" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand" aria-controls="dropdown-coba" data-collapse-toggle="dropdown-coba">
-                <svg class="w-5 h-5 transition duration-75 group-hover:text-fg-brand" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4.5 3h15" /><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3" /><path d="M6 14h12" />
-                </svg>
-                 <span class="flex-1 text-left ms-3 rtl:text-right whitespace-nowrap">Uji Coba</span>
-                 <svg class="w-3 h-3 group-hover:text-fg-brand" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" />
-                 </svg>
-             </button>
-             <ul id="dropdown-coba" class="hidden py-2 space-y-2">
-                 <li>
-                     <a href="/coba" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Uji Coba</a>
-                 </li>
-                 <li>
-                     <a href="/users" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">User</a>
-                 </li>
-             </ul>
-         </li>
+        
       </ul>
       
    </div>

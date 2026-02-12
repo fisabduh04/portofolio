@@ -20,6 +20,7 @@ use App\Http\Controllers\AbsensiExportController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\PegawaiAttendanceController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\AbsensiReportController;
 
 
 
