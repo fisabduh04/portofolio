@@ -5,66 +5,65 @@
         ['name' => 'Aturan Kehadiran', 'href' => '']
     ]" />
 
-    <div class="p-4 bg-white block sm:flex items-center justify-between border-b border-slate-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
-        <div class="w-full mb-1">
-            <div class="mb-4">
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Aturan Kehadiran & Gaji</h1>
-            </div>
-            <div class="sm:flex">
-                <div class="flex items-center ml-auto space-x-2 sm:space-x-3">
-                    <a href="{{ route('attendance.rules.create') }}" class="inline-flex items-center justify-center w-auto px-4 py-2 text-sm font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 sm:w-auto dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-base shadow-sm mt-4">
+        <div class="p-4 sm:p-6">
+            <!-- Top Controls -->
+            <div class="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="{{ route('attendance.rules.create') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-base hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 shadow-sm">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                         Tambah Aturan
                     </a>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="flex flex-col">
-        <div class="overflow-x-auto">
-            <div class="inline-block min-w-full align-middle">
-                <div class="overflow-hidden shadow">
-                    <table class="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
-                        <thead class="bg-gray-100 dark:bg-gray-700">
-                            <tr>
-                                <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Nama Aturan</th>
-                                <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Jam Masuk</th>
-                                <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Jam Pulang</th>
-                                <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Toleransi (Menit)</th>
-                                <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Gaji Harian</th>
-                                <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Pegawai</th>
-                                <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                            @foreach ($rules as $rule)
-                            <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ $rule->name }}</td>
-                                <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ $rule->jam_masuk }}</td>
-                                <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ $rule->jam_pulang }}</td>
-                                <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ $rule->toleransi_telat }}</td>
-                                <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">Hp {{ number_format($rule->gaji_harian, 0, ',', '.') }} + {{ number_format($rule->bantuan_makan, 0, ',', '.') }} (makan)</td>
-                                <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ $rule->pegawais_count }}</td>
-                                <td class="p-4 space-x-2 whitespace-nowrap">
-                                    <a href="{{ route('attendance.rules.edit', $rule->id) }}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                                        Edit
+            <!-- Table Container -->
+            <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+                <table class="w-full text-sm text-left rtl:text-right text-body">
+                    <thead class="text-sm text-body bg-neutral-secondary-soft border-b rounded-base border-default">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 font-medium">Nama Aturan</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Jam Masuk</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Jam Pulang</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Toleransi (Menit)</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Gaji Harian</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Pegawai</th>
+                            <th scope="col" class="px-6 py-3 font-medium text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($rules as $rule)
+                        <tr class="bg-neutral-primary border-b border-default last:border-0 hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
+                            <td class="px-6 py-4 font-medium text-heading whitespace-nowrap">{{ $rule->name }}</td>
+                            <td class="px-6 py-4">{{ $rule->jam_masuk }}</td>
+                            <td class="px-6 py-4">{{ $rule->jam_pulang }}</td>
+                            <td class="px-6 py-4">{{ $rule->toleransi_telat }}</td>
+                            <td class="px-6 py-4">Hp {{ number_format($rule->gaji_harian, 0, ',', '.') }} + {{ number_format($rule->bantuan_makan, 0, ',', '.') }} (makan)</td>
+                            <td class="px-6 py-4">{{ $rule->pegawais_count }}</td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ route('attendance.rules.edit', $rule->id) }}" class="p-2 text-blue-600 bg-blue-50 rounded-base hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                     </a>
                                     <form action="{{ route('attendance.rules.destroy', $rule->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus aturan ini?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-800 focus:ring-4 focus:ring-red-300 dark:focus:ring-red-900">
-                                            Hapus
+                                        <button type="submit" class="p-2 text-red-600 bg-red-50 rounded-base hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                         </button>
                                     </form>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-6">
+                {{ $rules->links() }}
             </div>
         </div>
-        {{ $rules->links() }}
     </div>
 </x-layout.layout>

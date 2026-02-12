@@ -6,11 +6,9 @@
         ['name' => 'Tambah Aturan', 'href' => '']
     ]" />
 
-    <div class="px-4 py-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mx-auto">
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Tambah Aturan Kehadiran</h1>
-            
-            <form action="{{ route('attendance.rules.store') }}" method="POST" class="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-base shadow-sm mt-4">
+        <div class="p-4 sm:p-6">
+            <form action="{{ route('attendance.rules.store') }}" method="POST" class="space-y-6">
                 @csrf
                 
                 <div>

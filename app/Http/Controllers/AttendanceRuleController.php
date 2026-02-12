@@ -75,10 +75,10 @@ class AttendanceRuleController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'jam_masuk' => 'required|date_format:H:i:s', // Or H:i depending on input
-            'jam_pulang' => 'required|date_format:H:i:s',
-            'scan_masuk_start' => 'required|date_format:H:i:s',
-            'scan_pulang_end' => 'required|date_format:H:i:s',
+            'jam_masuk' => 'required|date_format:H:i',
+            'jam_pulang' => 'required|date_format:H:i',
+            'scan_masuk_start' => 'required|date_format:H:i',
+            'scan_pulang_end' => 'required|date_format:H:i',
             'toleransi_telat' => 'required|integer|min:0',
             'bantuan_makan' => 'required|numeric|min:0',
             'gaji_harian' => 'required|numeric|min:0',

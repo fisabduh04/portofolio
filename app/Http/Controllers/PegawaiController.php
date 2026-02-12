@@ -52,8 +52,7 @@ class PegawaiController extends Controller
      */
     public function create()
     {
-        $attendanceRules = AttendanceRule::all();
-        return view('pegawai.input-pegawai', compact('attendanceRules'));
+        return view('pegawai.input-pegawai');
     }
 
     /**
@@ -65,8 +64,6 @@ class PegawaiController extends Controller
             'name' => 'required',
             'nuptk' => 'required',
             'foto' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
-            'attendance_rule_id' => 'nullable|exists:attendance_rules,id',
-            'fingerprint_id' => 'nullable|string|max:50',
         ]);
 
         $data = $request->all();
@@ -93,8 +90,7 @@ class PegawaiController extends Controller
     public function edit($id)
     {
         $pegawai = pegawai::findOrFail($id);
-        $attendanceRules = AttendanceRule::all();
-        return view('pegawai.input-pegawai', compact('pegawai', 'attendanceRules'));
+        return view('pegawai.input-pegawai', compact('pegawai'));
     }
 
     /**
@@ -108,8 +104,6 @@ class PegawaiController extends Controller
             'name' => 'required',
             'nuptk' => 'required',
             'foto' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
-            'attendance_rule_id' => 'nullable|exists:attendance_rules,id',
-            'fingerprint_id' => 'nullable|string|max:50',
         ]);
 
         $data = $request->all();

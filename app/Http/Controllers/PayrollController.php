@@ -16,33 +16,37 @@ class PayrollController extends Controller
         $year = $request->input('year', date('Y'));
 
         // Get all Pegawai with attendance data for the month
-        $pegawais = Pegawai::where('aktif', 'Aktif')->get()->map(function ($pegawai) use ($month, $year) {
-            $absensi = PegawaiAbsensi::where('pegawai_id', $pegawai->id)
-                ->whereMonth('tanggal', $month)
-                ->whereYear('tanggal', $year)
-                ->get();
+        $pegawais = Pegawai::where('aktif', 'Aktif')
+            ->with(['attendanceRule', 'pegawaiAbsensis' => function ($query) use ($month, $year) {
+                $query->whereMonth('tanggal', $month)
+                      ->whereYear('tanggal', $year);
+            }])
+            ->get()
+            ->map(function ($pegawai) {
+                // Use the eager loaded relation
+                $absensi = $pegawai->pegawaiAbsensis;
 
-            $totalGaji = $absensi->sum('nominal_gaji');
-            $totalMakan = $absensi->sum('nominal_makan');
-            // Total should ideally count deduction logic too if stored in total_honor directly
-            // Our Service stores final total_honor which includes deduction.
-            // But let's sum total_honor for accuracy.
-            $grandTotal = $absensi->sum('total_honor');
-            
-            $hadirCount = $absensi->where('status', 'Hadir')->count();
-            $telatCount = $absensi->where('status', 'Telat')->count();
-            $alphaCount = $absensi->where('status', 'Alpha')->count();
+                $totalGaji = $absensi->sum('nominal_gaji');
+                $totalMakan = $absensi->sum('nominal_makan');
+                // Total should ideally count deduction logic too if stored in total_honor directly
+                // Our Service stores final total_honor which includes deduction.
+                // But let's sum total_honor for accuracy.
+                $grandTotal = $absensi->sum('total_honor');
+                
+                $hadirCount = $absensi->where('status', 'Hadir')->count();
+                $telatCount = $absensi->where('status', 'Telat')->count();
+                $alphaCount = $absensi->where('status', 'Alpha')->count();
 
-            return [
-                'pegawai' => $pegawai,
-                'hadir_count' => $hadirCount,
-                'telat_count' => $telatCount,
-                'alpha_count' => $alphaCount,
-                'total_gaji' => $totalGaji,
-                'total_makan' => $totalMakan,
-                'grand_total' => $grandTotal,
-            ];
-        });
+                return [
+                    'pegawai' => $pegawai,
+                    'hadir_count' => $hadirCount,
+                    'telat_count' => $telatCount,
+                    'alpha_count' => $alphaCount,
+                    'total_gaji' => $totalGaji,
+                    'total_makan' => $totalMakan,
+                    'grand_total' => $grandTotal,
+                ];
+            });
 
         return view('attendance.payroll.index', compact('pegawais', 'month', 'year'));
     }

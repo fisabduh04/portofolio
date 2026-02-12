@@ -96,14 +96,22 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/absensi/piket/check-out', [AbsensiController::class, 'piketCheckOut'])->name('absensi.piket.check-out');
 
         // PEGAWAI ATTENDANCE SYSTEM
-        Route::resource('attendance/rules', AttendanceRuleController::class, ['as' => 'attendance']);
-        Route::get('attendance/dashboard', [PegawaiAttendanceController::class, 'index'])->name('attendance.index');
-        Route::get('attendance/create', [PegawaiAttendanceController::class, 'create'])->name('attendance.create');
-        Route::post('attendance/store', [PegawaiAttendanceController::class, 'store'])->name('attendance.store');
-        Route::post('attendance/process', [PegawaiAttendanceController::class, 'process'])->name('attendance.process');
-        Route::get('attendance/report', [PegawaiAttendanceController::class, 'report'])->name('attendance.report');
-        Route::get('attendance/payroll', [PayrollController::class, 'index'])->name('attendance.payroll.index');
-        Route::get('attendance/payroll/{id}/slip', [PayrollController::class, 'slip'])->name('attendance.payroll.slip');
+        Route::prefix('attendance')->name('attendance.')->group(function () {
+            Route::resource('rules', AttendanceRuleController::class);
+            Route::resource('fingerprint', FingerprintMachineController::class);
+            Route::get('dashboard', [PegawaiAttendanceController::class, 'index'])->name('index');
+            Route::get('create', [PegawaiAttendanceController::class, 'create'])->name('create');
+            Route::post('store', [PegawaiAttendanceController::class, 'store'])->name('store');
+            Route::post('process', [PegawaiAttendanceController::class, 'process'])->name('process');
+            Route::get('report', [PegawaiAttendanceController::class, 'report'])->name('report');
+            Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
+            Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
+
+            Route::prefix('payroll')->name('payroll.')->group(function () {
+                Route::get('/', [PayrollController::class, 'index'])->name('index');
+                Route::get('{id}/slip', [PayrollController::class, 'slip'])->name('slip');
+            });
+        });
 
 
 

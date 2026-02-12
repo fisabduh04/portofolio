@@ -7,7 +7,6 @@
                 ['name' => 'Home', 'href' => route('dashboard.index')],
                 ['name' => 'Dashboard', 'href' => '#'],
             ]" />
-            <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-heading">Dashboard</h1>
             <p class="text-body-secondary">Ringkasan statistik akademik dan presensi sekolah.</p>
         </div>
 
