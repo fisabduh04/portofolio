@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('logbooks', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('jadwal_id')->constrained('jadwals');
             $table->timestamps();
         });
     }

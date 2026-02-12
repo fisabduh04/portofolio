@@ -11,9 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('logbooks', function (Blueprint $table) {
-            $table->foreignId('jadwal_id')->nullable()->change();
-        });
+        if (!Schema::hasColumn('logbooks', 'jadwal_id')) {
+            Schema::table('logbooks', function (Blueprint $table) {
+                $table->foreignId('jadwal_id')->nullable()->constrained('jadwals');
+            });
+        } else {
+            Schema::table('logbooks', function (Blueprint $table) {
+                $table->foreignId('jadwal_id')->nullable()->change();
+            });
+        }
     }
 
     /**
