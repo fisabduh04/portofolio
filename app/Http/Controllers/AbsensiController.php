@@ -386,7 +386,7 @@ class AbsensiController extends Controller
 
             Logbook::create([
                 'kategori' => 'piket_masuk',
-                'pegawai_id' => auth()->id(),
+                'pegawai_id' => auth()->user()->pegawai_id,
                 'tanggal' => now()->toDateString(),
                 'catatan' => 'Guru Piket Check-in',
                 'foto' => $fotoPath ? json_encode([$fotoPath]) : null,
@@ -414,7 +414,7 @@ class AbsensiController extends Controller
 
             Logbook::create([
                 'kategori' => 'piket_pulang',
-                'pegawai_id' => auth()->id(),
+                'pegawai_id' => auth()->user()->pegawai_id,
                 'tanggal' => now()->toDateString(),
                 'catatan' => 'Guru Piket Check-out',
                 'foto' => $fotoPath ? json_encode([$fotoPath]) : null,

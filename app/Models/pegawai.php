@@ -13,7 +13,7 @@ class Pegawai extends Model
         'name', 'status', 'aktif', 'email', 'nuptk', 'jk', 'kotalahir', 'tanggallahir', 'jenisptk', 
         'agama', 'alamat', 'rt', 'rw', 'hp', 'skpengangkatan', 'lembagapengangkatan', 'PangkatGolongan', 
         'sumbergaji', 'ibukandung', 'kawin', 'suamiistri', 'pekerjaansuamiIstri', 'npwp', 'nonik', 
-        'nokk', 'foto', 'deskripsi', 'password', 'fingerprint_id', 'attendance_rule_id'
+        'nokk', 'foto', 'deskripsi', 'fingerprint_id', 'attendance_rule_id'
     ];
 
     public function user()
