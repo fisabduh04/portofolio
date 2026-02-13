@@ -40,9 +40,9 @@
                 </div>
 
                 <!-- Table Container -->
-                <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
-                    <table class="w-full text-sm text-left rtl:text-right text-body">
-                        <thead class="text-sm text-body bg-neutral-secondary-soft border-b rounded-base border-default">
+                <div class="relative overflow-x-auto bg-white dark:bg-gray-800 shadow-xs rounded-base border border-gray-200 dark:border-gray-700">
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-sm text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                             <tr>
                                 <th scope="col" class="px-6 py-3 font-medium">Pegawai</th>
                                 <th scope="col" class="px-6 py-3 font-medium">Aturan Kehadiran</th>
@@ -51,12 +51,12 @@
                         </thead>
                         <tbody>
                             @forelse ($pegawais as $key => $pegawai)
-                            <tr class="bg-neutral-primary border-b border-default last:border-0 hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
-                                <td class="px-6 py-4 font-medium text-heading">
+                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200">
+                                <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
                                     <input type="hidden" name="settings[{{ $key }}][id]" value="{{ $pegawai->id }}">
                                     <div class="flex flex-col">
                                         <span class="text-base font-semibold">{{ $pegawai->name }}</span>
-                                        <span class="text-xs text-body-subtle">{{ $pegawai->nip ?? $pegawai->nuptk ?? '-' }}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $pegawai->nip ?? $pegawai->nuptk ?? '-' }}</span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">

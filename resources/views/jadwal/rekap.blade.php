@@ -81,9 +81,9 @@
             </div>
 
             {{-- Table --}}
-            <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+            <div class="relative overflow-x-auto bg-white dark:bg-gray-800 shadow-xs rounded-base border border-gray-200 dark:border-gray-700">
                 <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                    <thead class="text-xs text-heading uppercase bg-neutral-secondary">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
                             <th scope="col" class="px-6 py-4 w-16 text-center text-gray-500">NO</th>
                             <th scope="col" class="px-6 py-4">Nama Guru / NIP</th>
@@ -148,7 +148,7 @@
                     </tbody>
                     {{-- Table Footer Summary --}}
                     @if($pegawais->isNotEmpty())
-                        <tfoot class="bg-neutral-secondary border-t border-default">
+                        <tfoot class="bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-700">
                             <tr>
                                 <td colspan="2" class="px-6 py-4 text-right">
                                     <span class="text-xs font-bold uppercase tracking-wider text-gray-500">TOTAL JAM (Halaman Ini) :</span>

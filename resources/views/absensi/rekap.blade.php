@@ -18,7 +18,6 @@
             ['name' => 'Rekapitulasi', 'href' => '#'],
             ['name' => 'Akumulasi Kehadiran', 'href' => '#'],
         ]" />
-        <h1 class="text-3xl font-bold dark:text-white mt-2">Akumulasi Kehadiran Siswa</h1>
     </div>
 
     {{-- Filter Panel (Standard Flowbite Card) --}}

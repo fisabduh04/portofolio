@@ -179,9 +179,9 @@
         @endphp
 
         {{-- Table --}}
-        <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+        <div class="relative overflow-x-auto bg-white dark:bg-gray-800 shadow-xs rounded-base border border-gray-200 dark:border-gray-700">
             <table id="data" class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-heading uppercase bg-neutral-secondary">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                          <th scope="col" class="p-4">
                             <div class="flex items-center">
@@ -298,7 +298,7 @@
                     @forelse ($jadwals as $j)
                         @php
                             $isConflict = isset($jadwalBentrokIds) && in_array($j->id, $jadwalBentrokIds);
-                            $rowClass = $isConflict ? 'bg-red-50 dark:bg-red-900/30 border-b border-default dark:border-gray-700' : 'border-b border-default dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600';
+                            $rowClass = $isConflict ? 'bg-red-50 dark:bg-red-900/30 border-b border-gray-200 dark:border-gray-700' : 'bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600';
                         @endphp
                         
                         <tr class="{{ $rowClass }}" id="row-{{ $j->id }}">

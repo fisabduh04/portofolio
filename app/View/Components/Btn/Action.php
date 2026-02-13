@@ -1,12 +1,12 @@
 <?php
 
-namespace App\View\Components;
+namespace App\View\Components\Btn;
 
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
-class tombol.tambah extends Component
+class Action extends Component
 {
     /**
      * Create a new component instance.
@@ -21,6 +21,6 @@ class tombol.tambah extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.tombol.tambah');
+        return view('components.btn.action');
     }
 }

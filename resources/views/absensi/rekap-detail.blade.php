@@ -6,8 +6,7 @@
             ['name' => 'Rekapitulasi', 'href' => route('absensi.rekap')],
             ['name' => 'Detail Jurnal', 'href' => '#'],
         ]" />
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2">
-            <h1 class="text-3xl font-bold dark:text-white">Detail Jurnal & Presensi</h1>
+        <div class="flex flex-col md:flex-row md:items-center justify-end gap-4 mt-2">
             <a href="{{ route('absensi.rekap', array_merge(request()->all(), ['view' => 'summary'])) }}" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 flex items-center gap-2">
                 <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>

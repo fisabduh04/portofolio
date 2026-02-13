@@ -21,6 +21,8 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\PegawaiAttendanceController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\AbsensiReportController;
+use App\Http\Controllers\FingerprintMachineController;
+use App\Http\Controllers\SekolahController;
 
 
 

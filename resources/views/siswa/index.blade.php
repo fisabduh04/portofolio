@@ -58,13 +58,13 @@
             </div>
 
             <!-- Table -->
-            <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+            <div class="relative overflow-x-auto bg-white dark:bg-gray-800 shadow-xs rounded-base border border-gray-200 dark:border-gray-700">
                 <form id="bulk-action-form" method="POST" action="">
                     @csrf 
                     @method('DELETE') <!-- Default method for delete -->
                     
                     <table class="w-full text-sm text-left rtl:text-right text-body">
-                        <thead class="text-xs text-heading uppercase bg-neutral-secondary">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
                                 <th scope="col" class="p-4">
                                     <div class="flex items-center">

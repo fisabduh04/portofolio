@@ -1,22 +1,19 @@
 <?php
 
-namespace App\View\Components\modal;
+namespace App\View\Components\Tombol;
 
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
-class hapus extends Component
+class Tambah extends Component
 {
     /**
      * Create a new component instance.
      */
-    public $id;
-    public $action;
-    public function __construct($id,$action)
+    public function __construct()
     {
-        $this->id=$id;
-        $this->action=$action;
+        //
     }
 
     /**
@@ -24,6 +21,6 @@ class hapus extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.modal.hapus');
+        return view('components.tombol.tambah');
     }
 }

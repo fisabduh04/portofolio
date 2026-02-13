@@ -1,12 +1,12 @@
 <?php
 
-namespace App\View\Components\btn;
+namespace App\View\Components\Btn;
 
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
-class tambah extends Component
+class Tambah extends Component
 {
     /**
      * Create a new component instance.

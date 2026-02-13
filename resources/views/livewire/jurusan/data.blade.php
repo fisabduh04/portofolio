@@ -7,9 +7,9 @@
         @endif
     </div>
 
-    <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
-        <table class="w-full text-sm text-left rtl:text-right text-body">
-            <thead class="text-sm text-body bg-neutral-secondary-soft border-b rounded-base border-default">
+    <div class="relative overflow-x-auto bg-white dark:bg-gray-800 shadow-xs rounded-base border border-gray-200 dark:border-gray-700">
+        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+            <thead class="text-sm text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                 <tr>
                     <th scope="col" class="px-6 py-3 font-medium">No</th>
                     <th scope="col" class="px-6 py-3 font-medium">Nama Jurusan</th>
@@ -21,8 +21,8 @@
                 {{-- Dynamic Input Rows --}}
                 <form id="formSave" wire:submit.prevent="store">
                     @foreach ($kode as $index => $val)
-                        <tr class="bg-neutral-primary border-b border-default animate-in fade-in slide-in-from-left-2">
-                            <td class="px-6 py-4 text-heading">#</td>
+                        <tr class="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 animate-in fade-in slide-in-from-left-2">
+                            <td class="px-6 py-4 text-gray-900 dark:text-white">#</td>
                             <td class="px-6 py-4">
                                 <input type="text" wire:model="jurusan.{{ $index }}"
                                     class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
@@ -48,8 +48,8 @@
 
                 {{-- Data Table Rows --}}
                 @foreach ($semuajurusan as $key => $k)
-                    <tr class="bg-neutral-primary border-b border-default last:border-0 hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
-                        <td class="px-6 py-4 font-medium text-heading">
+                    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200">
+                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
                             {{ $loop->iteration }}
                         </td>
                         <td class="px-6 py-4">
@@ -57,7 +57,7 @@
                                 <input type="text" wire:model="editjurusan"
                                     class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
                             @else
-                                <span class="text-heading font-semibold">{{ $k->jurusan }}</span>
+                                <span class="text-gray-900 dark:text-white font-semibold">{{ $k->jurusan }}</span>
                             @endif
                         </td>
                         <td class="px-6 py-4">
@@ -65,7 +65,7 @@
                                 <input type="text" wire:model="editkode"
                                     class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
                             @else
-                                <span class="font-medium text-heading">{{ $k->kode }}</span>
+                                <span class="font-medium text-gray-900 dark:text-white">{{ $k->kode }}</span>
                             @endif
                         </td>
                         <td class="px-6 py-4 text-right">
@@ -105,13 +105,13 @@
     </div>
 
     @if($semuajurusan->isEmpty() && !$kepala_table)
-        <div class="px-6 py-12 text-center bg-neutral-primary rounded-b-base border border-t-0 border-default">
+        <div class="px-6 py-12 text-center bg-white dark:bg-gray-800 rounded-b-base border border-t-0 border-gray-200 dark:border-gray-700">
             <div class="flex flex-col items-center justify-center">
                 <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
-                <p class="mt-4 text-lg font-medium text-heading">Belum ada data jurusan</p>
-                <p class="mt-1 text-sm text-body-subtle">Silahkan klik tombol Tambah untuk membuat data baru.</p>
+                <p class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Belum ada data jurusan</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Silahkan klik tombol Tambah untuk membuat data baru.</p>
             </div>
         </div>
     @endif

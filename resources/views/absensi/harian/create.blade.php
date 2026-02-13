@@ -1,13 +1,10 @@
 <x-layout.layout>
-<div class="container mx-auto px-4 py-8">
-    <div class="mb-6">
-        <x-breadcrumb :breadcrumbs="[
-            ['name' => 'Home', 'href' => route('dashboard.index')],
-            ['name' => 'Presensi', 'href' => '#'],
-            ['name' => 'Harian', 'href' => route('absensi.harian.index')],
-            ['name' => 'Input ' . ucfirst($type), 'href' => '#'],
-        ]" />
-    </div>
+    <x-breadcrumb :breadcrumbs="[
+        ['name' => 'Home', 'href' => route('dashboard.index')],
+        ['name' => 'Presensi', 'href' => '#'],
+        ['name' => 'Harian', 'href' => route('absensi.harian.index')],
+        ['name' => 'Input ' . ucfirst($type), 'href' => '#'],
+    ]" />
 
     <form action="{{ route('absensi.harian.store') }}" method="POST" enctype="multipart/form-data" id="absensiForm">
         @csrf
@@ -218,7 +215,6 @@
             </div>
         </div>
     </form>
-</div>
 
 <script>
     window.handleFiles = function(files) {

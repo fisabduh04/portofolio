@@ -1,19 +1,22 @@
 <?php
 
-namespace App\View\Components\btn;
+namespace App\View\Components\Modal;
 
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
-class action extends Component
+class Hapus extends Component
 {
     /**
      * Create a new component instance.
      */
-    public function __construct()
+    public $id;
+    public $action;
+    public function __construct($id,$action)
     {
-        //
+        $this->id=$id;
+        $this->action=$action;
     }
 
     /**
@@ -21,6 +24,6 @@ class action extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.btn.action');
+        return view('components.modal.hapus');
     }
 }
