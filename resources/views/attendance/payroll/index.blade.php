@@ -44,9 +44,9 @@
             </div>
 
             <!-- Table Container -->
-            <div class="relative overflow-x-auto bg-white dark:bg-gray-800 shadow-xs rounded-base border border-gray-200 dark:border-gray-700">
-                <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                    <thead class="text-sm text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+            <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+                <table class="w-full text-sm text-left rtl:text-right text-body">
+                    <thead class="text-sm text-body bg-neutral-secondary-soft border-b rounded-base border-default">
                         <tr>
                             <th scope="col" class="px-6 py-3 font-medium">Pegawai</th>
                             <th scope="col" class="px-6 py-3 font-medium">Kehadiran</th>
@@ -56,10 +56,10 @@
                     </thead>
                     <tbody>
                         @forelse ($pegawais as $data)
-                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200">
-                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                        <tr class="bg-neutral-primary border-b border-default last:border-0 hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
+                            <td class="px-6 py-4 font-medium text-heading">
                                 {{ $data['pegawai']->name }}
-                                <div class="text-xs text-gray-500 dark:text-gray-400 font-normal mt-0.5">{{ $data['pegawai']->attendanceRule->name ?? 'No Rule' }}</div>
+                                <div class="text-xs text-body-subtle font-normal mt-0.5">{{ $data['pegawai']->attendanceRule->name ?? 'No Rule' }}</div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex gap-2">
@@ -68,7 +68,7 @@
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">A: {{ $data['alpha_count'] }}</span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">
+                            <td class="px-6 py-4 font-bold text-heading">
                                 Rp {{ number_format($data['grand_total'], 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4 text-right">

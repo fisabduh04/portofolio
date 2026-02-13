@@ -38,9 +38,9 @@
             </div>
 
             <!-- Table Container -->
-            <div class="relative overflow-x-auto bg-white dark:bg-gray-800 shadow-xs rounded-base border border-gray-200 dark:border-gray-700">
-                <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                    <thead class="text-sm text-gray-700 bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+            <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+                <table class="w-full text-sm text-left rtl:text-right text-body">
+                    <thead class="text-sm text-body bg-neutral-secondary-soft border-b rounded-base border-default">
                         <tr>
                             <th scope="col" class="px-6 py-3 font-medium">No</th>
                             <th scope="col" class="px-6 py-3 font-medium">
@@ -61,8 +61,8 @@
                     </thead>
                     <tbody>
                         @forelse ($pegawai as $index => $peg)
-                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200">
-                                <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                            <tr class="bg-neutral-primary border-b border-default last:border-0 hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
+                                <td class="px-6 py-4 font-medium text-heading">
                                     {{ $pegawai->firstItem() + $index }}
                                 </td>
                                 <th scope="row" class="px-6 py-4 flex items-center whitespace-nowrap">
@@ -74,11 +74,11 @@
                                         </div>
                                     @endif
                                     <div class="pl-3">
-                                        <div class="text-base font-semibold text-gray-900 dark:text-white">{{ $peg->name }}</div>
-                                        <div class="font-normal text-gray-500 dark:text-gray-400">{{ $peg->email }}</div>
+                                        <div class="text-base font-semibold text-heading">{{ $peg->name }}</div>
+                                        <div class="font-normal text-body-subtle">{{ $peg->email }}</div>
                                     </div>  
                                 </th>
-                                <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                                <td class="px-6 py-4 font-medium text-heading">
                                     {{ $peg->nuptk }}
                                 </td>
                                 <td class="px-6 py-4">

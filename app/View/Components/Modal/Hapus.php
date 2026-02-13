@@ -13,10 +13,10 @@ class Hapus extends Component
      */
     public $id;
     public $action;
-    public function __construct($id,$action)
+    public function __construct($id, $action = null)
     {
-        $this->id=$id;
-        $this->action=$action;
+        $this->id = $id;
+        $this->action = $action;
     }
 
     /**

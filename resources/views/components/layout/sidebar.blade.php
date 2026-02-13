@@ -75,9 +75,7 @@
                 <li>
                     <a href="{{ route('kelassiswa.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Rombongan Belajar</a>
                 </li>
-                <li>
-                    <a href="{{ route('jadwal.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Jadwal</a>
-                </li>
+                
             </ul>
          </li>
 
@@ -137,10 +135,7 @@
                 
                 <li>
                     <a href="{{ route('absensi.harian.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Absensi Harian</a>
-                </li>
-                <li>
-                    <a href="{{ route('jadwal.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Guru Mata Pelajaran</a>
-                </li>
+                </li>                
                 @if(auth()->user()->isPiketToday())
                     <li>
                         <a href="{{ route('absensi.piket') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Guru Piket</a>

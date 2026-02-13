@@ -58,13 +58,13 @@
             </div>
 
             <!-- Table -->
-            <div class="relative overflow-x-auto bg-white dark:bg-gray-800 shadow-xs rounded-base border border-gray-200 dark:border-gray-700">
+            <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
                 <form id="bulk-action-form" method="POST" action="">
                     @csrf 
                     @method('DELETE') <!-- Default method for delete -->
                     
                     <table class="w-full text-sm text-left rtl:text-right text-body">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <thead class="text-xs text-heading uppercase bg-neutral-secondary-soft border-b border-default">
                             <tr>
                                 <th scope="col" class="p-4">
                                     <div class="flex items-center">
@@ -88,7 +88,7 @@
                         </thead>
                         <tbody>
                             @forelse ($siswa as $index => $sis)
-                                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150">
+                                <tr class="bg-neutral-primary border-b border-default hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
                                     <td class="w-4 p-4">
                                         <div class="flex items-center">
                                             <input type="checkbox" name="ids[]" value="{{ $sis->id }}" class="checkbox-item w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">

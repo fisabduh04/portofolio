@@ -88,8 +88,8 @@
                 </div>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                    <thead class="text-xs text-heading uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b dark:border-gray-700">
+                <table class="w-full text-sm text-left text-body dark:text-gray-400">
+                    <thead class="text-xs text-heading uppercase bg-neutral-secondary-soft border-b border-default">
                         <tr>
                             <th scope="col" class="p-4">
                                 <div class="flex items-center">
@@ -139,7 +139,7 @@
                         
                         {{-- New Data Input Rows --}}
                         @foreach ($kelas as $index => $val)
-                            <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                            <tr class="bg-neutral-primary border-b border-default hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
                                 <td class="px-4 py-3"></td>
                                 <td class="px-4 py-3">{{ ++$counter }}</td>
                                 <td class="px-4 py-3">
@@ -166,7 +166,7 @@
 
                         {{-- Existing Data Rows --}}
                         @foreach ($kelaslist as $index => $m)
-                            <tr wire:key="kelas-{{ $m->id }}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                            <tr wire:key="kelas-{{ $m->id }}" class="bg-neutral-primary border-b border-default hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
                                 <td class="w-4 p-4">
                                     <div class="flex items-center">
                                         <input id="checkbox-table-search-{{ $m->id }}" type="checkbox" wire:key="{{ $m->id }}" wire:model.live="kelas_selected_id" value="{{ $m->id }}" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">

@@ -193,9 +193,9 @@
 
 
         {{-- Table Container --}}
-        <div class="relative overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500 rtl:text-right dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+            <table class="w-full text-sm text-left text-body rtl:text-right">
+                <thead class="text-xs text-heading uppercase bg-neutral-secondary-soft border-b border-default">
                     <tr>
                         <th scope="col" class="p-4">
                             <div class="flex items-center">
@@ -220,7 +220,7 @@
                         @endif
                         @foreach ($pemetaans as $pemetaan)
                             <tr
-                                class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                class="bg-neutral-primary border-b border-default last:border-0 hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
                                 <td class="w-4 p-4">
                                     <div class="flex items-center">
                                         <input id="checkbox-{{ $pemetaan->id }}" type="checkbox" name="id[]"
