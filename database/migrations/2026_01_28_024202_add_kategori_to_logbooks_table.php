@@ -12,10 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('logbooks', function (Blueprint $table) {
-            $table->enum('kategori', ['mapel', 'piket_masuk', 'piket_pulang'])->default('mapel')->after('id');
-            $table->foreignId('kelas_id')->nullable()->after('jadwal_id')->constrained('kelas')->onDelete('cascade');
-            // Make jadwal_id nullable for picket logs
-            $table->unsignedBigInteger('jadwal_id')->nullable()->change();
+            if (!Schema::hasColumn('logbooks', 'kategori')) {
+                $table->enum('kategori', ['mapel', 'piket_masuk', 'piket_pulang'])->default('mapel')->after('id');
+            }
+            
+            if (!Schema::hasColumn('logbooks', 'kelas_id')) {
+                $table->foreignId('kelas_id')->nullable()->after('jadwal_id')->constrained('kelas')->onDelete('cascade');
+            }
+
+            if (Schema::hasColumn('logbooks', 'jadwal_id')) {
+                // Make jadwal_id nullable for picket logs
+                $table->unsignedBigInteger('jadwal_id')->nullable()->change();
+            } else {
+                $table->foreignId('jadwal_id')->nullable()->constrained('jadwals');
+            }
         });
     }
 

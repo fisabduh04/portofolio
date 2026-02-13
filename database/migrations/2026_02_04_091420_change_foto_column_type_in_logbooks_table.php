@@ -12,7 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('logbooks', function (Blueprint $table) {
-            $table->longText('foto')->nullable()->change();
+            if (Schema::hasColumn('logbooks', 'foto')) {
+                $table->longText('foto')->nullable()->change();
+            } else {
+                $table->longText('foto')->nullable();
+            }
         });
     }
 
