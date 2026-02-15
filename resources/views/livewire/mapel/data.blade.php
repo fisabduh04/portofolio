@@ -1,5 +1,5 @@
 <div>
-    <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-base overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-base overflow-hidden border border-gray-300 dark:border-gray-700">
             <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
                 <div class="w-full md:w-1/2">
                     <form class="flex items-center">
@@ -93,7 +93,7 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                    <thead class="text-xs text-heading uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b dark:border-gray-700">
+                    <thead class="text-xs text-heading uppercase bg-neutral-secondary-soft border-b border-default">
                         <tr>
                             <th scope="col" class="p-4">
                                 <div class="flex items-center">
@@ -146,12 +146,12 @@
                     </thead>
                     <tbody>
                         @foreach ($mapel as $index => $val)
-                            <tr class="bg-gray-50 border-b dark:bg-gray-700 dark:border-gray-600">
+                            <tr class="bg-neutral-primary border-b border-default hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
                                 <td class="w-4 p-4"></td>
                                 <td class="px-4 py-3">{{ $index + 1 }}</td>
                                 <td class="px-4 py-3">
-                                    <button type="button" wire:click="remove({{ $index }})" class="p-2 text-red-600 bg-red-50 rounded-base hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors">
-                                        Remove
+                                    <button type="button" wire:click="remove({{ $index }})" class="p-2 text-red-600 bg-red-50 rounded-base hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors" title="Delete">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
                                 </td>
                                 <td class="px-4 py-3">
@@ -176,7 +176,7 @@
 
                         {{-- Existing Data Rows --}}
                         @foreach ($mapellist as $index => $m)
-                            <tr wire:key="mapel-{{ $m->id }}" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                            <tr wire:key="mapel-{{ $m->id }}" class="bg-neutral-primary border-b border-default hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
                                 <td class="w-4 p-4">
                                     <div class="flex items-center">
                                         <input id="checkbox-table-search-{{ $m->id }}" type="checkbox" wire:key="{{ $m->id }}" wire:model.live="mapel_selected_id" value="{{ $m->id }}" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
