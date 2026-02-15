@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\JadwalPiket;
 
 class User extends Authenticatable
 {
@@ -70,7 +71,7 @@ class User extends Authenticatable
 
         if (!$tahunAktif) return false;
 
-        return \App\Models\JadwalPiket::where('pegawai_id', $this->pegawai_id)
+        return JadwalPiket::where('pegawai_id', $this->pegawai_id)
             ->where('hari', $hariIni)
             ->where('tahun_id', $tahunAktif->id)
             ->exists();

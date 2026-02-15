@@ -93,23 +93,72 @@ class KelasSiswaController extends Controller
 
     public function store(Request $request)
     {
+        // Handle Bulk Input (Arrays for Students, Single for Class/Year)
+        if ($request->has('siswa_id') && is_array($request->siswa_id)) {
+            $request->validate([
+                'siswa_id.*' => 'required|exists:siswas,id',
+                'ket.*' => 'required|in:aktif,do,naik,tinggal'
+            ]);
+            
+            // Check if kelas_id and tahun_id are arrays or single values
+            // If they are arrays, validate each item. If single, validate once.
+            if (is_array($request->kelas_id)) {
+                 $request->validate(['kelas_id.*' => 'required|exists:kelas,id']);
+            } else {
+                 $request->validate(['kelas_id' => 'required|exists:kelas,id']);
+            }
+
+            if (is_array($request->tahun_id)) {
+                 $request->validate(['tahun_id.*' => 'required|exists:tahuns,id']);
+            } else {
+                 $request->validate(['tahun_id' => 'required|exists:tahuns,id']);
+            }
+
+            $count = count($request->siswa_id);
+            for ($i = 0; $i < $count; $i++) {
+                if (!empty($request->siswa_id[$i])) {
+                    // Use array index if array, else use single value
+                    $kelasId = is_array($request->kelas_id) ? $request->kelas_id[$i] : $request->kelas_id;
+                    $tahunId = is_array($request->tahun_id) ? $request->tahun_id[$i] : $request->tahun_id;
+
+                    KelasSiswa::updateOrCreate(
+                        [
+                            'siswa_id' => $request->siswa_id[$i],
+                            'tahun_id' => $tahunId
+                        ],
+                        [
+                            'kelas_id' => $kelasId,
+                            'ket' => $request->ket[$i] ?? 'aktif' // Default safe value
+                        ]
+                    );
+                }
+            }
+
+            if ($request->ajax()) {
+                return response()->json(['message' => 'Data berhasil disimpan.']);
+            }
+
+            return redirect()->route('kelassiswa.index')->with('success', 'Data Massal Berhasil Disimpan');
+        }
+
+        // Handle Single Input (Old Way / Fallback / Edit)
         $validated = $request->validate([
             'kelas' => 'required',
             'siswa' => 'required',
             'tahun' => 'required',
+            'ket' => 'required'
         ]);
 
-        $siswaIds = is_array($validated['siswa']) ? $validated['siswa'] : [$validated['siswa']];
-        foreach ($siswaIds as $siswaId) {
-            KelasSiswa::updateOrCreate(
-                ['siswa_id' => $siswaId],
-                [
-                    'kelas_id' => $validated['kelas'],
-                    'tahun_id' => $validated['tahun'],
-                    'ket' => $request->ket,
-                ]
-            );
-        }
+        KelasSiswa::updateOrCreate(
+            [
+                'siswa_id' => $validated['siswa'],
+                'tahun_id' => $validated['tahun']
+            ],
+            [
+                'kelas_id' => $validated['kelas'],
+                'ket' => $validated['ket']
+            ]
+        );
 
         return redirect()->route('kelassiswa.index')
             ->with('message', 'Siswa berhasil ditambahkan ke kelas.')
@@ -118,8 +167,12 @@ class KelasSiswaController extends Controller
 
     public function edit(Request $request, $id)
     {
+        // ... (Keep existing edit logic if strictly needed, though we moved to inline/bulk)
         $pemetaan = KelasSiswa::findOrFail($id);
-        $kelas = Kelas::all(['id', 'kelas']);
+        // Redirect to index because we use inline edit now, or keep separate page?
+        // Let's keep it simply redirecting or showing index with modal info if needed.
+        // For now, let's just return the view as before to not break functionality
+             $kelas = Kelas::all(['id', 'kelas']);
         $tahun = Tahun::aktif()->get();
         $siswa = Siswa::all(['id', 'nama', 'nipd']);
 
@@ -137,17 +190,35 @@ class KelasSiswaController extends Controller
 
     public function update(Request $request, $id)
     {
+        $pemetaan = KelasSiswa::findOrFail($id);
+
+        // Handle Inline Update via AJAX
+        if ($request->ajax() || $request->wantsJson()) {
+            $validated = $request->validate([
+                'kelas_id' => 'sometimes|exists:kelas,id',
+                'tahun_id' => 'sometimes|exists:tahuns,id',
+                'ket' => 'sometimes|in:aktif,do,naik,tinggal',
+                // 'siswa_id' => 'sometimes' // Usually we don't change student ID inline
+            ]);
+
+            $pemetaan->update($validated);
+
+            return response()->json(['message' => 'Update berhasil', 'data' => $pemetaan]);
+        }
+
+        // Standard Form Update
         $validated = $request->validate([
             'kelas' => 'required',
             'siswa' => 'required',
             'tahun' => 'required',
+            'ket' => 'required'
         ]);
 
-        $pemetaan = KelasSiswa::findOrFail($id);
         $pemetaan->update([
             'kelas_id' => $validated['kelas'],
+            'siswa_id' => $validated['siswa'],
             'tahun_id' => $validated['tahun'],
-            'ket' => $request->ket,
+            'ket' => $validated['ket'],
         ]);
 
         return redirect()->route('kelassiswa.index')
@@ -155,14 +226,32 @@ class KelasSiswaController extends Controller
             ->with('type', 'success');
     }
 
-    public function destroy(Request $request)
+    public function destroy(Request $request, $id = null)
     {
-        $ids = $request->input('id');
+        // 1. Cek apakah ada input 'id' (array) dari Body (Bulk Delete)
+        // Kita prioritaskan ini karena form bulk delete mungkin mengirim ke URL dengan ID sembarang (misal: ID baris pertama)
+        if ($request->has('id') && is_array($request->input('id'))) {
+            $ids = $request->input('id');
+        } 
+        // 2. Jika tidak ada di body, cek apakah ada ID dari Route Parameter (Single Delete)
+        elseif ($id) {
+            $ids = [$id];
+        } 
+        // 3. Fallback: Cek input 'id' lagi kalau-kalau bukan array (meski jarang)
+        else {
+            $ids = $request->input('id');
+        }
 
-        if (empty($ids) || !is_array($ids)) {
+        // Validasi
+        if (empty($ids)) {
             return redirect()->route('kelassiswa.index')
                 ->with('message', 'Data tidak valid atau tidak ada yang dipilih.')
                 ->with('type', 'error');
+        }
+
+        // Pastikan ids adalah array jika belum (untuk safety)
+        if (!is_array($ids)) {
+            $ids = [$ids];
         }
 
         KelasSiswa::whereIn('id', $ids)->delete();

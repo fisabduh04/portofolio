@@ -67,6 +67,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('importsiswa', [SiswaController::class, 'import'])->name('importsiswa');
 
     // Route Kelas Siswa
+    Route::delete('/kelassiswa/bulk-delete', [KelasSiswaController::class, 'destroy'])->name('kelassiswa.bulkDelete');
     Route::resource('kelassiswa', KelasSiswaController::class);
     Route::get('/kelas-siswa-export', [KelasSiswaController::class, 'export'])->name('kelas-siswa-export');
     Route::post('kelas-siswa-import', [KelasSiswaController::class, 'import'])->name('kelas-siswa-import');

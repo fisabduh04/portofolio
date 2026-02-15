@@ -193,39 +193,159 @@
 
 
         {{-- Table Container --}}
+        <form id="MyForm" action="{{ route('kelassiswa.bulkDelete') }}" method="POST" class="hidden">
+            @csrf @method('delete')
+        </form>
         <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
             <table class="w-full text-sm text-left text-body rtl:text-right">
                 <thead class="text-xs text-heading uppercase bg-neutral-secondary-soft border-b border-default">
                     <tr>
                         <th scope="col" class="p-4">
                             <div class="flex items-center">
-                                <input id="checkAll" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <input id="checkAll" type="checkbox" onclick="toggleCheckAll(this)" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                             </div>
                         </th>
-                        <th scope="col" class="px-4 py-3">No</th>
+                        <th scope="col" class="px-4 py-3">
+                            <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'id', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                No
+                                @if(request('sort') == 'id')
+                                    <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                    </svg>
+                                @endif
+                            </a>
+                        </th>
                         <th scope="col" class="px-4 py-3 text-center">Action</th>
-                        <th scope="col" class="px-4 py-3">NIPD</th>
-                        <th scope="col" class="px-4 py-3">Nama Siswa</th>
-                        <th scope="col" class="px-4 py-3">Kelas</th>
-                        <th scope="col" class="px-4 py-3">Tahun Ajaran</th>
-                        <th scope="col" class="px-4 py-3">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                        @if ($pemetaans->isNotEmpty())
-                            <form id="MyForm"
-                                action="{{ route('kelassiswa.destroy', $pemetaans->first()->id ?? '') }}"
-                                method="POST">
-                                @csrf @method('delete')
-                        @endif
+                        <th scope="col" class="px-4 py-3">
+                            <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'nipd', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                NIPD
+                                @if(request('sort') == 'nipd')
+                                    <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                    </svg>
+                                @endif
+                            </a>
+                        </th>
+                        <th scope="col" class="px-4 py-3">
+                            <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'nama', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                Nama Siswa
+                                @if(request('sort') == 'nama')
+                                    <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                    </svg>
+                                @endif
+                            </a>
+                        </th>
+                        <th scope="col" class="px-4 py-3">
+                            <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'kelas', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                Kelas
+                                @if(request('sort') == 'kelas')
+                                    <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                    </svg>
+                                @endif
+                            </a>
+                        </th>
+                        <th scope="col" class="px-4 py-3">
+                            <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'tahun', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                Tahun Ajaran
+                                @if(request('sort') == 'tahun')
+                                    <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                    </svg>
+                                @endif
+                            </a>
+                        </th>
+                        <th scope="col" class="px-4 py-3">
+                            <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'ket', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                Status
+                                @if(request('sort') == 'ket')
+                                    <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                    </svg>
+                                @endif
+                            </a>
+            <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+                <table class="w-full text-sm text-left text-body rtl:text-right">
+                    <thead class="text-xs text-heading uppercase bg-neutral-secondary-soft border-b border-default">
+                        <tr>
+                            <th scope="col" class="p-4">
+                                <div class="flex items-center">
+                                    <input id="checkAll" type="checkbox" onclick="toggleCheckAll(this)" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                </div>
+                            </th>
+                            <th scope="col" class="px-4 py-3">
+                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'id', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                    No
+                                    @if(request('sort') == 'id')
+                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                        </svg>
+                                    @endif
+                                </a>
+                            </th>
+                            <th scope="col" class="px-4 py-3 text-center">Action</th>
+                            <th scope="col" class="px-4 py-3">
+                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'nipd', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                    NIPD
+                                    @if(request('sort') == 'nipd')
+                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                        </svg>
+                                    @endif
+                                </a>
+                            </th>
+                            <th scope="col" class="px-4 py-3">
+                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'nama', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                    Nama Siswa
+                                    @if(request('sort') == 'nama')
+                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                        </svg>
+                                    @endif
+                                </a>
+                            </th>
+                            <th scope="col" class="px-4 py-3">
+                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'kelas', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                    Kelas
+                                    @if(request('sort') == 'kelas')
+                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                        </svg>
+                                    @endif
+                                </a>
+                            </th>
+                            <th scope="col" class="px-4 py-3">
+                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'tahun', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                    Tahun Ajaran
+                                    @if(request('sort') == 'tahun')
+                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                        </svg>
+                                    @endif
+                                </a>
+                            </th>
+                            <th scope="col" class="px-4 py-3">
+                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'ket', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
+                                    Status
+                                    @if(request('sort') == 'ket')
+                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+                                        </svg>
+                                    @endif
+                                </a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         @foreach ($pemetaans as $pemetaan)
                             <tr
                                 class="bg-neutral-primary border-b border-default last:border-0 hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
                                 <td class="w-4 p-4">
                                     <div class="flex items-center">
-                                        <input id="checkbox-{{ $pemetaan->id }}" type="checkbox" name="id[]"
+                                        <input id="checkbox-{{ $pemetaan->id }}" form="MyForm" type="checkbox" name="id[]"
                                             value="{{ $pemetaan->id }}"
-                                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                         <label for="checkbox-{{ $pemetaan->id }}"
                                             class="sr-only">checkbox</label>
                                     </div>
@@ -239,6 +359,13 @@
                                         <x-btn type="button" 
                                             onclick="edit({{ $pemetaan->id }}, {{ $pemetaan->siswa_id }}, {{ $pemetaan->kelas_id }}, {{ $pemetaan->tahun_id }}, '{{ $pemetaan->ket }}')"
                                             icon="pencil-square" color="blue" variant="ghost" size="sm" class="!p-2" title="Edit" />
+                                        
+                                        <x-btn type="button" 
+                                            data-modal-target="popup-modal-{{ $pemetaan->id }}" 
+                                            data-modal-toggle="popup-modal-{{ $pemetaan->id }}" 
+                                            icon="trash" color="red" variant="ghost" size="sm" class="!p-2" title="Hapus" />
+                                        
+                                        <x-modal.hapus id="{{ $pemetaan->id }}" action="{{ route('kelassiswa.destroy', $pemetaan->id) }}" message="Apakah Anda yakin ingin menghapus siswa {{ $pemetaan->siswa->nama }}?" />
                                     </div>
                                 </td>
 
@@ -274,7 +401,6 @@
                                 </td>
                             </tr>
                         @endforeach
-                        </form>
                     </tbody>
                 </table>
 
@@ -357,27 +483,27 @@
                 window.location.search = urlParams.toString(); // Reload with new parameters
             });
 
-            // Handle select all checkbox (Bidirectional)
-            const checkAll = document.getElementById('checkAll');
-            const rowCheckboxes = document.querySelectorAll('input[type="checkbox"][name="id[]"]');
-
-            if (checkAll) {
-                // Header -> Rows
-                checkAll.addEventListener('change', function() {
-                    rowCheckboxes.forEach(checkbox => checkbox.checked = this.checked);
-                });
+            // Handle select all checkbox (Global Function Version)
+            function toggleCheckAll(source) {
+                const checkboxes = document.querySelectorAll('input[type="checkbox"][name="id[]"]');
+                for (var i = 0, n = checkboxes.length; i < n; i++) {
+                    checkboxes[i].checked = source.checked;
+                }
             }
+            
+            // Attach event listeners to row checkboxes to update master checkbox state
+            document.addEventListener('change', function(e) {
+                if (e.target && e.target.name === 'id[]') {
+                    const checkAll = document.getElementById('checkAll');
+                    if (!checkAll) return;
+                    
+                    const rowCheckboxes = document.querySelectorAll('input[type="checkbox"][name="id[]"]');
+                    const allChecked = Array.from(rowCheckboxes).every(cb => cb.checked);
+                    const someChecked = Array.from(rowCheckboxes).some(cb => cb.checked);
 
-            // Rows -> Header
-            rowCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    if (checkAll) {
-                        const allChecked = Array.from(rowCheckboxes).every(cb => cb.checked);
-                        const someChecked = Array.from(rowCheckboxes).some(cb => cb.checked);
-                        checkAll.checked = allChecked;
-                        checkAll.indeterminate = someChecked && !allChecked;
-                    }
-                });
+                    checkAll.checked = allChecked;
+                    checkAll.indeterminate = someChecked && !allChecked;
+                }
             });
 
             // Handle Search Auto-submit

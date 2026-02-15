@@ -31,6 +31,7 @@
          </li>
 
          @can('viewAny', \App\Models\User::class)
+
          <li>
              <a href="{{ route('operator.users.index') }}" class="flex items-center px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand">
                 <svg class="w-5 h-5 transition duration-75 group-hover:text-fg-brand" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -46,12 +47,19 @@
                 <svg class="w-5 h-5 transition duration-75 group-hover:text-fg-brand" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3.333 3 8.667 3 12 0v-5" />
                 </svg>
-                <span class="flex-1 text-left ms-3 rtl:text-right whitespace-nowrap">Akademik</span>
+                <span class="flex-1 text-left ms-3 rtl:text-right whitespace-nowrap">Data Master</span>
                 <svg class="w-3 h-3 group-hover:text-fg-brand" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" />
                 </svg>
             </button>
             <ul id="dropdown-akademik" class="hidden py-2 space-y-2">
+                <li>
+                    <a href="{{ route('sekolah.index') }}" class="flex items-center w-full pl-11 px-2 py-1.5 text-body rounded-base hover:bg-neutral-tertiary hover:text-fg-brand group">Data Sekolah</a>
+                </li>
+
+                <li>
+                    <a href="{{ route('operator.users.index') }}" class="flex items-center w-full pl-11 px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand">Manajemen Akun</a>
+                </li>
 
                 <li>
                     <a href="{{ route('tahun.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Tahun Akademik</a>
