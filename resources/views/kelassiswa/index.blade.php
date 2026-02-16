@@ -392,11 +392,11 @@
                                 </td>
                                 <td class="px-4 py-4">
                                     <select onchange="updateStatus({{ $pemetaan->id }}, this)"
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
-                                        <option value="aktif" {{ $pemetaan->ket == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                        <option value="do" {{ $pemetaan->ket == 'do' ? 'selected' : '' }}>Berhenti</option>
-                                        <option value="naik" {{ $pemetaan->ket == 'naik' ? 'selected' : '' }}>Naik Kelas</option>
-                                        <option value="tinggal" {{ $pemetaan->ket == 'tinggal' ? 'selected' : '' }}>Tinggal Kelas</option>
+                                        class="text-xs rounded-lg block w-full p-2 border transition-colors duration-200 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <option value="aktif" class="text-green-600 bg-green-50" {{ $pemetaan->ket == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                        <option value="do" class="text-red-600 bg-red-50" {{ $pemetaan->ket == 'do' ? 'selected' : '' }}>Berhenti</option>
+                                        <option value="naik" class="text-blue-600 bg-blue-50" {{ $pemetaan->ket == 'naik' ? 'selected' : '' }}>Naik Kelas</option>
+                                        <option value="tinggal" class="text-orange-600 bg-orange-50" {{ $pemetaan->ket == 'tinggal' ? 'selected' : '' }}>Tinggal Kelas</option>
                                     </select>
                                     <span id="status-msg-{{ $pemetaan->id }}" class="hidden text-[10px] mt-1 italic"></span>
                                 </td>
@@ -637,6 +637,9 @@
                 const statusBaru = selectElement.value;
                 const msgSpan = document.getElementById(`status-msg-${id}`);
 
+                // Update Color Immediately
+                updateSelectColor(selectElement);
+
                 // Show "Saving..." indicator
                 if(msgSpan) {
                     msgSpan.innerText = 'Menyimpan...';
@@ -688,12 +691,39 @@
                 });
             }
 
+            // Function to set color based on value
+            function updateSelectColor(select) {
+                // Reset base classes
+                select.className = "text-xs rounded-lg block w-full p-2 border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 dark:bg-gray-700 dark:border-gray-600";
+                
+                switch(select.value) {
+                    case 'aktif':
+                        select.classList.add('bg-green-50', 'text-green-700', 'border-green-300', 'focus:ring-green-500');
+                        break;
+                    case 'do': // Berhenti
+                        select.classList.add('bg-red-50', 'text-red-700', 'border-red-300', 'focus:ring-red-500');
+                        break;
+                    case 'naik':
+                        select.classList.add('bg-blue-50', 'text-blue-700', 'border-blue-300', 'focus:ring-blue-500');
+                        break;
+                    case 'tinggal':
+                        select.classList.add('bg-orange-50', 'text-orange-700', 'border-orange-300', 'focus:ring-orange-500');
+                        break;
+                    default:
+                        select.classList.add('bg-gray-50', 'text-gray-900', 'border-gray-300', 'focus:ring-blue-500');
+                }
+            }
+
+            // Initialize colors on load
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('select[onchange^="updateStatus"]').forEach(select => {
+                    updateSelectColor(select);
+                });
+            });        
             // Global Checkbox Logic
             function toggleCheckAll(source) {
                 const checkboxes = document.querySelectorAll('input[type="checkbox"][name="id[]"]');
-                for (var i = 0, n = checkboxes.length; i < n; i++) {
-                    checkboxes[i].checked = source.checked;
-                }
+                checkboxes.forEach(checkbox => checkbox.checked = source.checked);
             }
             
             // Row Checkbox Listener
