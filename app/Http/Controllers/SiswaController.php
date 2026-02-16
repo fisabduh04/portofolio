@@ -117,7 +117,135 @@ class SiswaController extends Controller
      */
     public function show(Siswa $siswa)
     {
-        //
+        // 1. Ambil Tahun Aktif
+        $tahunAktif = \App\Models\Tahun::aktif()->first();
+        $year = now()->year;
+
+        // 2. Statistik Tahunan (Summary - Tahun Aktif)
+        $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Total' => 0];
+        
+        // Query Absensi Filter Tahun Ini
+        $logs = \App\Models\Absensi::with(['logbook.jadwal.mapel', 'logbook.pegawai'])
+            ->where('siswa_id', $siswa->id)
+            ->whereHas('logbook', function($q) use ($year) {
+                $q->whereYear('tanggal', $year);
+            })
+            ->get();
+
+        foreach ($logs as $log) {
+            $status = $log->status;
+            if (isset($summaryStats[$status])) {
+                $summaryStats[$status]++;
+            }
+            $summaryStats['Total']++;
+        }
+
+        // 3. Data Grafik Bulanan (Monthly Trend - Tahun Aktif)
+        $months = range(1, 12);
+        $chartData = [
+            'Hadir' => [], 'Sakit' => [], 'Izin' => [], 'Alpha' => []
+        ];
+
+        foreach ($months as $m) {
+            $monthLogs = $logs->filter(function($log) use ($m) {
+                return \Carbon\Carbon::parse($log->logbook->tanggal)->month == $m;
+            });
+
+            $chartData['Hadir'][] = $monthLogs->where('status', 'Hadir')->count();
+            $chartData['Sakit'][] = $monthLogs->where('status', 'Sakit')->count();
+            $chartData['Izin'][] = $monthLogs->where('status', 'Izin')->count();
+            $chartData['Alpha'][] = $monthLogs->where('status', 'Alpha')->count();
+        }
+
+        // 4. Riwayat Terbaru (Top 10)
+        $recentLogs = $logs->sortByDesc(function($log) {
+            return $log->logbook->tanggal . ' ' . ($log->logbook->jadwal->mulai ?? '00:00');
+        })->take(10);
+
+        // 5. Data Kelas Aktif
+        $kelasAktif = $siswa->KelasSiswa()
+            ->where('tahun_id', $tahunAktif->id ?? 0)
+            ->with('kelas')
+            ->first()
+            ->kelas ?? '-';
+
+        // 6. Riwayat Akademik (History Kelas per Tahun/Semester)
+        $history = $siswa->KelasSiswa()
+            ->with(['kelas', 'tahun'])
+            ->orderByDesc('id') 
+            ->get()
+            ->map(function ($h) use ($siswa) {
+                // Hitung Absensi per Periode Tahun Ajaran tersebut
+                if ($h->tahun) {
+                    $stats = \App\Models\Absensi::where('siswa_id', $siswa->id)
+                        ->whereHas('logbook', function($q) use ($h) {
+                            $q->whereBetween('tanggal', [$h->tahun->tanggalmulai, $h->tahun->tanggalakhir]);
+                        })
+                        ->selectRaw('status, count(*) as count')
+                        ->groupBy('status')
+                        ->pluck('count', 'status')
+                        ->toArray();
+                    
+                    $total = array_sum($stats);
+                    $h->stats = [
+                        'H' => $stats['Hadir'] ?? 0,
+                        'S' => $stats['Sakit'] ?? 0,
+                        'I' => $stats['Izin'] ?? 0,
+                        'A' => $stats['Alpha'] ?? 0,
+                        'Total' => $total,
+                        'HadirPercent' => $total > 0 ? round((($stats['Hadir'] ?? 0) / $total) * 100, 1) : 0
+                    ];
+                } else {
+                     $h->stats = ['H'=>0, 'S'=>0, 'I'=>0, 'A'=>0, 'Total'=>0, 'HadirPercent'=>0];
+                }
+                return $h;
+            });
+
+        // 7. Smart Prediction & Risk Analysis
+        $prediction = [
+            'status' => 'Aman',
+            'color' => 'green',
+            'message' => 'Tingkat kehadiran siswa sangat baik. Pertahankan!',
+            'trend' => 'stabil', // naik, turun, stabil
+            'predicted_score' => 100
+        ];
+
+        if ($summaryStats['Total'] > 0) {
+            $attendanceRate = ($summaryStats['Hadir'] / $summaryStats['Total']) * 100;
+            $alphaRate = ($summaryStats['Alpha'] / $summaryStats['Total']) * 100;
+            
+            $prediction['predicted_score'] = round($attendanceRate, 1);
+
+            // Risk Logic
+            if ($attendanceRate < 80 || $summaryStats['Alpha'] > 10) {
+                $prediction['status'] = 'Bahaya';
+                $prediction['color'] = 'red';
+                $prediction['message'] = 'Siswa berisiko tidak naik kelas! Kehadiran di bawah 80% atau Alpha berlebih.';
+            } elseif ($attendanceRate < 90 || $summaryStats['Alpha'] > 5) {
+                $prediction['status'] = 'Waspada';
+                $prediction['color'] = 'yellow';
+                $prediction['message'] = 'Perlu perhatian. Tingkatkan kehadiran untuk hasil maksimal.';
+            }
+
+            // Trend Logic (Compare last 2 active months)
+            $activeMonths = array_keys(array_filter($chartData['Hadir'], fn($val) => $val > 0));
+            if (count($activeMonths) >= 2) {
+                $lastMonthIdx = end($activeMonths);
+                $prevMonthIdx = prev($activeMonths);
+                
+                $lastMonthHadir = $chartData['Hadir'][$lastMonthIdx];
+                $prevMonthHadir = $chartData['Hadir'][$prevMonthIdx];
+
+                if ($lastMonthHadir < $prevMonthHadir) {
+                    $prediction['trend'] = 'turun';
+                    $prediction['message'] .= ' Tren kehadiran menurun bulan ini.';
+                } elseif ($lastMonthHadir > $prevMonthHadir) {
+                    $prediction['trend'] = 'naik';
+                }
+            }
+        }
+
+        return view('siswa.show', compact('siswa', 'summaryStats', 'chartData', 'recentLogs', 'kelasAktif', 'year', 'history', 'prediction'));
     }
 
     /**

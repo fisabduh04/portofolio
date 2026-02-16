@@ -139,6 +139,7 @@
                                     </td>
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex items-center justify-end gap-2">
+                                            <x-btn href="{{ route('siswa.show', $sis->id) }}" icon="eye" color="gray" variant="ghost" size="sm" class="!p-2" />
                                             <x-btn href="{{ route('siswa.edit', $sis->id) }}" icon="pencil-square" color="blue" variant="ghost" size="sm" class="!p-2" />
                                             <!-- Separate Delete Form for Single Item -->
                                             <x-btn data-modal-target="popup-modal-{{ $sis->id }}" data-modal-toggle="popup-modal-{{ $sis->id }}" icon="trash" color="red" variant="ghost" size="sm" class="!p-2" />
