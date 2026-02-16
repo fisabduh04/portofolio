@@ -174,7 +174,6 @@
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     <span>Delete Selected</span>
                                 </button>
-                                <x-modal.hapus id="bulk-delete" formTarget="MyForm" message="Apakah Anda yakin ingin menghapus data yang dipilih?" />
                             </div>
                         </div>
                     </div>
@@ -256,88 +255,12 @@
                                 @endif
                             </a>
                         </th>
-                        <th scope="col" class="px-4 py-3">
-                            <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'ket', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
-                                Status
-                                @if(request('sort') == 'ket')
-                                    <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-                                    </svg>
-                                @endif
-                            </a>
-            <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
-                <table class="w-full text-sm text-left text-body rtl:text-right">
-                    <thead class="text-xs text-heading uppercase bg-neutral-secondary-soft border-b border-default">
-                        <tr>
-                            <th scope="col" class="p-4">
-                                <div class="flex items-center">
-                                    <input id="checkAll" type="checkbox" onclick="toggleCheckAll(this)" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                </div>
-                            </th>
-                            <th scope="col" class="px-4 py-3">
-                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'id', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
-                                    No
-                                    @if(request('sort') == 'id')
-                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-                                        </svg>
-                                    @endif
-                                </a>
-                            </th>
-                            <th scope="col" class="px-4 py-3 text-center">Action</th>
-                            <th scope="col" class="px-4 py-3">
-                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'nipd', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
-                                    NIPD
-                                    @if(request('sort') == 'nipd')
-                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-                                        </svg>
-                                    @endif
-                                </a>
-                            </th>
-                            <th scope="col" class="px-4 py-3">
-                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'nama', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
-                                    Nama Siswa
-                                    @if(request('sort') == 'nama')
-                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-                                        </svg>
-                                    @endif
-                                </a>
-                            </th>
-                            <th scope="col" class="px-4 py-3">
-                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'kelas', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
-                                    Kelas
-                                    @if(request('sort') == 'kelas')
-                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-                                        </svg>
-                                    @endif
-                                </a>
-                            </th>
-                            <th scope="col" class="px-4 py-3">
-                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'tahun', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
-                                    Tahun Ajaran
-                                    @if(request('sort') == 'tahun')
-                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-                                        </svg>
-                                    @endif
-                                </a>
-                            </th>
-                            <th scope="col" class="px-4 py-3">
-                                <a href="{{ route('kelassiswa.index', array_merge(request()->all(), ['sort' => 'ket', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center text-heading hover:text-blue-600">
-                                    Status
-                                    @if(request('sort') == 'ket')
-                                        <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-                                        </svg>
-                                    @endif
-                                </a>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if ($pemetaans->isNotEmpty())
+                         {{-- Form moved outside --}}
+                    @endif
                         @foreach ($pemetaans as $pemetaan)
                             <tr
                                 class="bg-neutral-primary border-b border-default last:border-0 hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
@@ -473,6 +396,9 @@
             </div>
         </div>
 
+
+        {{-- Bulk Delete Modal (Moved here for better DOM handling) --}}
+        <x-modal.hapus id="bulk-delete" formTarget="MyForm" message="Apakah Anda yakin ingin menghapus data yang dipilih?" />
 
         {{-- Script JS --}}
         <script>
