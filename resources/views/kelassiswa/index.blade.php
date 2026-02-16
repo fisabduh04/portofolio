@@ -391,21 +391,14 @@
                                     {{ $pemetaan->tahun->tahun }}-{{ $pemetaan->tahun->semester }}
                                 </td>
                                 <td class="px-4 py-4">
-                                    @if ($pemetaan->ket == 'aktif')
-                                        <span
-                                            class="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-gray-700 dark:text-green-400 border border-green-400">Aktif</span>
-                                    @elseif ($pemetaan->ket == 'do')
-                                        <span
-                                            class="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-gray-700 dark:text-red-400 border border-red-400">DO</span>
-                                    @elseif ($pemetaan->ket == 'naik')
-                                        <span
-                                            class="bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-gray-700 dark:text-blue-400 border border-blue-400">Naik
-                                            Kelas</span>
-                                    @elseif ($pemetaan->ket == 'tinggal')
-                                        <span
-                                            class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-gray-700 dark:text-yellow-400 border border-yellow-400">Tinggal
-                                            Kelas</span>
-                                    @endif
+                                    <select onchange="updateStatus({{ $pemetaan->id }}, this)"
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                                        <option value="aktif" {{ $pemetaan->ket == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                        <option value="do" {{ $pemetaan->ket == 'do' ? 'selected' : '' }}>Berhenti</option>
+                                        <option value="naik" {{ $pemetaan->ket == 'naik' ? 'selected' : '' }}>Naik Kelas</option>
+                                        <option value="tinggal" {{ $pemetaan->ket == 'tinggal' ? 'selected' : '' }}>Tinggal Kelas</option>
+                                    </select>
+                                    <span id="status-msg-{{ $pemetaan->id }}" class="hidden text-[10px] mt-1 italic"></span>
                                 </td>
                             </tr>
                         @endforeach
@@ -626,7 +619,7 @@
                 // 4. Hide Add Row Button
                 const addRowBtn = document.querySelector('button[onclick="addRow()"]');
                 if(addRowBtn) addRowBtn.style.display = 'none';
-
+                
                 // 5. Show Panel
                 if(panel) panel.classList.remove('hidden');
             }
@@ -634,9 +627,65 @@
             function tutup() {
                 if(panel) panel.classList.add('hidden');
                 
-                // Restore default names
+                // Reset to default name for bulk input
                 const inputTahun = document.getElementById('tahun');
                 if(inputTahun) inputTahun.name = 'tahun_id';
+            }
+
+            // --- Inline Status Update (Fetch API) ---
+            function updateStatus(id, selectElement) {
+                const statusBaru = selectElement.value;
+                const msgSpan = document.getElementById(`status-msg-${id}`);
+
+                // Show "Saving..." indicator
+                if(msgSpan) {
+                    msgSpan.innerText = 'Menyimpan...';
+                    msgSpan.classList.remove('hidden', 'text-green-600', 'text-red-600');
+                    msgSpan.classList.add('text-gray-500');
+                }
+                selectElement.disabled = true; // Prevent multiple changes while saving
+
+                fetch(`/kelassiswa/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        _method: 'PUT',
+                        ket: statusBaru
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Success Feedback
+                        if(msgSpan) {
+                            msgSpan.innerText = 'Tersimpan!';
+                            msgSpan.classList.remove('text-gray-500');
+                            msgSpan.classList.add('text-green-600');
+                            
+                            // Hide message after 2 seconds
+                            setTimeout(() => {
+                                msgSpan.classList.add('hidden');
+                            }, 2000);
+                        }
+                    } else {
+                        // Error Feedback
+                        throw new Error('Gagal menyimpan');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("Gagal menyimpan perubahan status. Periksa koneksi internet.");
+                    if(msgSpan) {
+                        msgSpan.innerText = 'Gagal!';
+                        msgSpan.classList.remove('text-gray-500');
+                        msgSpan.classList.add('text-red-600');
+                    }
+                })
+                .finally(() => {
+                    selectElement.disabled = false; // Re-enable select
+                });
             }
 
             // Global Checkbox Logic
