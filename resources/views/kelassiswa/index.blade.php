@@ -9,7 +9,6 @@
     <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-base overflow-hidden border border-gray-200 dark:border-gray-700">
         
         {{-- Header Section --}}
-        {{-- Header Section --}}
         <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4 border-b border-gray-200 dark:border-gray-700">
             <div class="w-full md:w-auto">
                 {{-- Data Count --}}
@@ -17,7 +16,7 @@
             </div>
             <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
                 {{-- Primary Action: Tambah --}}
-                <x-btn onclick="muncul()" color="blue" size="sm">
+                <x-btn onclick="tambah()" color="blue" size="sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                     <span>Tambah Data</span>
                 </x-btn>
@@ -31,12 +30,21 @@
         </div>
 
         {{-- Panel Input (Setup Data) --}}
-        <div id="InputSiswaPanel" class="hidden bg-gray-50 p-6 border-b border-gray-200 dark:bg-gray-700 dark:border-gray-600 transition-all">
-            <div class="flex items-center gap-2 mb-4">
-                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs pointer-events-none">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+        <div id="InputSiswaPanel" class="hidden bg-gray-50 dark:bg-gray-800 p-6 border-b border-gray-200 dark:border-gray-700 transition-all">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm pointer-events-none shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                    </div>
+                    <div>
+                        <h4 id="panelTitle" class="font-bold text-lg text-gray-800 dark:text-white tracking-tight">Input Data Rombongan Belajar</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Atur siswa dan kelas secara masal atau satu per satu.</p>
+                    </div>
                 </div>
-                <h4 id="panelTitle" class="font-bold text-sm text-gray-800 dark:text-white uppercase tracking-wider">Form Input Rombongan Belajar</h4>
+                <button type="button" onclick="tutup()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
             </div>
 
             <form action="{{ isset($pemetaan) ? route('kelassiswa.update', $pemetaan->id) : route('kelassiswa.store') }}"
@@ -46,65 +54,139 @@
                     @method('PUT')
                 @endisset
 
-                <div class="grid gap-6 mb-6 md:grid-cols-2 lg:grid-cols-4">
-                    <!-- Tahun Ajaran -->
-                    <div>
-                        <label for="tahun" class="block mb-2 text-xs font-semibold text-gray-900 dark:text-white uppercase">Tahun Ajaran</label>
-                        <select id="tahun" name="tahun"
-                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="">Pilih Tahun</option>
-                            @foreach ($tahun as $t)
-                                <option value="{{ $t->id }}">
-                                    {{ $t->tahun }} - {{ $t->semester }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Kelas -->
-                    <div>
-                        <label for="kelas" class="block mb-2 text-xs font-semibold text-gray-900 dark:text-white uppercase">Kelas</label>
-                        <select id="kelas" name="kelas"
-                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="">Pilih Kelas</option>
-                            @foreach ($kelas as $k)
-                                <option value="{{ $k->id }}">
-                                    {{ $k->kelas }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Siswa -->
-                    <div>
-                        <label for="siswa" class="block mb-2 text-xs font-semibold text-gray-900 dark:text-white uppercase">Siswa</label>
-                        <select id="siswa" name="siswa"
-                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="">Pilih Siswa</option>
-                            @foreach ($siswa as $s)
-                                <option value="{{ $s->id }}">
-                                    {{ $s->nama }} - {{ $s->nipd }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Keterangan -->
-                    <div>
-                        <label for="keterangan" class="block mb-2 text-xs font-semibold text-gray-900 dark:text-white uppercase">Keterangan</label>
-                        <select id="keterangan" name="ket"
-                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="aktif">Aktif</option>
-                            <option value="do">Berhenti</option>
-                            <option value="naik">Naik Kelas</option>
-                            <option value="tinggal">Tidak Naik Kelas</option>
-                        </select>
+                <!-- Global Settings (Tahun Ajaran) -->
+                <div class="mb-6 bg-white dark:bg-gray-900 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                        <div>
+                            <label for="tahun" class="block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                Tahun Ajaran
+                                <span class="text-xs font-normal text-gray-500 ml-1">(Berlaku untuk semua data di bawah)</span>
+                            </label>
+                            <select id="tahun" name="tahun_id" required
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white transition-all">
+                                <option value="">-- Pilih Tahun Ajaran --</option>
+                                @foreach ($tahun as $t)
+                                    <option value="{{ $t->id }}">
+                                        {{ $t->tahun }} - {{ $t->semester }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    <x-btn type="submit" id="submitButton" text="Simpan Data" icon="check" color="green" />
-                    <x-btn type="button" text="Batal" color="light" onclick="tutup()" />
+                <!-- Repeater Header (Desktop) -->
+                <div class="hidden md:grid grid-cols-12 gap-4 mb-2 px-4 font-semibold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    <div class="col-span-12 md:col-span-5">Siswa</div>
+                    <div class="col-span-12 md:col-span-4">Kelas</div>
+                    <div class="col-span-12 md:col-span-2">Status</div>
+                    <div class="col-span-12 md:col-span-1 text-center">Aksi</div>
+                </div>
+
+                <!-- Repeater Container -->
+                <div id="repeater-container" class="space-y-3 mb-6">
+                    <!-- Row 1 (Default) -->
+                    <div class="repeater-row grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all hover:border-blue-300 dark:hover:border-blue-700 group">
+                        <!-- Siswa -->
+                        <div class="md:col-span-5">
+                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Siswa</label>
+                            <select name="siswa_id[]" required
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                                <option value="">Pilih Siswa</option>
+                                @foreach ($siswa as $s)
+                                    <option value="{{ $s->id }}">{{ $s->nama }} - {{ $s->nipd }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <!-- Kelas -->
+                        <div class="md:col-span-4">
+                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Kelas</label>
+                            <select name="kelas_id[]" required
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                                <option value="">Pilih Kelas</option>
+                                @foreach ($kelas as $k)
+                                    <option value="{{ $k->id }}">{{ $k->kelas }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Keterangan -->
+                        <div class="md:col-span-2">
+                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Status</label>
+                            <select name="ket[]" required
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                                <option value="aktif">Aktif</option>
+                                <option value="berhenti">Berhenti</option>
+                                <option value="naik">Naik Kelas</option>
+                                <option value="tinggal">Tidak Naik Kelas</option>
+                            </select>
+                        </div>
+
+                        <!-- Delete Button -->
+                        <div class="md:col-span-1 flex justify-center items-center h-full pt-1">
+                            <button type="button" onclick="removeRow(this)" class="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100" title="Hapus Baris">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Row Button -->
+                <button type="button" onclick="addRow()" class="w-full py-3 mb-6 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:border-gray-600 dark:hover:border-blue-400 dark:hover:text-blue-400 dark:hover:bg-gray-800 transition-all duration-200 flex items-center justify-center group">
+                    <div class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600 flex items-center justify-center mr-2 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </div>
+                    Tambah Siswa Lain
+                </button>
+
+                <!-- Template for Javascript cloning (Hidden) -->
+                <template id="row-template">
+                    <div class="repeater-row grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all hover:border-blue-300 dark:hover:border-blue-700 group animate-fade-in-down">
+                        <div class="md:col-span-5">
+                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Siswa</label>
+                            <select name="siswa_id[]" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                                <option value="">Pilih Siswa</option>
+                                @foreach ($siswa as $s)
+                                    <option value="{{ $s->id }}">{{ $s->nama }} - {{ $s->nipd }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="md:col-span-4">
+                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Kelas</label>
+                            <select name="kelas_id[]" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                                <option value="">Pilih Kelas</option>
+                                @foreach ($kelas as $k)
+                                    <option value="{{ $k->id }}">{{ $k->kelas }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Status</label>
+                            <select name="ket[]" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                                <option value="aktif">Aktif</option>
+                                <option value="do">Berhenti</option>
+                                <option value="naik">Naik Kelas</option>
+                                <option value="tinggal">Tidak Naik Kelas</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-1 flex justify-center items-center h-full pt-1">
+                            <button type="button" onclick="removeRow(this)" class="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100" title="Hapus Baris">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <button type="button" onclick="tutup()" class="px-5 py-2.5 text-sm font-medium text-gray-700 focus:outline-none bg-white rounded-lg border border-gray-300 hover:bg-gray-50 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit" id="submitButton" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-lg shadow-blue-500/30 transition-all flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Simpan Data
+                    </button>
                 </div>
             </form>
         </div>
@@ -255,6 +337,9 @@
                                 @endif
                             </a>
                         </th>
+                        <th scope="col" class="px-4 py-3">
+                            Status
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -280,7 +365,7 @@
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         <x-btn type="button" 
-                                            onclick="edit({{ $pemetaan->id }}, {{ $pemetaan->siswa_id }}, {{ $pemetaan->kelas_id }}, {{ $pemetaan->tahun_id }}, '{{ $pemetaan->ket }}')"
+                                            onclick="edit({{ $pemetaan->id }}, '{{ $pemetaan->siswa_id }}', '{{ $pemetaan->kelas_id }}', '{{ $pemetaan->tahun_id }}', '{{ $pemetaan->ket }}')"
                                             icon="pencil-square" color="blue" variant="ghost" size="sm" class="!p-2" title="Edit" />
                                         
                                         <x-btn type="button" 
@@ -403,13 +488,158 @@
         {{-- Script JS --}}
         <script>
             // Handle perPage dropdown change
-            document.getElementById('perPage').addEventListener('change', function() {
-                const urlParams = new URLSearchParams(window.location.search);
-                urlParams.set('per_page', this.value); // Update per_page query parameter
-                window.location.search = urlParams.toString(); // Reload with new parameters
-            });
+            const perPageSelect = document.querySelector('select[name="per_page"]');
+            if(perPageSelect) {
+                perPageSelect.addEventListener('change', function() {
+                    this.form.submit();
+                });
+            }
 
-            // Handle select all checkbox (Global Function Version)
+            // DOM Elements
+            const panel = document.getElementById('InputSiswaPanel');
+            const form = document.getElementById('InputSiswa');
+            const submitButton = document.getElementById('submitButton');
+            const container = document.getElementById('repeater-container');
+            const template = document.getElementById('row-template');
+            const panelTitle = document.getElementById('panelTitle');
+
+            // --- Repeater Logic ---
+
+            function addRow() {
+                if(!template || !container) return;
+                const clone = template.content.cloneNode(true);
+                container.appendChild(clone);
+            }
+
+            function removeRow(button) {
+                if (container.querySelectorAll('.repeater-row').length > 1) {
+                    button.closest('.repeater-row').remove();
+                } else {
+                    alert("Minimal satu baris data harus ada.");
+                }
+            }
+
+            // --- Modal/Panel Logic ---
+
+            function tambah() {
+                // 1. Reset Form
+                if(form) {
+                    form.reset();
+                    form.action = "{{ route('kelassiswa.store') }}";
+                    
+                    const methodInput = form.querySelector('input[name="_method"]');
+                    if (methodInput) methodInput.remove();
+                }
+
+                if(panelTitle) panelTitle.innerText = "Tambah Data (Bulk Input)";
+                if(submitButton) {
+                    submitButton.innerText = "Simpan Semua";
+                    submitButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                    submitButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                }
+
+                // 2. Reset Repeater
+                if(container) {
+                    container.innerHTML = ''; 
+                    addRow(); 
+                }
+
+                // 3. Show Add Row Button
+                const addRowBtn = document.querySelector('button[onclick="addRow()"]');
+                if(addRowBtn) addRowBtn.style.display = 'flex';
+
+                // 4. Show Panel
+                if(panel) panel.classList.remove('hidden');
+                
+                // Show 'tambah' in previous code was 'muncul'. 
+                // Previous code: onclick="muncul()"
+                // I changed onclick to 'tambah()' in the Header Section (Part 1).
+            }
+            
+            // Backward compatibility if user clicks old button maybe? 
+            // I updated the button to onclick="tambah()" in Part 1.
+            function muncul() { tambah(); }
+
+            function edit(id, siswa_id, kelas_id, tahun_id, ket) {
+                // 1. Setup Form
+                if(form) {
+                    form.action = `/kelassiswa/${id}`;
+                    
+                    let methodInput = form.querySelector('input[name="_method"]');
+                    if (!methodInput) {
+                        methodInput = document.createElement('input');
+                        methodInput.type = 'hidden';
+                        methodInput.name = '_method';
+                        methodInput.value = 'PUT';
+                        form.appendChild(methodInput);
+                    } else {
+                        methodInput.value = 'PUT';
+                    }
+                }
+
+                if(panelTitle) panelTitle.innerText = "Edit Data Siswa";
+                if(submitButton) {
+                    submitButton.innerText = "Update Data";
+                    submitButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    submitButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                }
+
+                // 2. Prepare Repeater (Single Row)
+                if(container) {
+                    container.innerHTML = '';
+                    addRow(); 
+                    
+                    const row = container.querySelector('.repeater-row');
+                    
+                    if(row) {
+                        // 3. Populate & Rename for Single Update
+                        const inputTahun = document.getElementById('tahun');
+                        if(inputTahun) {
+                            inputTahun.name = 'tahun'; 
+                            inputTahun.value = tahun_id;
+                        }
+
+                        const inputSiswa = row.querySelector('select[name="siswa_id[]"]');
+                        if(inputSiswa) {
+                            inputSiswa.name = 'siswa'; 
+                            inputSiswa.value = siswa_id;
+                        }
+
+                        const inputKelas = row.querySelector('select[name="kelas_id[]"]');
+                        if(inputKelas) {
+                            inputKelas.name = 'kelas'; 
+                            inputKelas.value = kelas_id;
+                        }
+
+                        const inputKet = row.querySelector('select[name="ket[]"]');
+                        if(inputKet) {
+                            inputKet.name = 'ket'; 
+                            inputKet.value = ket;
+                        }
+                        
+                        // Hide Remove Button in Row
+                        const removeBtn = row.querySelector('button[onclick="removeRow(this)"]');
+                        if(removeBtn) removeBtn.style.display = 'none';
+                    }
+                }
+
+                // 4. Hide Add Row Button
+                const addRowBtn = document.querySelector('button[onclick="addRow()"]');
+                if(addRowBtn) addRowBtn.style.display = 'none';
+
+                // 5. Show Panel
+                if(panel) panel.classList.remove('hidden');
+            }
+
+            function tutup() {
+                if(panel) panel.classList.add('hidden');
+                
+                // Restore default names
+                const inputTahun = document.getElementById('tahun');
+                if(inputTahun) inputTahun.name = 'tahun_id';
+            }
+
+            // Global Checkbox Logic
             function toggleCheckAll(source) {
                 const checkboxes = document.querySelectorAll('input[type="checkbox"][name="id[]"]');
                 for (var i = 0, n = checkboxes.length; i < n; i++) {
@@ -417,7 +647,7 @@
                 }
             }
             
-            // Attach event listeners to row checkboxes to update master checkbox state
+            // Row Checkbox Listener
             document.addEventListener('change', function(e) {
                 if (e.target && e.target.name === 'id[]') {
                     const checkAll = document.getElementById('checkAll');
@@ -432,71 +662,18 @@
                 }
             });
 
-            // Handle Search Auto-submit
+            // Search Auto-Submit
             const searchInput = document.getElementById('search');
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
                     clearTimeout(window.delay);
                     window.delay = setTimeout(() => {
                         this.form.submit();
-                    }, 1000);
+                    }, 1000); // 1 second delay
                 });
-                
-                // Restore focus after reload if needed (optional, simplistic)
-                // const urlParams = new URLSearchParams(window.location.search);
-                // if(urlParams.has('search')) searchInput.focus(); 
             }
 
-            function muncul() {
-                const panel = document.getElementById('InputSiswaPanel');
-                const form = document.getElementById('InputSiswa');
-                const submitBtn = document.getElementById('submitButton');
-                const panelTitle = document.getElementById('panelTitle');
-
-                form.reset();
-                panel.classList.toggle('hidden');
-
-                if (!panel.classList.contains('hidden')) {
-                    form.removeAttribute('action');
-                    form.setAttribute('action', "{{ route('kelassiswa.store') }}");
-                    form.querySelector('input[name="_method"]')?.remove();
-                    
-                    panelTitle.textContent = 'Setup Data Baru';
-                    submitBtn.textContent = 'Simpan Data';
-                }
-            }
-
-            function edit(id, siswa_id, kelas_id, tahun_id, ket) {
-                const panel = document.getElementById('InputSiswaPanel');
-                const form = document.getElementById('InputSiswa');
-                const submitBtn = document.getElementById('submitButton');
-                const panelTitle = document.getElementById('panelTitle');
-
-                panel.classList.remove('hidden');
-                form.setAttribute('action', `/kelassiswa/${id}`);
-
-                if (!form.querySelector('input[name="_method"]')) {
-                    const methodInput = document.createElement('input');
-                    methodInput.setAttribute('type', 'hidden');
-                    methodInput.setAttribute('name', '_method');
-                    methodInput.setAttribute('value', 'PUT');
-                    form.appendChild(methodInput);
-                }
-
-                form.querySelector('select[name="siswa"]').value = siswa_id;
-                form.querySelector('select[name="kelas"]').value = kelas_id;
-                form.querySelector('select[name="tahun"]').value = tahun_id;
-                form.querySelector('select[name="ket"]').value = ket;
-
-                panelTitle.textContent = 'Edit Data Rombongan Belajar';
-                submitBtn.textContent = 'Update Data';
-            }
-
-            function tutup() {
-                const panel = document.getElementById('InputSiswaPanel');
-                panel.classList.add('hidden');
-            }
-
+            // Export Data
             function exportData(e) {
                 e.preventDefault();
                 const checkboxes = document.querySelectorAll('input[name="id[]"]:checked');
@@ -504,15 +681,6 @@
                 checkboxes.forEach((checkbox) => {
                     ids.push(checkbox.value);
                 });
-
-                if (ids.length === 0) {
-                     // Verify if the user intended to export ALL (Active Year)
-                     // If they checked nothing, we let it flow to 'active year' default.
-                     // But if they THINK they checked something, this console log helps.
-                     console.log("No checkboxes detected. Defaulting to Active Year export.");
-                } else {
-                     console.log("Exporting IDs: " + ids.join(','));
-                }
 
                 let url = "{{ route('kelas-siswa-export') }}";
                 if (ids.length > 0) {
@@ -522,12 +690,5 @@
                 window.location.href = url;
             }
         </script>
-
-
-        </script>
-
-
-
-
 
 </x-layout.layout>
