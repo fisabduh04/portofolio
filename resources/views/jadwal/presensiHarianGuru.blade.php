@@ -8,14 +8,7 @@
     <div class="mt-8">
         {{-- Header Section --}}
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <div>
-                <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-                    Presensi Harian
-                </h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-1">
-                    Kelola kehadiran siswa untuk jadwal hari ini.
-                </p>
-            </div>
+
             
             <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                 {{-- View Toggle Tabs (Only for Admin/Operator or Guru Piket) --}}
@@ -35,6 +28,18 @@
                 {{-- Date Filter Form --}}
                 <form action="{{ route('jadwal.presensiHarian') }}" method="GET" class="flex items-center gap-3 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 flex-1 md:flex-none">
                     <input type="hidden" name="view_mode" value="{{ $viewMode }}">
+                    
+                    {{-- Class Filter --}}
+                    <div class="relative">
+                        <select name="filter_kelas" onchange="this.form.submit()" 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            <option value="">Semua Kelas</option>
+                            @foreach($kelas as $k)
+                                <option value="{{ $k->id }}" {{ $filter_kelas == $k->id ? 'selected' : '' }}>{{ $k->kelas }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <label for="date" class="text-sm font-medium text-gray-700 dark:text-gray-300 pl-2">Tanggal:</label>
                     <div class="relative flex-1 md:w-auto">
                         <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">

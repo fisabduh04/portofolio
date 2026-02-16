@@ -465,6 +465,12 @@ class JadwalController extends Controller
             ->where('hari', $dayName)
             ->orderBy('jam');
 
+        // Filter Kelas Logic
+        $filter_kelas = $request->input('filter_kelas');
+        if($filter_kelas) {
+            $query->where('kelas_id', $filter_kelas);
+        }
+
         // 4. Role & Piket Check
         $user = auth()->user();
         $isPiket = false;
@@ -514,9 +520,10 @@ class JadwalController extends Controller
             return $jadwal;
         });
 
-        return view('jadwal.presensiHarianGuru', compact('jadwals', 'date', 'dayName', 'activeYear', 'isPiket', 'viewMode'));
+        // Dropdown Data
+        $kelas = \App\Models\Kelas::orderBy('kelas')->get();
+
+        return view('jadwal.presensiHarianGuru', compact('jadwals', 'date', 'dayName', 'activeYear', 'isPiket', 'viewMode', 'kelas', 'filter_kelas'));
     }
-
-
 
 }
