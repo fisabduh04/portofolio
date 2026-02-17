@@ -202,6 +202,7 @@ class PegawaiAttendanceController extends Controller
                 // Generate full date range
                 $attendanceData = collect([]);
                 $current = $startDate->copy();
+                $totalSeconds = 0;
                 
                 while ($current->lte($endDate)) {
                     $dateStr = $current->toDateString();
