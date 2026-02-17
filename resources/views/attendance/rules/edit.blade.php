@@ -8,7 +8,7 @@
 
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-base shadow-sm mt-4">
         <div class="p-4 sm:p-6">
-            <form action="{{ route('attendance.rules.update', ['rule' => $attendanceRule->id]) }}" method="POST" class="space-y-6" x-data="{ ruleType: '{{ $attendanceRule->rule_type ?? 'Standard' }}' }">
+            <form action="{{ route('attendance.rules.update', $attendanceRule->id) }}" method="POST" class="space-y-6" x-data="{ ruleType: '{{ $attendanceRule->rule_type ?? 'Standard' }}' }">
                 @csrf
                 @method('PUT')
                 

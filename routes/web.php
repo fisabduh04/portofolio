@@ -111,7 +111,7 @@ Route::middleware(['auth', 'active'])->group(function () {
             
             // ADMIN Only Routes
             Route::middleware(['role:kepala,admin,operator'])->group(function () {
-                Route::resource('rules', AttendanceRuleController::class);
+                Route::resource('rules', AttendanceRuleController::class)->parameters(['rules' => 'attendanceRule']);
                 Route::resource('fingerprint', FingerprintMachineController::class);
                 Route::get('create', [PegawaiAttendanceController::class, 'create'])->name('create');
                 Route::post('store', [PegawaiAttendanceController::class, 'store'])->name('store');
