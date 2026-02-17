@@ -259,6 +259,29 @@ class AttendanceService
         // Since we are here (Step 5), it means none of those were found.
         // So, for a Teacher, this is NOT a working day (Libur/Off), preventing "Alpha".
         if ($rule->rule_type === 'Teacher') {
+             // CHECK: Is this day explicitly marked as a working day in the Rule? (e.g. Sunday)
+             // If yes, it becomes Mandatory.
+             $isMandatoryDay = false;
+             if (!empty($rule->hari_kerja)) {
+                $hariKerja = is_string($rule->hari_kerja) ? json_decode($rule->hari_kerja, true) : $rule->hari_kerja;
+                if (is_array($hariKerja) && in_array($dayName, $hariKerja)) {
+                    $isMandatoryDay = true;
+                }
+             }
+
+             if ($isMandatoryDay) {
+                return [
+                    'is_working_day' => true,
+                    'jam_masuk' => $rule->jam_masuk,
+                    'jam_pulang' => $rule->jam_pulang,
+                    'toleransi_telat' => $rule->toleransi_telat,
+                    'gaji_harian' => $rule->gaji_harian,
+                    'bantuan_makan' => $rule->bantuan_makan,
+                    'denda_telat' => $rule->denda_telat ?? 0,
+                    'status_label' => 'Hadir',
+                ];
+             }
+
              return [
                 'is_working_day' => false,
                 'jam_masuk' => null,
