@@ -1,0 +1,5 @@
+
+        // Absensi Harian Routes (Guru Piket)
+        Route::get('/absensi/harian', [AbsensiController::class, 'indexHarian'])->name('absensi.harian.index');
+        Route::get('/absensi/harian/create', [AbsensiController::class, 'createHarian'])->name('absensi.harian.create');
+        Route::post('/absensi/harian', [AbsensiController::class, 'storeHarian'])->name('absensi.harian.store');
