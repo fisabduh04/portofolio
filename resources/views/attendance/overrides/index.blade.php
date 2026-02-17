@@ -1,60 +1,76 @@
-@extends('layouts.app')
+<x-layout.layout>
+    <x-breadcrumb :breadcrumbs="[
+        ['name' => 'Home', 'href' => route('dashboard.index')],
+        ['name' => 'Absensi', 'href' => route('attendance.index')],
+        ['name' => 'Manajemen Jadwal', 'href' => route('attendance.rules.index')],
+        ['name' => 'Jadwal Khusus', 'href' => '']
+    ]" />
 
-@section('content')
-<div class="p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
-    <div class="w-full mb-1">
-        <div class="mb-4">
-            <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Jadwal Khusus (Override)</h1>
-            <p class="text-sm text-gray-500">Atur jadwal/rule khusus untuk pegawai tertentu pada tanggal tertentu (Manual Exception).</p>
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-base shadow-sm mt-4">
+        {{-- Internal Tab Navigation --}}
+        <div class="border-b border-gray-200 dark:border-gray-700">
+            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500 dark:text-gray-400">
+                <li class="mr-2">
+                    <a href="{{ route('attendance.rules.index') }}" class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">
+                        Aturan Reguler
+                    </a>
+                </li>
+                <li class="mr-2">
+                    <a href="{{ route('attendance.attendance.overrides.index') }}" class="inline-block p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500" aria-current="page">
+                        Jadwal Khusus (Override)
+                    </a>
+                </li>
+                <li class="mr-2">
+                    <a href="{{ route('attendance.attendance.events.index') }}" class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">
+                        Event & Kegiatan
+                    </a>
+                </li>
+            </ul>
         </div>
-        <div class="sm:flex">
-            <div class="flex items-center ml-auto space-x-2 sm:space-x-3">
-                <a href="{{ route('attendance.overrides.create') }}" class="inline-flex items-center justify-center w-half px-3 py-2 text-sm font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                    <svg class="w-5 h-5 mr-2 -ml-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
-                    Tambah Jadwal Khusus
-                </a>
+
+        <div class="p-4 sm:p-6">
+            <div class="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                     <h2 class="text-lg font-medium text-gray-900 dark:text-white">Jadwal Khusus (Manual Exception)</h2>
+                     <p class="text-sm text-gray-500">Atur jadwal khusus untuk pegawai tertentu pada tanggal tertentu.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="{{ route('attendance.attendance.overrides.create') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-base hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Tambah Jadwal Khusus
+                    </a>
+                </div>
             </div>
-        </div>
-    </div>
-</div>
 
-<div class="flex flex-col">
-    <div class="overflow-x-auto">
-        <div class="inline-block min-w-full align-middle">
-            <div class="overflow-hidden shadow">
-                <table class="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
-                    <thead class="bg-gray-100 dark:bg-gray-700">
+            <!-- Table Container -->
+            <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+                <table class="w-full text-sm text-left rtl:text-right text-body">
+                    <thead class="text-sm text-body bg-neutral-secondary-soft border-b rounded-base border-default">
                         <tr>
-                            <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Pegawai</th>
-                            <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Tanggal</th>
-                            <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Rule yang Berlaku</th>
-                            <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Alasan</th>
-                            <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Aksi</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Pegawai</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Tanggal</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Rule yang Berlaku</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Alasan</th>
+                            <th scope="col" class="px-6 py-3 font-medium text-right">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                    <tbody>
                         @foreach ($overrides as $override)
-                        <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <td class="p-4 text-sm font-normal text-gray-500 dark:text-gray-400">
-                                <div class="text-base font-semibold text-gray-900 dark:text-white">{{ $override->pegawai->name }}</div>
-                            </td>
-                            <td class="p-4 text-sm font-normal text-gray-500 dark:text-gray-400">
-                                {{ \Carbon\Carbon::parse($override->date)->isoFormat('D MMMM Y') }}
-                            </td>
-                            <td class="p-4 text-sm font-normal text-gray-500 dark:text-gray-400">
+                        <tr class="bg-neutral-primary border-b border-default last:border-0 hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
+                            <td class="px-6 py-4 font-medium text-heading whitespace-nowrap">{{ $override->pegawai->name }}</td>
+                            <td class="px-6 py-4">{{ \Carbon\Carbon::parse($override->date)->isoFormat('D MMMM Y') }}</td>
+                            <td class="px-6 py-4">
                                 <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
                                     {{ $override->attendanceRule->name }}
                                 </span>
                             </td>
-                            <td class="p-4 text-sm font-normal text-gray-500 dark:text-gray-400">
-                                {{ $override->reason ?? '-' }}
-                            </td>
-                            <td class="p-4 space-x-2 whitespace-nowrap">
-                                <form action="{{ route('attendance.overrides.destroy', $override->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Hapus jadwal khusus ini?');">
+                            <td class="px-6 py-4">{{ $override->reason ?? '-' }}</td>
+                            <td class="px-6 py-4 text-right">
+                                <form action="{{ route('attendance.attendance.overrides.destroy', $override->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Hapus jadwal khusus ini?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-2 dark:bg-red-500 dark:hover:bg-red-600 dark:focus:ring-red-900">
-                                        Hapus
+                                    <button type="submit" class="p-2 text-red-600 bg-red-50 rounded-base hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
                                 </form>
                             </td>
@@ -63,10 +79,11 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination -->
+            <div class="mt-6">
+                {{ $overrides->links() }}
+            </div>
         </div>
     </div>
-</div>
-<div class="px-4 py-2">
-    {{ $overrides->links() }}
-</div>
-@endsection
+</x-layout.layout>
