@@ -246,14 +246,21 @@ class AttendanceService
         $isWorkingDay = false;
         
         if ($rule && !empty($rule->hari_kerja)) {
-            // hari_kerja is JSON/Array in DB? 
-            // Need to verify how it's stored. Assuming cast to array in Model.
-            // If not casted, we might fail here. 
-            // Previous code: is_array($rule->hari_kerja)
             $hariKerja = is_string($rule->hari_kerja) ? json_decode($rule->hari_kerja, true) : $rule->hari_kerja;
             
             if (is_array($hariKerja) && in_array($dayName, $hariKerja)) {
                 $isWorkingDay = true;
+            }
+        }
+
+        // CUSTOM LOGIC: Teacher Flexibility
+        // If the employee is a Teacher (has teaching schedule), we ignore the Default Rule's "Presence Requirement".
+        // They are only required to be present if they have a Class, Picket, Event, or Override (Checked above).
+        // This prevents "Alpha" on days they don't teach.
+        if ($isWorkingDay) {
+            $isTeacher = Jadwal::where('pegawai_id', $pegawai->id)->exists();
+            if ($isTeacher) {
+                $isWorkingDay = false;
             }
         }
 

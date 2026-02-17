@@ -194,24 +194,46 @@ class PegawaiAttendanceController extends Controller
                 $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
                 
                 // Fetch attendance for range
-                $attendanceData = PegawaiAbsensi::where('pegawai_id', $pegawaiId)
+                $dbAttendance = PegawaiAbsensi::where('pegawai_id', $pegawaiId)
                     ->whereBetween('tanggal', [$startDate->toDateString(), $endDate->toDateString()])
-                    ->orderBy('tanggal')
-                    ->get();
+                    ->get()
+                    ->keyBy('tanggal');
                     
-                // Process totals
-                $totalSeconds = 0;
-                foreach($attendanceData as $log) {
-                    if ($log->status == 'Hadir' || $log->status == 'Telat' || $log->status == 'Hadir (Event)') {
-                        $stats['total_hadir']++;
+                // Generate full date range
+                $attendanceData = collect([]);
+                $current = $startDate->copy();
+                
+                while ($current->lte($endDate)) {
+                    $dateStr = $current->toDateString();
+                    
+                    if ($dbAttendance->has($dateStr)) {
+                        $log = $dbAttendance->get($dateStr);
+                        $attendanceData->push($log);
                         
-                        if ($log->durasi_kerja) {
-                            $parts = explode(':', $log->durasi_kerja);
-                            if (count($parts) === 3) {
-                                $totalSeconds += ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
+                        // Process Totals (Existing Logic)
+                        if ($log->status == 'Hadir' || $log->status == 'Telat' || $log->status == 'Hadir (Event)') {
+                            $stats['total_hadir']++;
+                            
+                            if ($log->durasi_kerja) {
+                                $parts = explode(':', $log->durasi_kerja);
+                                if (count($parts) === 3) {
+                                    $totalSeconds += ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
+                                }
                             }
                         }
+                    } else {
+                        // Create Empty Placeholder
+                        $attendanceData->push((object)[
+                            'tanggal' => $dateStr,
+                            'jam_masuk' => '-',
+                            'jam_pulang' => '-',
+                            'status' => '-',
+                            'attendance_source' => '-',
+                            'durasi_kerja' => '-'
+                        ]);
                     }
+                    
+                    $current->addDay();
                 }
                 
                 // Format total duration
