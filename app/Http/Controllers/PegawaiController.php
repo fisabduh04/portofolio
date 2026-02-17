@@ -79,9 +79,79 @@ class PegawaiController extends Controller
     /**
      * Display the specified resource.
      */
+    /**
+     * Display the specified resource.
+     */
     public function show(pegawai $pegawai)
     {
-        //
+        $year = now()->year;
+
+        // 1. Statistik Tahunan (Summary - Tahun Ini)
+        $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Total' => 0];
+        
+        // Query Absensi Filter Tahun Ini
+        $logs = \App\Models\PegawaiAbsensi::where('pegawai_id', $pegawai->id)
+            ->whereYear('tanggal', $year)
+            ->get();
+
+        foreach ($logs as $log) {
+            $status = $log->status;
+            // Normalize status strings if necessary (e.g. "Hadir " -> "Hadir")
+            $status = trim($status);
+            
+            if (isset($summaryStats[$status])) {
+                $summaryStats[$status]++;
+            } else {
+                 // Fallback for unexpected status, treat as Hadir or separate? 
+                 // For now, let's just log it or ignore
+            }
+            $summaryStats['Total']++;
+        }
+
+        // 2. Data Grafik Bulanan (Monthly Trend - Tahun Ini)
+        $months = range(1, 12);
+        $chartData = [
+            'Hadir' => [], 'Sakit' => [], 'Izin' => [], 'Alpha' => []
+        ];
+
+        foreach ($months as $m) {
+            $monthLogs = $logs->filter(function($log) use ($m) {
+                return $log->tanggal->month == $m;
+            });
+
+            $chartData['Hadir'][] = $monthLogs->where('status', 'Hadir')->count();
+            $chartData['Sakit'][] = $monthLogs->where('status', 'Sakit')->count();
+            $chartData['Izin'][] = $monthLogs->where('status', 'Izin')->count();
+            $chartData['Alpha'][] = $monthLogs->where('status', 'Alpha')->count();
+        }
+
+        // 3. Riwayat Terbaru (Top 10)
+        $recentLogs = $logs->sortByDesc('tanggal')->take(10);
+
+        // 4. Smart Prediction (Optional/Simple Version)
+        $prediction = [
+            'status' => 'Aman',
+            'color' => 'green',
+            'message' => 'Tingkat kehadiran pegawai sangat baik.',
+            'predicted_score' => 100
+        ];
+
+        if ($summaryStats['Total'] > 0) {
+            $attendanceRate = ($summaryStats['Hadir'] / $summaryStats['Total']) * 100;
+            $prediction['predicted_score'] = round($attendanceRate, 1);
+
+            if ($attendanceRate < 80) {
+                $prediction['status'] = 'Perlu Evaluasi';
+                $prediction['color'] = 'red';
+                $prediction['message'] = 'Tingkat kehadiran di bawah 80%.';
+            } elseif ($attendanceRate < 90) {
+                $prediction['status'] = 'Waspada';
+                $prediction['color'] = 'yellow';
+                $prediction['message'] = 'Tingkat kehadiran perlu ditingkatkan.';
+            }
+        }
+
+        return view('pegawai.show', compact('pegawai', 'summaryStats', 'chartData', 'recentLogs', 'year', 'prediction'));
     }
 
     /**
