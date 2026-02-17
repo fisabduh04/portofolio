@@ -115,7 +115,8 @@ class PegawaiAttendanceController extends Controller
         $month = $request->input('month', now()->month);
         $year = $request->input('year', now()->year);
 
-        $report = PegawaiAbsensi::with('pegawai.attendanceRule')
+        // 1. Fetch Aggregated Stats from Absensi
+        $stats = PegawaiAbsensi::with('pegawai.attendanceRule')
             ->whereMonth('tanggal', $month)
             ->whereYear('tanggal', $year)
             ->selectRaw('
@@ -128,7 +129,26 @@ class PegawaiAttendanceController extends Controller
                 sum(total_honor) as grand_total
             ')
             ->groupBy('pegawai_id')
-            ->get();
+            ->get()
+            ->keyBy('pegawai_id');
+
+        // 2. Fetch All Active Employees
+        $activePegawais = Pegawai::where('aktif', 'Aktif')->with('attendanceRule')->orderBy('name')->get();
+
+        // 3. Merge Data (Left Join Logic)
+        $report = $activePegawais->map(function($pegawai) use ($stats) {
+            $stat = $stats->get($pegawai->id);
+            
+            return (object) [
+                'pegawai' => $pegawai,
+                'hadir_count' => $stat->hadir_count ?? 0,
+                'telat_count' => $stat->telat_count ?? 0,
+                'alpha_count' => $stat->alpha_count ?? 0,
+                'total_gaji' => $stat->total_gaji ?? 0,
+                'total_makan' => $stat->total_makan ?? 0,
+                'grand_total' => $stat->grand_total ?? 0,
+            ];
+        });
 
         return view('attendance.report', compact('report', 'month', 'year'));
     }

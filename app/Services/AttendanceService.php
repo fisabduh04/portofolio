@@ -243,24 +243,36 @@ class AttendanceService
 
         // 5. Default Rule
         $rule = $pegawai->attendanceRule;
+        
+        // If no rule attached, assume not a working day
+        if (!$rule) {
+            return [
+                'is_working_day' => false,
+                'jam_masuk' => null,
+                'jam_pulang' => null,
+            ];
+        }
+
+        // CUSTOM LOGIC: Teacher Flexibility
+        // If the rule type is "Teacher", they ONLY work if they had an Event, Override, Piket, or Jadwal (checked above).
+        // Since we are here (Step 5), it means none of those were found.
+        // So, for a Teacher, this is NOT a working day (Libur/Off), preventing "Alpha".
+        if ($rule->rule_type === 'Teacher') {
+             return [
+                'is_working_day' => false,
+                'jam_masuk' => null,
+                'jam_pulang' => null,
+            ];
+        }
+
+        // Standard Logic for Staff/Regular Employees
         $isWorkingDay = false;
         
-        if ($rule && !empty($rule->hari_kerja)) {
+        if (!empty($rule->hari_kerja)) {
             $hariKerja = is_string($rule->hari_kerja) ? json_decode($rule->hari_kerja, true) : $rule->hari_kerja;
             
             if (is_array($hariKerja) && in_array($dayName, $hariKerja)) {
                 $isWorkingDay = true;
-            }
-        }
-
-        // CUSTOM LOGIC: Teacher Flexibility
-        // If the employee is a Teacher (has teaching schedule), we ignore the Default Rule's "Presence Requirement".
-        // They are only required to be present if they have a Class, Picket, Event, or Override (Checked above).
-        // This prevents "Alpha" on days they don't teach.
-        if ($isWorkingDay) {
-            $isTeacher = Jadwal::where('pegawai_id', $pegawai->id)->exists();
-            if ($isTeacher) {
-                $isWorkingDay = false;
             }
         }
 
