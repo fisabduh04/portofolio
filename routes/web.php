@@ -56,6 +56,11 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('exporttmapel', [MapelController::class, 'export'])->name('mapel.export');
 
     // Route pegawai
+    // Event & Override Routes
+    Route::resource('attendance/events', \App\Http\Controllers\SpecialEventController::class, ['as' => 'attendance']);
+    Route::resource('attendance/overrides', \App\Http\Controllers\ScheduleOverrideController::class, ['as' => 'attendance']);
+    
+    // Existing Routes
     Route::resource('pegawai', PegawaiController::class);
     Route::post('importpegawai', [PegawaiController::class, 'import'])->name('importpegawai');
     Route::get('exportpegawai', [PegawaiController::class, 'export'])->name('exportpegawai');

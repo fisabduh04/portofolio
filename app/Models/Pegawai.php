@@ -40,4 +40,14 @@ class Pegawai extends Model
     {
         return $this->hasMany(PegawaiAbsensi::class);
     }
+
+    public function specialEvents()
+    {
+        return $this->belongsToMany(SpecialEvent::class, 'special_event_participants');
+    }
+
+    public function scheduleOverrides()
+    {
+        return $this->hasMany(PegawaiScheduleOverride::class);
+    }
 }

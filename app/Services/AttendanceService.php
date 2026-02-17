@@ -5,6 +5,10 @@ namespace App\Services;
 use App\Models\AttendanceLog;
 use App\Models\PegawaiAbsensi;
 use App\Models\AttendanceRule;
+use App\Models\SpecialEvent;
+use App\Models\PegawaiScheduleOverride;
+use App\Models\Jadwal;
+use App\Models\JadwalPiket;
 use Carbon\Carbon;
 
 class AttendanceService
@@ -20,53 +24,23 @@ class AttendanceService
             ->orderBy('scan_time')
             ->get();
 
-        // 2. Get Rule
-        $rule = $pegawai->attendanceRule;
-        $dayName = Carbon::parse($date)->format('D'); // Mon, Tue, etc.
+        // 2. Determine Schedule (Waterfall Priority)
+        $schedule = $this->getDailySchedule($pegawai, $date);
 
-        // Check if today is a working day (if rule has hari_kerja)
-        $isWorkingDay = true;
-        if ($rule && !empty($rule->hari_kerja) && is_array($rule->hari_kerja)) {
-            if (!in_array($dayName, $rule->hari_kerja)) {
-                $isWorkingDay = false;
-            }
-        }
-
-        if (!$isWorkingDay) {
-             // If not a working day, check if they showed up anyway?
-             // If logs exist, we treat as "Lembur" or just simple presence? 
-             // For simplicity, if they scan on holiday, we count as Hadir but maybe mark status "Lembur/Hadir Libur"
-             // If no logs, then it's NOT Alpha.
-             if ($logs->isEmpty()) {
-                 return; // Do nothing, not absent, not present.
-             }
+        // If no valid schedule found (e.g. Sunday with no picket/class), 
+        // and no logs, do nothing.
+        // If logs exist but no schedule, it's "Diluar Jadwal".
+        if (!$schedule['is_working_day'] && $logs->isEmpty()) {
+            // Optional: Clear existing Absensi record if it exists and was auto-generated?
+            // For now, simple return.
+            return;
         }
 
         if ($logs->isEmpty()) {
-            return $this->markAsAlpha($pegawai, $date);
-        }
-
-        if (!$rule) {
-            // If no rule, we cannot calculate salary/status accurately.
-            // For now, we save as 'Hadir' with 0 salary or handle as error.
-            // Let's save as 'Unregistered Rule'
-             return PegawaiAbsensi::updateOrCreate(
-                ['pegawai_id' => $pegawai->id, 'tanggal' => $date],
-                [
-                    'jam_masuk' => $logs->first()->scan_time->format('H:i:s'),
-                    'jam_pulang' => $logs->last()->scan_time->format('H:i:s'),
-                    'status' => 'Tanpa Aturan',
-                    'nominal_gaji' => 0,
-                    'nominal_makan' => 0,
-                    'total_honor' => 0,
-                ]
-            );
+            return $this->markAsAlpha($pegawai, $date, $schedule);
         }
 
         // 3. Determine In/Out (First-In, Last-Out)
-        // Filter logs strictly within scan window if needed, but user said "taken from last finger"
-        // typically implies within the day. We rely on the date filtering above.
-        
         $firstLog = $logs->first();
         $lastLog = $logs->last();
 
@@ -74,29 +48,40 @@ class AttendanceService
         $jamPulang = Carbon::parse($lastLog->scan_time);
         
         // 4. Calculate Status
-        $status = 'Hadir';
+        $status = $schedule['status_label'] ?? 'Hadir'; // Default 'Hadir' or 'Hadir (Event)'
         
         // Rule Time
-        $ruleMasuk = Carbon::parse($date . ' ' . $rule->jam_masuk);
-        $lateThreshold = $ruleMasuk->copy()->addMinutes($rule->toleransi_telat);
+        $expectedIn = $schedule['jam_masuk'] ? Carbon::parse($date . ' ' . $schedule['jam_masuk']) : null;
+        
+        if ($expectedIn) {
+            $toleransi = $schedule['toleransi_telat'] ?? 0;
+            $lateThreshold = $expectedIn->copy()->addMinutes($toleransi);
 
-        if ($jamMasuk->gt($lateThreshold)) {
-            $status = 'Telat';
+            if ($jamMasuk->gt($lateThreshold)) {
+                $status = 'Telat';
+            }
         }
 
         // 5. Calculate Duration
-        // If there is only 1 log, Jam Masuk = Jam Pulang, Duration = 0
         $duration = $jamMasuk->diff($jamPulang);
         $formattedDuration = $duration->format('%H:%I:%S');
 
         // 6. Calculate Financials
-        $honorHarian = $rule->gaji_harian;
-        $uangMakan = $rule->bantuan_makan;
+        $honorHarian = $schedule['gaji_harian'] ?? 0;
+        $uangMakan = $schedule['bantuan_makan'] ?? 0;
         $potongan = 0;
 
-        // Apply Penalty
+        // Apply Penalty if Telat
         if ($status === 'Telat') {
-            $potongan = $rule->denda_telat ?? 0;
+            $potongan = $schedule['denda_telat'] ?? 0;
+        }
+
+        // Special Case: "Diluar Jadwal" (No Schedule but Presensi exists)
+        if (!$schedule['is_working_day']) {
+             $status = 'Diluar Jadwal';
+             $honorHarian = 0;
+             $uangMakan = 0;
+             $potongan = 0;
         }
 
         // Ensure total honor is not negative
@@ -121,8 +106,13 @@ class AttendanceService
         );
     }
 
-    private function markAsAlpha($pegawai, $date)
+    private function markAsAlpha($pegawai, $date, $schedule)
     {
+        // Only mark Alpha if it WAS a working day
+        if (!$schedule['is_working_day']) {
+            return null;
+        }
+
         return PegawaiAbsensi::updateOrCreate(
             [
                 'pegawai_id' => $pegawai->id,
@@ -138,5 +128,133 @@ class AttendanceService
                 'total_honor' => 0,
             ]
         );
+    }
+
+    /**
+     * Determine the schedule/rule for a specific day.
+     * Waterfall Logic: Event > Override > Piket/Jadwal > Default Rule
+     */
+    public function getDailySchedule($pegawai, $date)
+    {
+        $dayName = Carbon::parse($date)->isoFormat('dddd'); // Senin, Selasa, etc.
+        
+        // 1. Special Event
+        $event = SpecialEvent::where('date', $date)
+            ->whereHas('participants', function($q) use ($pegawai) {
+                $q->where('pegawai_id', $pegawai->id);
+            })
+            ->first();
+
+        if ($event) {
+            return [
+                'is_working_day' => true,
+                'jam_masuk' => $event->start_time,
+                'jam_pulang' => $event->end_time,
+                'toleransi_telat' => 0,
+                'gaji_harian' => $event->bantuan_hadir, // Use event allowance as base pay
+                'bantuan_makan' => 0, // Usually included in event pay or separate? Assuming 0 for now
+                'denda_telat' => 0,
+                'status_label' => 'Hadir (Event)',
+            ];
+        }
+
+        // 2. Schedule Override
+        $override = PegawaiScheduleOverride::with('attendanceRule')
+            ->where('pegawai_id', $pegawai->id)
+            ->where('date', $date)
+            ->first();
+
+        if ($override) {
+            $rule = $override->attendanceRule;
+            return [
+                'is_working_day' => true,
+                'jam_masuk' => $rule->jam_masuk,
+                'jam_pulang' => $rule->jam_pulang,
+                'toleransi_telat' => $rule->toleransi_telat,
+                'gaji_harian' => $rule->gaji_harian,
+                'bantuan_makan' => $rule->bantuan_makan,
+                'denda_telat' => $rule->denda_telat ?? 0,
+                'status_label' => 'Hadir',
+            ];
+        }
+
+        // 3. Auto-Detect: Jadwal Piket
+        // Assuming 'hari' in JadwalPiket matches 'Senin', 'Selasa', etc.
+        // We enforce Case Insensitive check just in case, or Standardize. 
+        // Laravel Enum usually handles it, but let's be safe.
+        $piket = JadwalPiket::where('pegawai_id', $pegawai->id)
+            ->where('hari', $dayName)
+            ->first();
+
+        if ($piket) {
+            // Use Employee's Default Rule values OR a specific 'Piket' rule if exists.
+            // For now, we fall back to Default Rule's financial values but enforce presence.
+            $rule = $pegawai->attendanceRule;
+            return [
+                'is_working_day' => true,
+                'jam_masuk' => $rule ? $rule->jam_masuk : '07:00:00',
+                'jam_pulang' => $rule ? $rule->jam_pulang : '14:00:00',
+                'toleransi_telat' => $rule ? $rule->toleransi_telat : 15,
+                'gaji_harian' => $rule ? $rule->gaji_harian : 0,
+                'bantuan_makan' => $rule ? $rule->bantuan_makan : 0,
+                'denda_telat' => $rule ? ($rule->denda_telat ?? 0) : 0,
+                'status_label' => 'Piket',
+            ];
+        }
+
+        // 4. Auto-Detect: Jadwal Mengajar
+        $mengajar = Jadwal::where('pegawai_id', $pegawai->id)
+            ->where('hari', $dayName)
+            ->exists();
+
+        if ($mengajar) {
+             $rule = $pegawai->attendanceRule;
+             return [
+                'is_working_day' => true,
+                'jam_masuk' => $rule ? $rule->jam_masuk : '07:00:00', // Could be refined to First Class Time
+                'jam_pulang' => $rule ? $rule->jam_pulang : '14:00:00',
+                'toleransi_telat' => $rule ? $rule->toleransi_telat : 15,
+                'gaji_harian' => $rule ? $rule->gaji_harian : 0,
+                'bantuan_makan' => $rule ? $rule->bantuan_makan : 0,
+                'denda_telat' => $rule ? ($rule->denda_telat ?? 0) : 0,
+                'status_label' => 'Mengajar',
+            ];
+        }
+
+        // 5. Default Rule
+        $rule = $pegawai->attendanceRule;
+        $isWorkingDay = false;
+        
+        if ($rule && !empty($rule->hari_kerja)) {
+            // hari_kerja is JSON/Array in DB? 
+            // Need to verify how it's stored. Assuming cast to array in Model.
+            // If not casted, we might fail here. 
+            // Previous code: is_array($rule->hari_kerja)
+            $hariKerja = is_string($rule->hari_kerja) ? json_decode($rule->hari_kerja, true) : $rule->hari_kerja;
+            
+            if (is_array($hariKerja) && in_array($dayName, $hariKerja)) {
+                $isWorkingDay = true;
+            }
+        }
+
+        if ($isWorkingDay) {
+            return [
+                'is_working_day' => true,
+                'jam_masuk' => $rule->jam_masuk,
+                'jam_pulang' => $rule->jam_pulang,
+                'toleransi_telat' => $rule->toleransi_telat,
+                'gaji_harian' => $rule->gaji_harian,
+                'bantuan_makan' => $rule->bantuan_makan,
+                'denda_telat' => $rule->denda_telat ?? 0,
+                'status_label' => 'Hadir',
+            ];
+        }
+
+        // 6. No Schedule
+        return [
+            'is_working_day' => false,
+            'jam_masuk' => null,
+            'jam_pulang' => null,
+        ];
     }
 }
