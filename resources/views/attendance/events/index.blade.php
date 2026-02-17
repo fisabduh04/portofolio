@@ -18,7 +18,7 @@
                      <p class="text-sm text-gray-500">Kelola jadwal rapat, kegiatan sekolah, atau event lainnya.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <a href="{{ route('attendance.attendance.events.create') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-base hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 shadow-sm">
+                    <a href="{{ route('attendance.events.create') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-base hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 shadow-sm">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                         Tambah Event
                     </a>
@@ -51,7 +51,7 @@
                             </td>
                             <td class="px-6 py-4">Rp {{ number_format($event->bantuan_hadir, 0, ',', '.') }}</td>
                             <td class="px-6 py-4 text-right">
-                                <form action="{{ route('attendance.attendance.events.destroy', $event->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Hapus event ini?');">
+                                <form action="{{ route('attendance.events.destroy', $event->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Hapus event ini?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="p-2 text-red-600 bg-red-50 rounded-base hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors">
