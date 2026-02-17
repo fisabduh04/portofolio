@@ -33,7 +33,7 @@
                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Bulan</label>
                     <select name="month" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
                         @for($m=1; $m<=12; $m++)
-                            <option value="{{ $m }}" {{ $month == $m ? 'selected' : '' }}>{{ \Carbon\Carbon::create()->month($m)->translate('month_name') }}</option>
+                            <option value="{{ $m }}" {{ $month == $m ? 'selected' : '' }}>{{ $monthNames[$m] }}</option>
                         @endfor
                     </select>
                 </div>
@@ -77,9 +77,10 @@
                                     <td class="px-6 py-4">{{ $row->jam_pulang ?? '-' }}</td>
                                     <td class="px-6 py-4">
                                         <span class="px-2.5 py-0.5 rounded text-xs font-medium 
-                                            @if($row->status == 'Hadir') bg-green-100 text-green-800 
+                                            @if($row->status == 'Hadir' || $row->status == 'Hadir (Event)') bg-green-100 text-green-800 
                                             @elseif($row->status == 'Telat') bg-yellow-100 text-yellow-800 
                                             @elseif($row->status == 'Alpha') bg-red-100 text-red-800 
+                                            @elseif($row->status == 'Belum Bekerja') bg-gray-200 text-gray-600
                                             @else bg-gray-100 text-gray-800 @endif">
                                             {{ $row->status }}
                                         </span>

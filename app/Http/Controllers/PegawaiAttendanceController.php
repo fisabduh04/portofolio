@@ -203,6 +203,8 @@ class PegawaiAttendanceController extends Controller
                 $attendanceData = collect([]);
                 $current = $startDate->copy();
                 $totalSeconds = 0;
+
+                $joinDate = $selectedPegawai->created_at ? $selectedPegawai->created_at->startOfDay() : null;
                 
                 while ($current->lte($endDate)) {
                     $dateStr = $current->toDateString();
@@ -223,12 +225,18 @@ class PegawaiAttendanceController extends Controller
                             }
                         }
                     } else {
+                        // Check for "Belum Bekerja"
+                        $statusSpec = '-';
+                        if ($joinDate && $current->lt($joinDate)) {
+                            $statusSpec = 'Belum Bekerja';
+                        }
+
                         // Create Empty Placeholder
                         $attendanceData->push((object)[
                             'tanggal' => $dateStr,
                             'jam_masuk' => '-',
                             'jam_pulang' => '-',
-                            'status' => '-',
+                            'status' => $statusSpec,
                             'attendance_source' => '-',
                             'durasi_kerja' => '-'
                         ]);
@@ -245,7 +253,13 @@ class PegawaiAttendanceController extends Controller
                 $stats['total_durasi_jam'] = round($totalSeconds / 3600, 2);
             }
         }
+
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
         
-        return view('attendance.rekap_pegawai', compact('pegawais', 'attendanceData', 'stats', 'month', 'year', 'pegawaiId', 'selectedPegawai'));
+        return view('attendance.rekap_pegawai', compact('pegawais', 'attendanceData', 'stats', 'month', 'year', 'pegawaiId', 'selectedPegawai', 'monthNames'));
     }
 }
