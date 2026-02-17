@@ -8,6 +8,7 @@ class AttendanceRule extends Model
 {
     protected $fillable = [
         'name',
+        'rule_type',
         'jam_masuk',
         'jam_pulang',
         'scan_masuk_start',

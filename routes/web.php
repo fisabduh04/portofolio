@@ -83,8 +83,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     // 1. AKSES UNTUK SEMUA ROLE (Dashboard)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
-    // 2. AKSES REKAPITULASI (Kepala Sekolah, Admin, Operator) - Must be before resource routes
-    Route::middleware(['role:kepala,admin,operator'])->group(function () {
+    // 2. AKSES REKAPITULASI & ATTENDANCE (Kepala Sekolah, Admin, Operator, Staff)
+    Route::middleware(['role:kepala,admin,operator,staff'])->group(function () {
+        // ... (Report routes unrelated to attendance module) ...
+
         Route::get('/absensi/rekap', [AbsensiReportController::class, 'rekap'])->name('absensi.rekap');
         Route::get('/absensi/rekap-harian', [AbsensiReportController::class, 'rekapHarian'])->name('absensi.rekap-harian');
         Route::get('/absensi/rekap-harian/export', [AbsensiExportController::class, 'exportRekapHarian'])->name('absensi.rekap-harian.export');
@@ -96,7 +98,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/absensi/rekap-periode', [AbsensiReportController::class, 'rekapPeriode'])->name('absensi.rekap-periode');
         Route::get('/absensi/export-periode', [AbsensiExportController::class, 'exportRekapPeriode'])->name('absensi.export-periode');
         Route::get('/absensi/export-bulanan', [AbsensiExportController::class, 'exportBulanan'])->name('absensi.export-bulanan');
-        Route::get('/absensi/export-tahunan', [AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.export-tahunan'); // Fixed to point to existing export method
+        Route::get('/absensi/export-tahunan', [AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.export-tahunan'); 
         Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
         
         // Piket Routes
@@ -106,25 +108,28 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         // PEGAWAI ATTENDANCE SYSTEM
         Route::prefix('attendance')->name('attendance.')->group(function () {
-            Route::resource('rules', AttendanceRuleController::class);
-            Route::resource('fingerprint', FingerprintMachineController::class);
+            
+            // ADMIN Only Routes
+            Route::middleware(['role:kepala,admin,operator'])->group(function () {
+                Route::resource('rules', AttendanceRuleController::class);
+                Route::resource('fingerprint', FingerprintMachineController::class);
+                Route::get('create', [PegawaiAttendanceController::class, 'create'])->name('create');
+                Route::post('store', [PegawaiAttendanceController::class, 'store'])->name('store');
+                Route::post('process', [PegawaiAttendanceController::class, 'process'])->name('process');
+                Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
+                Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
+            });
+
+            // STAFF & ADMIN Routes (Self Service)
             Route::get('dashboard', [PegawaiAttendanceController::class, 'index'])->name('index');
-            Route::get('create', [PegawaiAttendanceController::class, 'create'])->name('create');
-            Route::post('store', [PegawaiAttendanceController::class, 'store'])->name('store');
-            Route::post('process', [PegawaiAttendanceController::class, 'process'])->name('process');
             Route::get('rekap-pegawai', [PegawaiAttendanceController::class, 'rekapPegawai'])->name('rekap-pegawai');
             Route::get('report', [PegawaiAttendanceController::class, 'report'])->name('report');
-            Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
-            Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
 
             Route::prefix('payroll')->name('payroll.')->group(function () {
                 Route::get('/', [PayrollController::class, 'index'])->name('index');
                 Route::get('{id}/slip', [PayrollController::class, 'slip'])->name('slip');
             });
         });
-
-
-
 
     });
 

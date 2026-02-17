@@ -31,6 +31,7 @@ class AttendanceRuleController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'rule_type' => 'required|in:Standard,Teacher',
             'jam_masuk' => 'required|date_format:H:i',
             'jam_pulang' => 'required|date_format:H:i',
             'scan_masuk_start' => 'required|date_format:H:i',
@@ -40,9 +41,14 @@ class AttendanceRuleController extends Controller
             'gaji_harian' => 'required|numeric|min:0',
             'gaji_per_jam' => 'nullable|numeric|min:0',
             'denda_telat' => 'required|numeric|min:0',
-            'hari_kerja' => 'required|array',
+            'hari_kerja' => 'nullable|array',
             'hari_kerja.*' => 'string',
         ]);
+
+        // Default empty array for hari_kerja if null
+        if (!isset($validated['hari_kerja'])) {
+            $validated['hari_kerja'] = [];
+        }
 
         AttendanceRule::create($validated);
 
@@ -75,6 +81,7 @@ class AttendanceRuleController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'rule_type' => 'required|in:Standard,Teacher',
             'jam_masuk' => 'required|date_format:H:i',
             'jam_pulang' => 'required|date_format:H:i',
             'scan_masuk_start' => 'required|date_format:H:i',
@@ -84,9 +91,14 @@ class AttendanceRuleController extends Controller
             'gaji_harian' => 'required|numeric|min:0',
             'gaji_per_jam' => 'nullable|numeric|min:0',
             'denda_telat' => 'required|numeric|min:0',
-            'hari_kerja' => 'required|array',
+            'hari_kerja' => 'nullable|array',
             'hari_kerja.*' => 'string',
         ]);
+
+        // Default empty array for hari_kerja if null
+        if (!isset($validated['hari_kerja'])) {
+            $validated['hari_kerja'] = [];
+        }
 
         $attendanceRule->update($validated);
 
