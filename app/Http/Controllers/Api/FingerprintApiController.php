@@ -112,6 +112,13 @@ class FingerprintApiController extends Controller
         return 'POST DATA OK';
     }
 
+    protected $attendanceService;
+
+    public function __construct(\App\Services\AttendanceService $attendanceService)
+    {
+        $this->attendanceService = $attendanceService;
+    }
+
     private function saveLog($fingerprintId, $scanTime, $machineSn)
     {
         // Find Pegawai by fingerprint_id
@@ -127,8 +134,10 @@ class FingerprintApiController extends Controller
                  'created_at' => now(),
              ]);
 
-             // Optional: Trigger daily calculation immediately?
-             // \App\Services\AttendanceService::calculateDaily($pegawai, $date);
+             // Trigger daily calculation immediately (Plug & Play)
+             $date = substr($scanTime, 0, 10); // Extract YYYY-MM-DD
+             $this->attendanceService->calculateDailyAttendance($pegawai, $date);
+             
         } else {
             // Log for unknown user?
             // Log::warning("Unknown fingerprint ID: $fingerprintId from $machineSn");
