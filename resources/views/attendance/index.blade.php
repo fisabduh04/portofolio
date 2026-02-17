@@ -7,6 +7,7 @@
 
     <x-layout.sidebar.sub-menu :items="[
         ['name' => 'Dashboard', 'href' => route('attendance.index'), 'active' => true],
+        ['name' => 'Rekap Per Pegawai', 'href' => route('attendance.rekap-pegawai')],
         ['name' => 'Aturan & Jam Kerja', 'href' => route('attendance.rules.index')],
         ['name' => 'Mesin Fingerprint', 'href' => route('attendance.fingerprint.index')],
         ['name' => 'Konfigurasi', 'href' => route('attendance.setting')],

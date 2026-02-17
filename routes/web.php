@@ -112,6 +112,7 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('create', [PegawaiAttendanceController::class, 'create'])->name('create');
             Route::post('store', [PegawaiAttendanceController::class, 'store'])->name('store');
             Route::post('process', [PegawaiAttendanceController::class, 'process'])->name('process');
+            Route::get('rekap-pegawai', [PegawaiAttendanceController::class, 'rekapPegawai'])->name('rekap-pegawai');
             Route::get('report', [PegawaiAttendanceController::class, 'report'])->name('report');
             Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
             Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');

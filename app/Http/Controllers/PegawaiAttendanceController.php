@@ -167,4 +167,62 @@ class PegawaiAttendanceController extends Controller
             return back()->with('type', 'error')->with('message', 'Gagal memperbarui konfigurasi: ' . $e->getMessage());
         }
     }
+
+    public function rekapPegawai(Request $request)
+    {
+        $pegawaiId = $request->input('pegawai_id');
+        $month = $request->input('month', date('m'));
+        $year = $request->input('year', date('Y'));
+        
+        $pegawais = Pegawai::where('aktif', 'Aktif')->orderBy('name')->get();
+        
+        $attendanceData = collect([]);
+        $stats = [
+            'total_hadir' => 0,
+            'total_durasi_jam' => 0, // Decimal hours
+            'total_durasi_formatted' => '00:00:00'
+        ];
+        
+        $selectedPegawai = null;
+        
+        if ($pegawaiId) {
+            $selectedPegawai = Pegawai::find($pegawaiId);
+            
+            if ($selectedPegawai) {
+                // Get start and end of month
+                $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+                $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+                
+                // Fetch attendance for range
+                $attendanceData = PegawaiAbsensi::where('pegawai_id', $pegawaiId)
+                    ->whereBetween('tanggal', [$startDate->toDateString(), $endDate->toDateString()])
+                    ->orderBy('tanggal')
+                    ->get();
+                    
+                // Process totals
+                $totalSeconds = 0;
+                foreach($attendanceData as $log) {
+                    if ($log->status == 'Hadir' || $log->status == 'Telat' || $log->status == 'Hadir (Event)') {
+                        $stats['total_hadir']++;
+                        
+                        if ($log->durasi_kerja) {
+                            $parts = explode(':', $log->durasi_kerja);
+                            if (count($parts) === 3) {
+                                $totalSeconds += ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
+                            }
+                        }
+                    }
+                }
+                
+                // Format total duration
+                $hours = floor($totalSeconds / 3600);
+                $minutes = floor(($totalSeconds % 3600) / 60);
+                $seconds = $totalSeconds % 60;
+                $stats['total_durasi_formatted'] = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+                $stats['total_durasi_jam'] = round($totalSeconds / 3600, 2);
+            }
+        }
+        
+        return view('attendance.rekap_pegawai', compact('pegawais', 'attendanceData', 'stats', 'month', 'year', 'pegawaiId', 'selectedPegawai'));
+    }
 }
