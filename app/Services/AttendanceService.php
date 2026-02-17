@@ -27,12 +27,12 @@ class AttendanceService
         // 2. Determine Schedule (Waterfall Priority)
         $schedule = $this->getDailySchedule($pegawai, $date);
 
-        // If no valid schedule found (e.g. Sunday with no picket/class), 
-        // and no logs, do nothing.
-        // If logs exist but no schedule, it's "Diluar Jadwal".
+        // If no valid schedule found (e.g. Sunday with no picket/class or Teacher with no class), 
+        // and no logs, we must CLEAN UP any existing "Alpha" record that might have been created previously.
         if (!$schedule['is_working_day'] && $logs->isEmpty()) {
-            // Optional: Clear existing Absensi record if it exists and was auto-generated?
-            // For now, simple return.
+            PegawaiAbsensi::where('pegawai_id', $pegawai->id)
+                ->whereDate('tanggal', $date)
+                ->delete();
             return;
         }
 
