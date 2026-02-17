@@ -88,7 +88,24 @@ class AttendanceService
         $totalHonor = ($honorHarian + $uangMakan) - $potongan;
         if ($totalHonor < 0) $totalHonor = 0;
 
-        // 7. Store Result
+        // 7. Determine Source & Creator
+        $source = 'Fingerprint';
+        $createdBy = null;
+
+        foreach ($logs as $log) {
+            if ($log->machine_id === 'MANUAL') {
+                $source = 'Manual';
+                // If we tracked who created the log in AttendanceLog, we could pull it here.
+                // For now, if it's manual, we flag it.
+            }
+        }
+
+        // If Event
+        if ($schedule['status_label'] === 'Hadir (Event)') {
+            $source = 'Event';
+        }
+
+        // 8. Store Result
         return PegawaiAbsensi::updateOrCreate(
             [
                 'pegawai_id' => $pegawai->id,
@@ -102,6 +119,8 @@ class AttendanceService
                 'nominal_gaji' => $honorHarian,
                 'nominal_makan' => $uangMakan,
                 'total_honor' => $totalHonor,
+                'attendance_source' => $source,
+                'created_by' => auth()->id() ?? null, // Capture if re-processed by admin
             ]
         );
     }
@@ -126,6 +145,7 @@ class AttendanceService
                 'nominal_gaji' => 0,
                 'nominal_makan' => 0,
                 'total_honor' => 0,
+                'attendance_source' => 'System',
             ]
         );
     }

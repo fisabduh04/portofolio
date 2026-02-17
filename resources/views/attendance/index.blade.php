@@ -120,44 +120,68 @@
                     <thead class="text-sm text-body bg-neutral-secondary-soft border-b rounded-base border-default">
                         <tr>
                             <th scope="col" class="px-6 py-3 font-medium">Pegawai</th>
-                            <th scope="col" class="px-6 py-3 font-medium">Jam Masuk</th>
-                            <th scope="col" class="px-6 py-3 font-medium">Jam Pulang</th>
-                            <th scope="col" class="px-6 py-3 font-medium">Durasi</th>
-                            <th scope="col" class="px-6 py-3 font-medium">Status</th>
+                            <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Status Kehadiran</th>
+                            <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Jam Masuk</th>
+                            <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Jam Pulang</th>
+                            <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Sumber</th>
+                            <th scope="col" class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">Durasi</th>
                             <th scope="col" class="px-6 py-3 font-medium">Honor</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @forelse ($attendance as $att)
-                        <tr class="bg-neutral-primary border-b border-default last:border-0 hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
+                    <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                        @forelse ($attendance as $log)
+                        <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <td class="p-4 text-sm font-normal text-gray-500 whitespace-nowrap dark:text-gray-400">
+                                <div class="text-base font-semibold text-gray-900 dark:text-white">{{ $log->pegawai->name }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ $log->pegawai->nuptk }}</div>
+                            </td>
+                            <td class="p-4 text-sm font-normal text-gray-500 whitespace-nowrap dark:text-gray-400">
+                                @if($log->status == 'Hadir')
+                                    <span class="bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Hadir</span>
+                                @elseif($log->status == 'Telat')
+                                    <span class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">Telat</span>
+                                @elseif($log->status == 'Alpha')
+                                    <span class="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">Alpha</span>
+                                @else
+                                     <span class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">{{ $log->status }}</span>
+                                @endif
+                            </td>
+                            <td class="p-4 text-sm font-normal text-gray-500 whitespace-nowrap dark:text-gray-400">
+                                {{ $log->jam_masuk ?? '-' }}
+                            </td>
+                            <td class="p-4 text-sm font-normal text-gray-500 whitespace-nowrap dark:text-gray-400">
+                                {{ $log->jam_pulang ?? '-' }}
+                            </td>
+                            <td class="p-4 text-sm font-normal text-gray-500 whitespace-nowrap dark:text-gray-400">
+                                @if($log->attendance_source == 'Fingerprint' || $log->attendance_source == 'Machine')
+                                    <span class="inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                                        Mesin Finger
+                                    </span>
+                                @elseif($log->attendance_source == 'Manual')
+                                    <span class="inline-flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" clip-rule="evenodd"></path></svg>
+                                        Input Manual
+                                    </span>
+                                @elseif($log->attendance_source == 'Event')
+                                    <span class="inline-flex items-center bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-purple-900 dark:text-purple-300">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+                                        Event/Kegiatan
+                                    </span>
+                                @else
+                                    <span class="text-xs text-gray-500">{{ $log->attendance_source ?? 'System' }}</span>
+                                @endif
+                            </td>
+                            <td class="p-4 text-sm font-normal text-gray-500 whitespace-nowrap dark:text-gray-400">
+                                {{ $log->durasi_kerja ?? '-' }}
+                            </td>
                             <td class="px-6 py-4 font-medium text-heading">
-                                {{ $att->pegawai->name }}
-                            </td>
-                            <td class="px-6 py-4 text-body-subtle">
-                                {{ $att->jam_masuk ?? '-' }}
-                            </td>
-                            <td class="px-6 py-4 text-body-subtle">
-                                {{ $att->jam_pulang ?? '-' }}
-                            </td>
-                            <td class="px-6 py-4 text-body-subtle">
-                                {{ $att->durasi_kerja ?? '-' }}
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full 
-                                    @if($att->status == 'Hadir') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300
-                                    @elseif($att->status == 'Telat') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300
-                                    @elseif($att->status == 'Alpha') bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300
-                                    @else bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 @endif">
-                                    {{ $att->status }}
-                                </span>
-                            </td>
-                             <td class="px-6 py-4 font-medium text-heading">
-                                Rp {{ number_format($att->total_honor, 0, ',', '.') }}
+                                Rp {{ number_format($log->total_honor, 0, ',', '.') }}
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-body-subtle">
+                            <td colspan="7" class="px-6 py-12 text-center text-body-subtle">
                                 <div class="flex flex-col items-center justify-center">
                                     <svg class="w-12 h-12 mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                     <p>Belum ada data presensi untuk tanggal ini.</p>
