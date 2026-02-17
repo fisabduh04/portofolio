@@ -225,10 +225,12 @@ class PegawaiAttendanceController extends Controller
                             }
                         }
                     } else {
-                        // Check for "Belum Bekerja"
+                        // Check for "Belum Bekerja" or "Libur"
                         $statusSpec = '-';
                         if ($joinDate && $current->lt($joinDate)) {
                             $statusSpec = 'Belum Bekerja';
+                        } elseif ($current->isWeekend()) {
+                            $statusSpec = 'Libur';
                         }
 
                         // Create Empty Placeholder
