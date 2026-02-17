@@ -1,0 +1,8 @@
+{
+    "name": "fisabduh04/fingerprint-bridge",
+    "description": "Bridge script to sync attendance from ZKTeco machines to Cloud App",
+    "require": {
+        "rats/php-zklib": "^1.0",
+        "guzzlehttp/guzzle": "^7.8"
+    }
+}

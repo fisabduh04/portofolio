@@ -99,7 +99,9 @@ class PegawaiController extends Controller
             // Normalize status strings if necessary (e.g. "Hadir " -> "Hadir")
             $status = trim($status);
             
-            if (isset($summaryStats[$status])) {
+            if ($status === 'Telat') {
+                $summaryStats['Hadir']++;
+            } elseif (isset($summaryStats[$status])) {
                 $summaryStats[$status]++;
             } else {
                  // Fallback for unexpected status, treat as Hadir or separate? 
@@ -119,7 +121,7 @@ class PegawaiController extends Controller
                 return $log->tanggal->month == $m;
             });
 
-            $chartData['Hadir'][] = $monthLogs->where('status', 'Hadir')->count();
+            $chartData['Hadir'][] = $monthLogs->whereIn('status', ['Hadir', 'Telat'])->count();
             $chartData['Sakit'][] = $monthLogs->where('status', 'Sakit')->count();
             $chartData['Izin'][] = $monthLogs->where('status', 'Izin')->count();
             $chartData['Alpha'][] = $monthLogs->where('status', 'Alpha')->count();
