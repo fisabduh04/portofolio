@@ -57,8 +57,13 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     // Route pegawai
     // Event & Override Routes
+    // Event & Override Routes
     Route::resource('attendance/events', \App\Http\Controllers\SpecialEventController::class, ['as' => 'attendance']);
     Route::resource('attendance/overrides', \App\Http\Controllers\ScheduleOverrideController::class, ['as' => 'attendance']);
+    
+    // NEW: Mandatory Days (Jadwal Wajib)
+    Route::get('attendance/mandatory', [\App\Http\Controllers\MandatoryScheduleController::class, 'index'])->name('attendance.mandatory.index');
+    Route::post('attendance/mandatory', [\App\Http\Controllers\MandatoryScheduleController::class, 'store'])->name('attendance.mandatory.store');
     
     // Existing Routes
     Route::resource('pegawai', PegawaiController::class);

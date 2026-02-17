@@ -254,55 +254,14 @@ class AttendanceService
             ];
         }
 
-        // CUSTOM LOGIC: Teacher Flexibility
-        // If the rule type is "Teacher", they ONLY work if they had an Event, Override, Piket, or Jadwal (checked above).
-        // Since we are here (Step 5), it means none of those were found.
-        // So, for a Teacher, this is NOT a working day (Libur/Off), preventing "Alpha".
-        if ($rule->rule_type === 'Teacher') {
-             // CHECK: Is this day explicitly marked as a working day in the Rule? (e.g. Sunday)
-             // If yes, it becomes Mandatory.
-             $isMandatoryDay = false;
-             if (!empty($rule->hari_kerja)) {
-                $hariKerja = is_string($rule->hari_kerja) ? json_decode($rule->hari_kerja, true) : $rule->hari_kerja;
-                if (is_array($hariKerja) && in_array($dayName, $hariKerja)) {
-                    $isMandatoryDay = true;
-                }
-             }
-
-             if ($isMandatoryDay) {
-                return [
-                    'is_working_day' => true,
-                    'jam_masuk' => $rule->jam_masuk,
-                    'jam_pulang' => $rule->jam_pulang,
-                    'toleransi_telat' => $rule->toleransi_telat,
-                    'gaji_harian' => $rule->gaji_harian,
-                    'bantuan_makan' => $rule->bantuan_makan,
-                    'denda_telat' => $rule->denda_telat ?? 0,
-                    'status_label' => 'Hadir',
-                ];
-             }
-
-             return [
-                'is_working_day' => false,
-                'jam_masuk' => null,
-                'jam_pulang' => null,
-                'status_label' => 'Libur',
-            ];
-        }
-
-        // Standard Logic for Staff/Regular Employees
-        $isWorkingDay = false;
+        // 6. CHECK MANDATORY DAYS (From Pegawai->wajib_hadir) - REPLACES Rule->hari_kerja
+        $hariWajib = $pegawai->wajib_hadir ?? []; 
+        // If null (not set), fall back to checking Rule for backward compatibility or default empty
         
-        if (!empty($rule->hari_kerja)) {
-            $hariKerja = is_string($rule->hari_kerja) ? json_decode($rule->hari_kerja, true) : $rule->hari_kerja;
-            
-            if (is_array($hariKerja) && in_array($dayName, $hariKerja)) {
-                $isWorkingDay = true;
-            }
-        }
+        $isMandatory = in_array($dayName, $hariWajib);
 
-        if ($isWorkingDay) {
-            return [
+        if ($isMandatory) {
+             return [
                 'is_working_day' => true,
                 'jam_masuk' => $rule->jam_masuk,
                 'jam_pulang' => $rule->jam_pulang,
@@ -313,6 +272,16 @@ class AttendanceService
                 'status_label' => 'Hadir',
             ];
         }
+
+        // If NOT mandatory, and no other schedule (Picket/Teaching) found above:
+        // Then it is NOT a working day.
+        
+        return [
+            'is_working_day' => false,
+            'jam_masuk' => null,
+            'jam_pulang' => null,
+            'status_label' => 'Libur',
+        ];
 
         // 6. No Schedule
         return [

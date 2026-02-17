@@ -10,10 +10,10 @@
             </a>
         </li>
         <li class="mr-2">
-            <a href="{{ route('attendance.overrides.index') }}" 
-               class="inline-block p-4 border-b-2 rounded-t-lg {{ $active === 'overrides' ? 'text-blue-600 border-blue-600 active dark:text-blue-500 dark:border-blue-500' : 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300' }}"
-               aria-current="{{ $active === 'overrides' ? 'page' : 'false' }}">
-                Jadwal Khusus (Override)
+            <a href="{{ route('attendance.mandatory.index') }}" 
+               class="inline-block p-4 border-b-2 rounded-t-lg {{ $active === 'mandatory' ? 'text-blue-600 border-blue-600 active dark:text-blue-500 dark:border-blue-500' : 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300' }}"
+               aria-current="{{ $active === 'mandatory' ? 'page' : 'false' }}">
+                Jadwal Wajib
             </a>
         </li>
         <li class="mr-2">
