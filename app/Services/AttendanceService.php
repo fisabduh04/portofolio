@@ -101,7 +101,7 @@ class AttendanceService
         }
 
         // If Event
-        if ($schedule['status_label'] === 'Hadir (Event)') {
+        if (($schedule['status_label'] ?? '') === 'Hadir (Event)') {
             $source = 'Event';
         }
 
@@ -250,6 +250,7 @@ class AttendanceService
                 'is_working_day' => false,
                 'jam_masuk' => null,
                 'jam_pulang' => null,
+                'status_label' => 'Tanpa Aturan',
             ];
         }
 
@@ -262,6 +263,7 @@ class AttendanceService
                 'is_working_day' => false,
                 'jam_masuk' => null,
                 'jam_pulang' => null,
+                'status_label' => 'Libur',
             ];
         }
 
@@ -294,6 +296,7 @@ class AttendanceService
             'is_working_day' => false,
             'jam_masuk' => null,
             'jam_pulang' => null,
+            'status_label' => 'Libur',
         ];
     }
 }
