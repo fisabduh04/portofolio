@@ -17,10 +17,17 @@ class PayrollController extends Controller
 
         // Get all Pegawai with attendance data for the month
         $pegawais = Pegawai::where('aktif', 'Aktif')
-            ->with(['attendanceRule', 'pegawaiAbsensis' => function ($query) use ($month, $year) {
-                $query->whereMonth('tanggal', $month)
-                      ->whereYear('tanggal', $year);
-            }])
+            ->with([
+                'ruleAllocations' => function($query) use ($year) {
+                    $query->whereHas('tahun', function($q) use ($year) {
+                        $q->where('tahun', $year);
+                    })->with('attendanceRule');
+                }, 
+                'pegawaiAbsensis' => function ($query) use ($month, $year) {
+                    $query->whereMonth('tanggal', $month)
+                          ->whereYear('tanggal', $year);
+                }
+            ])
             ->get()
             ->map(function ($pegawai) {
                 // Use the eager loaded relation
@@ -56,7 +63,11 @@ class PayrollController extends Controller
         $month = $request->input('month', date('n'));
         $year = $request->input('year', date('Y'));
         
-        $pegawai = Pegawai::findOrFail($id);
+        $pegawai = Pegawai::with(['ruleAllocations' => function($query) use ($year) {
+            $query->whereHas('tahun', function($q) use ($year) {
+                $q->where('tahun', $year);
+            })->with('attendanceRule');
+        }])->findOrFail($id);
         
         $absensi = PegawaiAbsensi::where('pegawai_id', $pegawai->id)
             ->whereMonth('tanggal', $month)

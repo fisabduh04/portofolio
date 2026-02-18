@@ -24,8 +24,13 @@ class AttendanceRule extends Model
         'hari_kerja' => 'array',
     ];
 
+    public function ruleAllocations()
+    {
+        return $this->hasMany(PegawaiRuleAllocation::class);
+    }
+
     public function pegawais()
     {
-        return $this->hasMany(Pegawai::class);
+        return $this->belongsToMany(Pegawai::class, 'pegawai_rule_allocations', 'attendance_rule_id', 'pegawai_id')->withTimestamps();
     }
 }

@@ -118,6 +118,9 @@
                     <a href="{{ route('attendance.report') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Laporan Absensi</a>
                 </li>
                 <li>
+                    <a href="{{ route('attendance.wajib-hadir.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Jadwal Wajib Hadir</a>
+                </li>
+                <li>
                     <a href="{{ route('attendance.fingerprint.index') }}" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Mesin Fingerprint</a>
                 </li>
                 <li>

@@ -78,7 +78,7 @@
                                 {{ $data->pegawai->name }}
                             </td>
                             <td class="px-6 py-4 text-body-subtle">
-                                {{ $data->pegawai->attendanceRule->name ?? 'Tanpa Aturan' }}
+                                {{ $data->pegawai->ruleAllocations->first()->attendanceRule->name ?? 'Tanpa Aturan' }}
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex gap-2">

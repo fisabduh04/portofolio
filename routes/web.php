@@ -110,6 +110,10 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('report', [PegawaiAttendanceController::class, 'report'])->name('report');
             Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
             Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
+            
+            // Wajib Hadir Routes
+            Route::get('wajib-hadir', [\App\Http\Controllers\PegawaiWajibHadirController::class, 'index'])->name('wajib-hadir.index');
+            Route::post('wajib-hadir', [\App\Http\Controllers\PegawaiWajibHadirController::class, 'store'])->name('wajib-hadir.store');
 
             Route::prefix('payroll')->name('payroll.')->group(function () {
                 Route::get('/', [PayrollController::class, 'index'])->name('index');

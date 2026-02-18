@@ -115,7 +115,11 @@ class PegawaiAttendanceController extends Controller
         $month = $request->input('month', now()->month);
         $year = $request->input('year', now()->year);
 
-        $report = PegawaiAbsensi::with('pegawai.attendanceRule')
+        $report = PegawaiAbsensi::with(['pegawai.ruleAllocations' => function($query) use ($year) {
+            $query->whereHas('tahun', function($q) use ($year) {
+                $q->where('tahun', $year);
+            })->with('attendanceRule');
+        }])
             ->whereMonth('tanggal', $month)
             ->whereYear('tanggal', $year)
             ->selectRaw('
@@ -135,9 +139,8 @@ class PegawaiAttendanceController extends Controller
 
     public function setting()
     {
-        $pegawais = Pegawai::with('attendanceRule')->orderBy('name')->paginate(100);
-        $rules = \App\Models\AttendanceRule::all();
-        return view('attendance.setting', compact('pegawais', 'rules'));
+        $pegawais = Pegawai::with('fingerprintEnrollments')->orderBy('name')->paginate(100);
+        return view('attendance.setting', compact('pegawais'));
     }
 
     public function updateSetting(Request $request)
@@ -145,7 +148,6 @@ class PegawaiAttendanceController extends Controller
         $request->validate([
             'settings' => 'required|array',
             'settings.*.id' => 'required|exists:pegawais,id',
-            'settings.*.attendance_rule_id' => 'nullable|exists:attendance_rules,id',
             'settings.*.fingerprint_id' => 'nullable|string|max:50',
         ]);
 
@@ -154,10 +156,24 @@ class PegawaiAttendanceController extends Controller
             foreach ($request->settings as $setting) {
                 $pegawai = Pegawai::find($setting['id']);
                 if ($pegawai) {
-                    $pegawai->update([
-                        'attendance_rule_id' => $setting['attendance_rule_id'],
-                        'fingerprint_id' => $setting['fingerprint_id'],
-                    ]);
+                     // Handle Enrollment (Update or Create the primary one)
+                    if (!empty($setting['fingerprint_id'])) {
+                        // Check if exists
+                        $enrollment = $pegawai->fingerprintEnrollments()->first();
+                        
+                        if ($enrollment) {
+                            $enrollment->update(['fingerprint_user_id' => $setting['fingerprint_id']]);
+                        } else {
+                            $pegawai->fingerprintEnrollments()->create([
+                                'fingerprint_user_id' => $setting['fingerprint_id'],
+                                'fingerprint_machine_id' => null // Default/Global
+                            ]);
+                        }
+                    } else {
+                        // If empty, user wants to clear it? 
+                        // Or just clear the primary one.
+                        $pegawai->fingerprintEnrollments()->delete();
+                    }
                 }
             }
             DB::commit();

@@ -12,7 +12,15 @@ class AttendanceRuleController extends Controller
      */
     public function index()
     {
-        $rules = AttendanceRule::withCount('pegawais')->paginate(10);
+        $activeYear = \App\Models\Tahun::where('isActive', 1)->first();
+        
+        $rules = AttendanceRule::withCount(['pegawais' => function ($query) use ($activeYear) {
+            if ($activeYear) {
+                // Filter relation count strictly by the active year allocation
+                $query->where('pegawai_rule_allocations.tahun_id', $activeYear->id);
+            }
+        }])->paginate(10);
+
         return view('attendance.rules.index', compact('rules'));
     }
 

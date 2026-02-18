@@ -24,8 +24,12 @@ if (!$pegawai) {
     echo "No Pegawai found. Creating temporary.\n";
     $pegawai = Pegawai::create(['name' => 'Test Pegawai', 'aktif' => 'Aktif']);
 }
-$pegawai->attendance_rule_id = $rule->id;
-$pegawai->save();
+
+$activeYear = \App\Models\Tahun::where('isActive', 1)->first();
+\App\Models\PegawaiRuleAllocation::updateOrCreate(
+    ['pegawai_id' => $pegawai->id, 'tahun_id' => $activeYear->id],
+    ['attendance_rule_id' => $rule->id]
+);
 
 // 2. Scenario A: On Time
 echo "--- Scenario A: On Time ---\n";

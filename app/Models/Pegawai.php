@@ -13,8 +13,10 @@ class Pegawai extends Model
         'name', 'status', 'aktif', 'email', 'nuptk', 'jk', 'kotalahir', 'tanggallahir', 'jenisptk', 
         'agama', 'alamat', 'rt', 'rw', 'hp', 'skpengangkatan', 'lembagapengangkatan', 'PangkatGolongan', 
         'sumbergaji', 'ibukandung', 'kawin', 'suamiistri', 'pekerjaansuamiIstri', 'npwp', 'nonik', 
-        'nokk', 'foto', 'deskripsi', 'fingerprint_id', 'attendance_rule_id'
+        'nokk', 'foto', 'deskripsi'
     ];
+
+    protected $appends = ['fingerprint_id'];
 
     public function user()
     {
@@ -26,9 +28,9 @@ class Pegawai extends Model
         return $this->hasMany(Jadwal::class);
     }
 
-    public function attendanceRule()
+    public function ruleAllocations()
     {
-        return $this->belongsTo(AttendanceRule::class);
+        return $this->hasMany(PegawaiRuleAllocation::class);
     }
 
     public function attendanceLogs()
@@ -39,5 +41,22 @@ class Pegawai extends Model
     public function pegawaiAbsensis()
     {
         return $this->hasMany(PegawaiAbsensi::class);
+    }
+
+    public function fingerprintEnrollments()
+    {
+        return $this->hasMany(FingerprintEnrollment::class);
+    }
+
+    public function wajibHadirs()
+    {
+        return $this->hasMany(PegawaiWajibHadir::class);
+    }
+
+    // Accessor for backward compatibility
+    public function getFingerprintIdAttribute()
+    {
+        // Return the first enrollment ID found, or null
+        return $this->fingerprintEnrollments->first()?->fingerprint_user_id;
     }
 }

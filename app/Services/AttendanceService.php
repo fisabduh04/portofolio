@@ -21,8 +21,19 @@ class AttendanceService
             ->get();
 
         // 2. Get Rule
-        $rule = $pegawai->attendanceRule;
-        $dayName = Carbon::parse($date)->format('D'); // Mon, Tue, etc.
+        // 2. Get Rule for the specific year of $date
+        $carbonDate = Carbon::parse($date);
+        $tahun = \App\Models\Tahun::where('tanggalmulai', '<=', $carbonDate->toDateString())
+            ->where('tanggalakhir', '>=', $carbonDate->toDateString())
+            ->first() ?? \App\Models\Tahun::where('isActive', 1)->first();
+
+        $allocation = $pegawai->ruleAllocations()
+            ->where('tahun_id', $tahun?->id)
+            ->with('attendanceRule')
+            ->first();
+
+        $rule = $allocation?->attendanceRule;
+        $dayName = $carbonDate->format('D'); // Mon, Tue, etc.
 
         // Check if today is a working day (if rule has hari_kerja)
         $isWorkingDay = true;
@@ -123,6 +134,40 @@ class AttendanceService
 
     private function markAsAlpha($pegawai, $date)
     {
+        // 1. Determine Day Name (Senin, Selasa...)
+        $carbonDate = Carbon::parse($date);
+        $dayName = $carbonDate->isoFormat('dddd'); // Requires Carbon locale set to ID, or use map.
+        // Safer: English to Indo map if Locale not guaranteed
+        $days = [
+            'Mon' => 'Senin', 'Tue' => 'Selasa', 'Wed' => 'Rabu', 
+            'Thu' => 'Kamis', 'Fri' => 'Jumat', 'Sat' => 'Sabtu', 'Sun' => 'Minggu'
+        ];
+        $dayIndo = $days[$carbonDate->format('D')] ?? '';
+
+        // 2. Check Wajib Hadir Table
+        // Need to know current Academic Year for that date
+        $tahun = \App\Models\Tahun::where('tanggalmulai', '<=', $carbonDate->toDateString())
+            ->where('tanggalakhir', '>=', $carbonDate->toDateString())
+            ->first() ?? \App\Models\Tahun::where('isActive', 1)->first();
+
+        if (!$tahun) {
+             // Fallback: If no year context, maybe don't mark alpha? 
+             // Or assumes default behavior. Let's assume default is NOT Alpha to be safe.
+             return null;
+        }
+
+        $isWajibHadir = \App\Models\PegawaiWajibHadir::where('pegawai_id', $pegawai->id)
+            ->where('tahun_id', $tahun->id)
+            ->where('hari', $dayIndo)
+            ->exists();
+
+        if (!$isWajibHadir) {
+            // Not required to be present -> Not Alpha.
+            // Maybe clear any existing Alpha?
+            // For now just return.
+            return null;
+        }
+
         return PegawaiAbsensi::updateOrCreate(
             [
                 'pegawai_id' => $pegawai->id,

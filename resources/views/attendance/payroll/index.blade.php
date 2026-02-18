@@ -59,7 +59,7 @@
                         <tr class="bg-neutral-primary border-b border-default last:border-0 hover:bg-neutral-secondary-soft/50 transition-colors duration-200">
                             <td class="px-6 py-4 font-medium text-heading">
                                 {{ $data['pegawai']->name }}
-                                <div class="text-xs text-body-subtle font-normal mt-0.5">{{ $data['pegawai']->attendanceRule->name ?? 'No Rule' }}</div>
+                                <div class="text-xs text-body-subtle font-normal mt-0.5">{{ $data['pegawai']->ruleAllocations->first()->attendanceRule->name ?? 'No Rule' }}</div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex gap-2">

@@ -121,16 +121,38 @@ class FingerprintApiController extends Controller
 
     private function saveLog($fingerprintId, $scanTime, $machineSn)
     {
-        // Find Pegawai by fingerprint_id
-        $pegawai = Pegawai::where('fingerprint_id', $fingerprintId)->first();
+        // 1. Identify Machine ID from SN (if possible)
+        $machine = FingerprintMachine::where('name', $machineSn)->first();
+        $machineId = $machine ? $machine->id : null;
 
-        if ($pegawai) {
+        // 2. Find Enrollment
+        // We look for a specific enrollment for this machine, OR a global/legacy enrollment (machine_id is null)
+        $enrollment = \App\Models\FingerprintEnrollment::where('fingerprint_user_id', $fingerprintId)
+            ->where(function($q) use ($machineId) {
+                $q->where('fingerprint_machine_id', $machineId)
+                  ->orWhereNull('fingerprint_machine_id');
+            })
+            ->with('pegawai')
+            ->first();
+
+        // If multiple found (e.g. specific AND global), which one?
+        // Ideally specific overrides global.
+        // Let's refine the query to prioritize specific.
+        if ($machineId) {
+             $specific = \App\Models\FingerprintEnrollment::where('fingerprint_user_id', $fingerprintId)
+                ->where('fingerprint_machine_id', $machineId)->with('pegawai')->first();
+             if ($specific) $enrollment = $specific;
+        }
+
+        if ($enrollment && $enrollment->pegawai) {
+             $pegawai = $enrollment->pegawai;
+
              // Avoid duplicate within same second
              AttendanceLog::firstOrCreate([
                  'pegawai_id' => $pegawai->id,
                  'scan_time' => $scanTime,
              ], [
-                 'machine_id' => $machineSn,
+                 'machine_id' => $machineSn, // Keeping string for now as per schema
                  'created_at' => now(),
              ]);
 
