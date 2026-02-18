@@ -58,6 +58,22 @@
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400 font-sans">Total: {{ $jadwals->total() }}</span>
             </div>
             <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
+                {{-- Simpan Semua Baris + Tahun (hidden until new rows added) --}}
+                @if(in_array(auth()->user()->role, ['admin', 'operator']))
+                <div id="btnSimpanWrapper" class="hidden flex items-center gap-2">
+                    <select id="tahun_bulk" name="tahun_id" form="bulkFormJadwal"
+                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+                        <option value="">-- Tahun Ajaran --</option>
+                        @foreach ($tahun as $t)
+                            <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
+                                {{ $t->tahun }} - {{ $t->semester }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <x-btn type="submit" form="bulkFormJadwal" id="btnSimpanBarisBaru" text="Simpan Semua Baris" icon="check" color="green" size="sm" />
+                </div>
+                @endif
+
                 {{-- Primary Action: Tambah --}}
                 @if(in_array(auth()->user()->role, ['admin', 'operator']))
                 <x-btn onclick="tambah()" color="blue" size="sm">
@@ -72,6 +88,7 @@
                     <span>Refresh</span>
                 </x-btn>
             </div>
+
         </div>
 
         {{-- Filters & Search Section --}}
@@ -417,31 +434,8 @@
             </div>
         </div>
 
-        {{-- Slide Down Panel (Setup Data Baru) --}}
-        <div id="tahunbulk" class="hidden mt-6 bg-gray-50 p-6 rounded-base border border-default dark:bg-gray-700 dark:border-gray-600 transition-all">
-            <div class="flex items-center gap-2 mb-4">
-                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">1</div>
-                <h4 class="font-bold text-sm text-gray-800 dark:text-white">Setup Data Baru</h4>
-            </div>
-            
-            <div class="flex flex-col md:flex-row gap-4 items-end">
-                <div class="w-full md:w-1/3">
-                    <label for="tahun_bulk" class="block mb-2 text-xs font-semibold text-gray-900 dark:text-white">Pilih Tahun Ajaran Default</label>
-                    <select id="tahun_bulk" name="tahun_id" form="bulkFormJadwal"
-                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
-                        <option value="">-- Pilih Tahun Ajaran --</option>
-                        @foreach ($tahun as $t)
-                            <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
-                                {{ $t->tahun }} - {{ $t->semester }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                     <x-btn type="submit" form="bulkFormJadwal" id="btnSimpanBarisBaru" text="Simpan Semua Baris" icon="check" color="green" />
-                </div>
-            </div>
-        </div>
+
+
     </div>
 </div>
 
@@ -562,7 +556,8 @@
 
     // 4. Tambah Row Logic
     function tambah() {
-        document.getElementById('tahunbulk').classList.remove('hidden');
+        document.getElementById('btnSimpanWrapper')?.classList.remove('hidden');
+        document.getElementById('btnSimpanWrapper')?.classList.add('flex');
         const tpl = document.getElementById('tplNewJadwalRow');
         const tbody = document.getElementById('jadwalTable');
         const clone = tpl.content.cloneNode(true);
@@ -571,7 +566,10 @@
 
     function removeNewRow(btn) {
         btn.closest('tr').remove();
-        if(!document.querySelector('tr.new-row')) document.getElementById('tahunbulk').classList.add('hidden');
+        if(!document.querySelector('tr.new-row')) {
+            document.getElementById('btnSimpanWrapper')?.classList.add('hidden');
+            document.getElementById('btnSimpanWrapper')?.classList.remove('flex');
+        }
     }
 
     // Auto Search
