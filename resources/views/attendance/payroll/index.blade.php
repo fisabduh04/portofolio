@@ -5,6 +5,15 @@
         ['name' => 'Payroll', 'href' => '']
     ]" />
 
+    <x-layout.sidebar.sub-menu :items="[
+        ['name' => 'Dashboard', 'href' => route('attendance.index')],
+        ['name' => 'Aturan & Jam Kerja', 'href' => route('attendance.rules.index')],
+        ['name' => 'Mesin Fingerprint', 'href' => route('attendance.fingerprint.index')],
+        ['name' => 'Konfigurasi', 'href' => route('attendance.setting')],
+        ['name' => 'Laporan Bulanan', 'href' => route('attendance.report')],
+        ['name' => 'Payroll', 'href' => route('attendance.payroll.index'), 'active' => true]
+    ]" />
+
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-base shadow-sm mt-4">
         <div class="p-4 sm:p-6">
             <!-- Top Controls (Filter) -->

@@ -2,7 +2,16 @@
     <x-breadcrumb :breadcrumbs="[
         ['name' => 'Home', 'href' => route('dashboard.index')],
         ['name' => 'Absensi', 'href' => route('attendance.index')],
-        ['name' => 'Laparan Bulanan', 'href' => '']
+        ['name' => 'Laporan Bulanan', 'href' => '']
+    ]" />
+
+    <x-layout.sidebar.sub-menu :items="[
+        ['name' => 'Dashboard', 'href' => route('attendance.index')],
+        ['name' => 'Aturan & Jam Kerja', 'href' => route('attendance.rules.index')],
+        ['name' => 'Mesin Fingerprint', 'href' => route('attendance.fingerprint.index')],
+        ['name' => 'Konfigurasi', 'href' => route('attendance.setting')],
+        ['name' => 'Laporan Bulanan', 'href' => route('attendance.report'), 'active' => true],
+        ['name' => 'Payroll', 'href' => route('attendance.payroll.index')]
     ]" />
 
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-base shadow-sm mt-4">
