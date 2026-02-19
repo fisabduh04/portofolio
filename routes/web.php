@@ -108,6 +108,7 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::post('store', [PegawaiAttendanceController::class, 'store'])->name('store');
             Route::post('process', [PegawaiAttendanceController::class, 'process'])->name('process');
             Route::get('report', [PegawaiAttendanceController::class, 'report'])->name('report');
+            Route::get('report/employee', [\App\Http\Controllers\AbsensiPegawaiReportController::class, 'index'])->name('report.employee');
             Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
             Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
             
@@ -119,6 +120,9 @@ Route::middleware(['auth', 'active'])->group(function () {
                 Route::get('/', [PayrollController::class, 'index'])->name('index');
                 Route::get('{id}/slip', [PayrollController::class, 'slip'])->name('slip');
             });
+
+            // Special Events
+            Route::resource('events', \App\Http\Controllers\SpecialEventController::class);
         });
 
 
