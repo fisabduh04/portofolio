@@ -9,6 +9,7 @@
         ['name' => 'Dashboard', 'href' => route('attendance.index')],
         ['name' => 'Aturan & Jam Kerja', 'href' => route('attendance.rules.index')],
         ['name' => 'Mesin Fingerprint', 'href' => route('attendance.fingerprint.index')],
+        ['name' => 'Events', 'href' => route('attendance.events.index')],
         ['name' => 'Konfigurasi', 'href' => route('attendance.setting')],
         ['name' => 'Laporan Bulanan', 'href' => route('attendance.report'), 'active' => true],
         ['name' => 'Payroll', 'href' => route('attendance.payroll.index')]
@@ -34,7 +35,7 @@
                     </form>
 
                     <!-- Link ke Laporan Per Pegawai -->
-                    <x-btn href="{{ route('report.employee') }}" color="blue" icon="users">
+                    <x-btn href="{{ route('attendance.report.employee') }}" color="blue" icon="users">
                         Rekap Per Pegawai
                     </x-btn>
 

@@ -9,7 +9,15 @@
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm mt-4">
         {{-- Internal Tab Navigation using existing component scheme --}}
         <div class="border-b border-gray-200 dark:border-gray-700">
-             <x-layout.sidebar.sub-menu />
+             <x-layout.sidebar.sub-menu :items="[
+                ['name' => 'Dashboard', 'href' => route('attendance.index')],
+                ['name' => 'Aturan & Jam Kerja', 'href' => route('attendance.rules.index')],
+                ['name' => 'Mesin Fingerprint', 'href' => route('attendance.fingerprint.index')],
+                ['name' => 'Events', 'href' => route('attendance.events.index'), 'active' => true],
+                ['name' => 'Konfigurasi', 'href' => route('attendance.setting')],
+                ['name' => 'Laporan Bulanan', 'href' => route('attendance.report')],
+                ['name' => 'Payroll', 'href' => route('attendance.payroll.index')]
+            ]" />
         </div>
 
         <div class="p-4 sm:p-6">

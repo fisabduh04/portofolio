@@ -4,11 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\SpecialEvent;
 use App\Models\Pegawai;
+use App\Services\AttendanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SpecialEventController extends Controller
 {
+    protected $attendanceService;
+
+    public function __construct(AttendanceService $attendanceService)
+    {
+        $this->attendanceService = $attendanceService;
+    }
+
     public function index()
     {
         $events = SpecialEvent::withCount('participants')->latest()->paginate(10);
@@ -17,12 +26,7 @@ class SpecialEventController extends Controller
 
     public function create()
     {
-        $pegawais = Pegawai::where('status', 'Aktif')->orderBy('nama')->get(); // Adjusted to match schema (status='Aktif', orderBy='nama')
-        // Fallback if 'status' column is different, usually it's 'status' or 'is_active'. 
-        // Checking Pegawai model might be needed but assuming standard.
-        // Wait, looking at previous context, Pegawai model likely has 'nama' not 'name'.
-        // Let's check Pegawai model in next step if this fails, but for now I will use 'nama' as commonly used in this project.
-        
+        $pegawais = Pegawai::where('aktif', 'Aktif')->orderBy('name')->get();
         return view('attendance.events.create', compact('pegawais'));
     }
 
@@ -53,19 +57,52 @@ class SpecialEventController extends Controller
 
             $event->participants()->attach($request->participants);
             
+            // Re-calculate attendance for all participants on the event date
+            $this->recomputeParticipants($request->participants, $request->date);
+
             DB::commit();
             return redirect()->route('attendance.events.index')
-                ->with('success', 'Event khusus berhasil dibuat.');
+                ->with('success', 'Event khusus berhasil dibuat dan absensi peserta diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error("Gagal membuat Special Event: " . $e->getMessage());
             return back()->with('error', 'Gagal membuat event: ' . $e->getMessage());
         }
     }
 
-    public function destroy(SpecialEvent $event) // Changed param name to match route model binding default
+    public function destroy(SpecialEvent $event)
     {
-        $event->delete();
-        return redirect()->route('attendance.events.index')
-            ->with('success', 'Event berhasil dihapus.');
+        DB::beginTransaction();
+        try {
+            $date = $event->date;
+            // Handle as array if $date is Carbon object or string
+            $dateString = is_object($date) ? $date->format('Y-m-d') : $date;
+            $participantIds = $event->participants->pluck('id')->toArray();
+
+            $event->delete();
+
+            // After delete, recalculate to remove event status from attendance
+            $this->recomputeParticipants($participantIds, $dateString);
+
+            DB::commit();
+            return redirect()->route('attendance.events.index')
+                ->with('success', 'Event berhasil dihapus dan absensi peserta dihitung ulang.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Gagal menghapus Special Event: " . $e->getMessage());
+            return back()->with('error', 'Gagal menghapus event: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Helper untuk memicu hitung ulang absensi masal
+     */
+    private function recomputeParticipants(array $participantIds, $date)
+    {
+        $pegawais = Pegawai::whereIn('id', $participantIds)->get();
+        foreach ($pegawais as $pegawai) {
+            $this->attendanceService->calculateDailyAttendance($pegawai, $date);
+        }
     }
 }
+

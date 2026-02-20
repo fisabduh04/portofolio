@@ -23,11 +23,13 @@ use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\AbsensiReportController;
 use App\Http\Controllers\FingerprintMachineController;
 use App\Http\Controllers\SekolahController;
+use App\Http\Controllers\PegawaiWajibHadirController;
+use App\Http\Controllers\SpecialEventController;
 
 
 
 // Override Fortify Password Reset to Block Inactive Users
-Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
     ->middleware(['guest:'.config('fortify.guard')])
     ->name('password.email');
 
@@ -109,6 +111,7 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::post('process', [PegawaiAttendanceController::class, 'process'])->name('process');
             Route::get('report', [PegawaiAttendanceController::class, 'report'])->name('report');
             Route::get('report/employee', [\App\Http\Controllers\AbsensiPegawaiReportController::class, 'index'])->name('report.employee');
+            Route::get('report/employee/export', [\App\Http\Controllers\AbsensiPegawaiReportController::class, 'export'])->name('report.employee.export');
             Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
             Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
             

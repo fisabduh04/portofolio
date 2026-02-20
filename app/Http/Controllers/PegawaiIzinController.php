@@ -4,14 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\Pegawai;
 use App\Models\PegawaiIzin;
-use App\Models\PegawaiAbsensi;
+use App\Services\AttendanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class PegawaiIzinController extends Controller
 {
+    protected $attendanceService;
+
+    /**
+     * Dependency Injection: Memasukkan otak (Service) ke dalam tangan (Controller)
+     */
+    public function __construct(AttendanceService $attendanceService)
+    {
+        $this->attendanceService = $attendanceService;
+    }
+
     public function index()
     {
         $izins = PegawaiIzin::with('pegawai')->latest()->paginate(10);
@@ -20,10 +30,13 @@ class PegawaiIzinController extends Controller
 
     public function create()
     {
-        $pegawais = Pegawai::orderBy('nama')->get(); // Assumption: 'nama' column
+        $pegawais = Pegawai::orderBy('name')->get();
         return view('attendance.izin.create', compact('pegawais'));
     }
 
+    /**
+     * Menyimpan data Izin dan memicu penghitungan ulang absensi
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -49,16 +62,18 @@ class PegawaiIzinController extends Controller
                 'tanggal_akhir' => $request->tanggal_akhir,
                 'keterangan' => $request->keterangan,
                 'bukti_dokumen' => $path,
-                'status_approval' => 'Approved', // Auto-approved for admin input
+                'status_approval' => 'Approved',
             ]);
 
-            // Sync with PegawaiAbsensi
-            $this->syncToAttendance($izin);
+            // Clean Code: Panggil Service untuk hitung ulang absensi dalam rentang tanggal izin
+            $this->recomputeAttendance($izin);
 
             DB::commit();
             return redirect()->route('attendance.izin.index')->with('success', 'Data izin berhasil disimpan.');
+            
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error("Gagal menyimpan Izin: " . $e->getMessage());
             if ($path) Storage::disk('public')->delete($path);
             return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage());
         }
@@ -68,20 +83,10 @@ class PegawaiIzinController extends Controller
     {
         DB::beginTransaction();
         try {
-            // Restore attendance status to null or recalculate?
-            // For simplicity, we delete the attendance records for these dates so they can be recalculated or stay empty
-            // Or better, set status back to null/Alpha if past?
-            // Let's delete the specific records created by this Izin logic. 
-            // BUT, what if there was attendance log? Real attendance > Izin?
-            // Strategy: Loop dates and delete/update.
-            
+            // Sebelum dihapus, ambil data pegawai dan rentang tanggalnya
+            $pegawai = $izin->pegawai;
             $start = $izin->tanggal_mulai;
             $end = $izin->tanggal_akhir;
-            
-            PegawaiAbsensi::where('pegawai_id', $izin->pegawai_id)
-                ->whereBetween('tanggal', [$start->format('Y-m-d'), $end->format('Y-m-d')])
-                ->whereIn('status', ['Sakit', 'Izin', 'Cuti', 'Dinas Luar']) // Only delete if status matches permission types
-                ->delete();
 
             if ($izin->bukti_dokumen) {
                 Storage::disk('public')->delete($izin->bukti_dokumen);
@@ -89,74 +94,34 @@ class PegawaiIzinController extends Controller
             
             $izin->delete();
 
+            // Picu hitung ulang: Sekarang sistem akan melihat tidak ada izin lagi,
+            // dan akan mengembalikan status ke Alpha (jika wajib hadir) atau Kosong.
+            for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                $this->attendanceService->calculateDailyAttendance($pegawai, $date->format('Y-m-d'));
+            }
+
             DB::commit();
-            return redirect()->route('attendance.izin.index')->with('success', 'Data izin berhasil dihapus.');
+            return redirect()->route('attendance.izin.index')->with('success', 'Data izin berhasil dihapus & absensi dihitung ulang.');
+            
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error("Gagal menghapus Izin: " . $e->getMessage());
             return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
     }
 
-    private function syncToAttendance(PegawaiIzin $izin)
+    /**
+     * Helper untuk menghitung ulang absensi dalam rentang waktu tertentu
+     */
+    private function recomputeAttendance(PegawaiIzin $izin)
     {
         $start = $izin->tanggal_mulai;
         $end = $izin->tanggal_akhir;
         $pegawai = $izin->pegawai;
 
         for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
-            
-            // Financial Logic based on Proposal
-            $nominalGaji = 0; // Default 0 for Izin
-            $nominalMakan = 0; // Default 0 for Sakit, Izin, Cuti
-            
-            // Fetch Rule for Salary Info (to get base salary)
-            // Need simplified way to get daily salary. AttendanceService has this logic.
-            // For now, we fetch rule allocation manually or check if we store salary in Pegawai.
-            // Assuming Rule has the salary.
-            
-            $allocation = $pegawai->ruleAllocations()
-                ->whereHas('tahun', function($q) use ($date) {
-                    $q->where('tanggalmulai', '<=', $date->toDateString())
-                      ->where('tanggalakhir', '>=', $date->toDateString());
-                })
-                ->orWhereHas('tahun', function($q) {
-                    $q->where('isActive', 1);
-                })
-                ->with('attendanceRule')
-                ->first();
-
-            $gajiHarian = $allocation?->attendanceRule?->gaji_harian ?? 0;
-            $uangMakan = $allocation?->attendanceRule?->bantuan_makan ?? 0;
-
-            if ($izin->jenis_izin === 'Sakit') {
-                $nominalGaji = $gajiHarian;
-                $nominalMakan = 0;
-            } elseif ($izin->jenis_izin === 'Cuti') {
-                $nominalGaji = $gajiHarian;
-                $nominalMakan = 0;
-            } elseif ($izin->jenis_izin === 'Dinas Luar') {
-                $nominalGaji = $gajiHarian;
-                $nominalMakan = $uangMakan;
-            } elseif ($izin->jenis_izin === 'Izin') {
-                $nominalGaji = 0;
-                $nominalMakan = 0;
-            }
-
-            PegawaiAbsensi::updateOrCreate(
-                [
-                    'pegawai_id' => $izin->pegawai_id,
-                    'tanggal' => $date->format('Y-m-d'),
-                ],
-                [
-                    'jam_masuk' => null, // No scan
-                    'jam_pulang' => null,
-                    'durasi_kerja' => null,
-                    'status' => $izin->jenis_izin,
-                    'nominal_gaji' => $nominalGaji,
-                    'nominal_makan' => $nominalMakan,
-                    'total_honor' => $nominalGaji + $nominalMakan, // No penalty
-                ]
-            );
+            $this->attendanceService->calculateDailyAttendance($pegawai, $date->format('Y-m-d'));
         }
     }
 }
+
