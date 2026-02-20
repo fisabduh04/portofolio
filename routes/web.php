@@ -123,6 +123,9 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             // Special Events
             Route::resource('events', \App\Http\Controllers\SpecialEventController::class);
+            
+            // Perizinan (Izin/Sakit/Cuti)
+            Route::resource('izin', \App\Http\Controllers\PegawaiIzinController::class);
         });
 
 

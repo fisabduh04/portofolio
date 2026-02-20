@@ -20,6 +20,32 @@ class AttendanceService
             ->orderBy('scan_time')
             ->get();
 
+        // [NEW] Check if there is an existing Izin/Sakit/Cuti/DL record
+        // If "Izin" or "Sakit" or "Cuti" exists (that usually implies NO Presence), we should NOT overwrite it with "Alpha"
+        // BUT if there are Logs (Fingerprint), does it override Izin? 
+        // Typically: Presence > Izin (e.g. approved leave but came to work).
+        // OR: Izin > Presence (strict). 
+        // Let's assume: If Logs exist, we process as Hadir/Telat (cancel Izin effect effectively for that day, or need manual review).
+        // If NO Logs, we check Izin. If Izin exists, we return (do nothing, let IzinController logic hold).
+        // OR better: We query PegawaiAbsensi for this date. If status is in ['Sakit', 'Izin', 'Cuti', 'Dinas Luar'], we preserve it UNLESS logs exist?
+        
+        $existingAbsensi = PegawaiAbsensi::where('pegawai_id', $pegawai->id)
+            ->where('tanggal', $date)
+            ->first();
+
+        if ($logs->isEmpty()) {
+            // If no logs, check if we already have a specialized status (Izin/Sakit/etc)
+            if ($existingAbsensi && in_array($existingAbsensi->status, ['Sakit', 'Izin', 'Cuti', 'Dinas Luar'])) {
+                return $existingAbsensi; // Keep existing permit status
+            }
+            // Otherwise check for Alpha logic
+            return $this->markAsAlpha($pegawai, $date);
+        }
+
+        // If Logs EXIST, we generally overwrite "Izin" because they grew legs and came to office.
+        // However, if status is 'Dinas Luar', maybe they scanned at location? (Not relevant for simpler fingerprint).
+        // Let's proceed to calculate attendance from logs.
+
         // 2. Get Rule
         // 2. Get Rule for the specific year of $date
         $carbonDate = Carbon::parse($date);
@@ -53,9 +79,7 @@ class AttendanceService
              }
         }
 
-        if ($logs->isEmpty()) {
-            return $this->markAsAlpha($pegawai, $date);
-        }
+        // Logs NOT empty here
 
         if (!$rule) {
             // If no rule, we cannot calculate salary/status accurately.
