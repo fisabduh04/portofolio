@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\SpecialEvent;
 use App\Models\Pegawai;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+    protected $attendanceService;
 
-class SpecialEventController extends Controller
-{
+    public function __construct(AttendanceService $attendanceService)
+    {
+        $this->attendanceService = $attendanceService;
+    }
+
     public function index()
     {
         $events = SpecialEvent::withCount('participants')->latest()->paginate(10);
@@ -48,21 +50,51 @@ class SpecialEventController extends Controller
 
             $event->participants()->attach($request->participants);
             
+            // Re-calculate attendance for all participants on the event date
+            $this->recomputeParticipants($request->participants, $request->date);
+
             DB::commit();
             return redirect()->route('attendance.events.index')
-                ->with('type', 'success')
-                ->with('message', 'Event khusus berhasil dibuat.');
+                ->with('success', 'Event khusus berhasil dibuat dan absensi peserta diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('type', 'error')->with('message', 'Gagal membuat event: ' . $e->getMessage());
+            Log::error("Gagal membuat Special Event: " . $e->getMessage());
+            return back()->with('error', 'Gagal membuat event: ' . $e->getMessage());
         }
     }
 
-    public function destroy(SpecialEvent $specialEvent)
+    public function destroy(SpecialEvent $event)
     {
-        $specialEvent->delete();
-        return redirect()->route('attendance.events.index')
-            ->with('type', 'success')
-            ->with('message', 'Event berhasil dihapus.');
+        DB::beginTransaction();
+        try {
+            $date = $event->date;
+            // Handle as array if $date is Carbon object or string
+            $dateString = is_object($date) ? $date->format('Y-m-d') : $date;
+            $participantIds = $event->participants->pluck('id')->toArray();
+
+            $event->delete();
+
+            // After delete, recalculate to remove event status from attendance
+            $this->recomputeParticipants($participantIds, $dateString);
+
+            DB::commit();
+            return redirect()->route('attendance.events.index')
+                ->with('success', 'Event berhasil dihapus dan absensi peserta dihitung ulang.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Gagal menghapus Special Event: " . $e->getMessage());
+            return back()->with('error', 'Gagal menghapus event: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Helper untuk memicu hitung ulang absensi masal
+     */
+    private function recomputeParticipants(array $participantIds, $date)
+    {
+        $pegawais = Pegawai::whereIn('id', $participantIds)->get();
+        foreach ($pegawais as $pegawai) {
+            $this->attendanceService->calculateDailyAttendance($pegawai, $date);
+        }
     }
 }

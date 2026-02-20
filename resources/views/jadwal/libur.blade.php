@@ -5,59 +5,45 @@
         ['name' => 'Jadwal Libur', 'href' => '#'],
     ]" />
 
-    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex-1 min-w-0">
-            <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
-               Jadwal Libur
-            </h1>
-            <p class="mt-1 text-base text-gray-500 dark:text-gray-400">Atur hari libur mingguan dan libur khusus di sini.</p>
-        </div>
-    </div>
-
-    @if(!$tahun)
-        <div class="p-4 mb-6 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-red-900/10 dark:text-red-400 border border-red-200 dark:border-red-800" role="alert">
-            <div class="flex items-center">
-                <svg class="flex-shrink-0 w-4 h-4 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-                </svg>
-                <span class="font-medium">Peringatan!</span> Tidak ada tahun ajaran aktif. Silakan aktifkan tahun ajaran terlebih dahulu.
+    <div class="mt-4">
+        @if(!$tahun)
+            <div class="p-4 mb-6 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-red-900/10 dark:text-red-400 border border-red-200 dark:border-red-800" role="alert">
+                <div class="flex items-center">
+                    <svg class="flex-shrink-0 w-4 h-4 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                    </svg>
+                    <span class="font-medium">Peringatan!</span> Tidak ada tahun ajaran aktif. Silakan aktifkan tahun ajaran terlebih dahulu.
+                </div>
             </div>
-        </div>
-    @else
-        <!-- Grid Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- 1. Libur Mingguan (Left Column) -->
-            <div class="lg:col-span-1">
-                <div class="p-4 sm:p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 h-full flex flex-col">
-                    <div class="mb-5">
-                         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Libur Mingguan</h3>
-                         <p class="text-sm text-gray-500 dark:text-gray-400">
-                             Pilih hari yang secara rutin menjadi hari libur untuk seluruh tahun ajaran aktif.
-                         </p>
-                    </div>
-                    
-                    <form action="{{ route('hari-libur.updateWeekly') }}" method="POST" class="flex-1 flex flex-col justify-between">
-                        @csrf
-                        <input type="hidden" name="tahun_id" value="{{ $tahun->id }}">
-
-                        <!-- Form Masa Berlaku (Baru) -->
-                        <div class="p-4 mb-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                            <h6 class="text-xs font-bold uppercase text-blue-800 dark:text-blue-300 mb-2 tracking-wider">Masa Berlaku (Opsional)</h6>
-                            <p class="text-xs text-blue-600 dark:text-blue-400 mb-3 leading-relaxed">
-                                Jika diisi, aturan libur ini hanya berlaku dalam rentang tanggal tersebut. Kosongkan untuk berlaku selamanya dalam tahun ajaran ini.
-                            </p>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label for="weekly_start" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Mulai</label>
-                                    <input type="date" name="tanggal_mulai" id="weekly_start" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
-                                </div>
-                                <div>
-                                    <label for="weekly_end" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Sampai</label>
-                                    <input type="date" name="tanggal_akhir" id="weekly_end" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+        @else
+            <!-- Grid Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- 1. Libur Mingguan (Left Column) -->
+                <div class="lg:col-span-1">
+                    <div class="p-4 sm:p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 h-full flex flex-col">
+                        <div class="mb-5">
+                             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Libur Mingguan</h3>
+                             <p class="text-sm text-gray-500 dark:text-gray-400">
+                                 Pilih hari yang secara rutin menjadi hari libur untuk seluruh tahun ajaran aktif.
+                             </p>
+                        </div>
+                        
+                        <form action="{{ route('hari-libur.updateWeekly') }}" method="POST" class="flex-1 flex flex-col justify-between">
+                            @csrf
+                            <input type="hidden" name="tahun_id" value="{{ $tahun->id }}">
+    
+                            <!-- Form Masa Berlaku (Baru) -->
+                            <div class="p-4 mb-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                                <h6 class="text-xs font-bold uppercase text-blue-800 dark:text-blue-300 mb-2 tracking-wider">Masa Berlaku (Opsional)</h6>
+                                <p class="text-xs text-blue-600 dark:text-blue-400 mb-3 leading-relaxed">
+                                    Jika diisi, aturan libur ini hanya berlaku dalam rentang tanggal tersebut. Kosongkan untuk berlaku selamanya dalam tahun ajaran ini.
+                                </p>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <x-form.input type="date" name="tanggal_mulai" id="weekly_start" label="Mulai" />
+                                    <x-form.input type="date" name="tanggal_akhir" id="weekly_end" label="Sampai" />
                                 </div>
                             </div>
-                        </div>
                         
                         <div class="space-y-3 mb-6">
                             @foreach(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'] as $day)
@@ -226,13 +212,10 @@
                             </div>
     
                             <div class="grid grid-cols-1 gap-4" id="date-inputs">
-                               <div>
-                                    <label for="tanggal_mulai" class="block mb-1.5 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Tanggal Mulai</label>
-                                    <input type="date" name="tanggal_mulai" id="tanggal_mulai" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" required />
-                               </div>
+                               <x-form.input type="date" name="tanggal_mulai" id="tanggal_mulai" label="Tanggal Mulai" required />
+                               
                                <div id="end-date-container" class="hidden">
-                                     <label for="tanggal_akhir" class="block mb-1.5 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Tanggal Akhir</label>
-                                    <input type="date" name="tanggal_akhir" id="tanggal_akhir" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
+                                     <x-form.input type="date" name="tanggal_akhir" id="tanggal_akhir" label="Tanggal Akhir" />
                                      <p class="mt-1 text-xs text-gray-400">Sampai dengan tanggal ini (inklusif).</p>
                                </div>
                             </div>
@@ -285,13 +268,10 @@
                             </div>
     
                             <div class="grid grid-cols-1 gap-4">
-                               <div>
-                                    <label for="edit_tanggal_mulai" class="block mb-1.5 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Tanggal Mulai</label>
-                                    <input type="date" name="tanggal_mulai" id="edit_tanggal_mulai" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" required />
-                               </div>
+                               <x-form.input type="date" name="tanggal_mulai" id="edit_tanggal_mulai" label="Tanggal Mulai" required />
+                               
                                <div id="edit-end-date-container" class="hidden">
-                                    <label for="edit_tanggal_akhir" class="block mb-1.5 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Tanggal Akhir</label>
-                                    <input type="date" name="tanggal_akhir" id="edit_tanggal_akhir" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
+                                    <x-form.input type="date" name="tanggal_akhir" id="edit_tanggal_akhir" label="Tanggal Akhir" />
                                     <p class="mt-1 text-xs text-gray-400">Sampai dengan tanggal ini (inklusif).</p>
                                </div>
                             </div>

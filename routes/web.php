@@ -23,11 +23,14 @@ use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\AbsensiReportController;
 use App\Http\Controllers\FingerprintMachineController;
 use App\Http\Controllers\SekolahController;
+use App\Http\Controllers\PegawaiWajibHadirController;
+use App\Http\Controllers\SpecialEventController;
+use App\Http\Controllers\PegawaiIzinController;
 
 
 
 // Override Fortify Password Reset to Block Inactive Users
-Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
     ->middleware(['guest:'.config('fortify.guard')])
     ->name('password.email');
 
@@ -129,17 +132,25 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('dashboard', [PegawaiAttendanceController::class, 'index'])->name('index');
             Route::get('rekap-pegawai', [PegawaiAttendanceController::class, 'rekapPegawai'])->name('rekap-pegawai');
             Route::get('report', [PegawaiAttendanceController::class, 'report'])->name('report');
+            Route::get('report/employee', [AbsensiPegawaiReportController::class, 'index'])->name('report.employee');
+            Route::get('report/employee/export', [AbsensiPegawaiReportController::class, 'export'])->name('report.employee.export');
             Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
             Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
             
             // Wajib Hadir Routes
-            Route::get('wajib-hadir', [\App\Http\Controllers\PegawaiWajibHadirController::class, 'index'])->name('wajib-hadir.index');
-            Route::post('wajib-hadir', [\App\Http\Controllers\PegawaiWajibHadirController::class, 'store'])->name('wajib-hadir.store');
+            Route::get('wajib-hadir', [PegawaiWajibHadirController::class, 'index'])->name('wajib-hadir.index');
+            Route::post('wajib-hadir', [PegawaiWajibHadirController::class, 'store'])->name('wajib-hadir.store');
 
             Route::prefix('payroll')->name('payroll.')->group(function () {
                 Route::get('/', [PayrollController::class, 'index'])->name('index');
                 Route::get('{id}/slip', [PayrollController::class, 'slip'])->name('slip');
             });
+
+            // Special Events
+            Route::resource('events', SpecialEventController::class);
+            
+            // Perizinan (Izin/Sakit/Cuti)
+            Route::resource('izin', PegawaiIzinController::class);
         });
 
     });
