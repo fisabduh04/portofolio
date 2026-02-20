@@ -11,32 +11,25 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">Masukkan data ketidakhadiran pegawai.</p>
         </div>
         
-        <form action="{{ route('attendance.izin.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('attendance.izin.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
+            
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div class="sm:col-span-2">
-                     <label for="pegawai_id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nama Pegawai</label>
-                     <select name="pegawai_id" id="pegawai_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" required>
-                        <option value="">-- Pilih Pegawai --</option>
-                        @foreach($pegawais as $p)
-                            <option value="{{ $p->id }}">{{ $p->nama }}</option>
-                        @endforeach
-                     </select>
+                     <x-form.select name="pegawai_id" label="Nama Pegawai" :options="$pegawais" placeholder="-- Pilih Pegawai --" required />
                 </div>
                 
                 <div>
-                     <label for="jenis_izin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Jenis Izin</label>
-                     <select name="jenis_izin" id="jenis_izin" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" required>
-                        <option value="Sakit">Sakit (Tetap Gaji, Tanpa Uang Makan)</option>
-                        <option value="Izin">Izin (Potong Gaji & Uang Makan)</option>
-                        <option value="Cuti">Cuti (Tetap Gaji, Tanpa Uang Makan)</option>
-                        <option value="Dinas Luar">Dinas Luar (Full Payment)</option>
-                     </select>
+                     <x-form.select name="jenis_izin" label="Jenis Izin" :options="[
+                        'Sakit' => 'Sakit (Tetap Gaji, Tanpa Uang Makan)',
+                        'Izin' => 'Izin (Potong Gaji & Uang Makan)',
+                        'Cuti' => 'Cuti (Tetap Gaji, Tanpa Uang Makan)',
+                        'Dinas Luar' => 'Dinas Luar (Full Payment)'
+                     ]" placeholder="-- Pilih Jenis Izin --" required />
                 </div>
 
                 <div>
-                    <label for="bukti_dokumen" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Upload Bukti (Opsional)</label>
-                    <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="bukti_dokumen" name="bukti_dokumen" type="file">
+                    <x-form.input type="file" name="bukti_dokumen" label="Upload Bukti (Opsional)" />
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-300">JPG, PNG, PDF (Max. 2MB)</p>
                 </div>
 
@@ -48,12 +41,11 @@
                 </div>
                 
                 <div class="sm:col-span-2">
-                     <label for="keterangan" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Keterangan / Alasan</label>
-                     <textarea id="keterangan" name="keterangan" rows="3" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Jelaskan alasan izin/sakit/cuti..."></textarea>
+                     <x-form.textarea name="keterangan" label="Keterangan / Alasan" rows="3" placeholder="Jelaskan alasan izin/sakit/cuti..." />
                 </div>
             </div>
 
-            <div class="mt-6 flex items-center gap-3">
+            <div class="flex items-center gap-3">
                 <x-btn type="submit" color="blue" icon="save">Simpan Data</x-btn>
                 <x-btn type="a" href="{{ route('attendance.izin.index') }}" color="light">Batal</x-btn>
             </div>

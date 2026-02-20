@@ -30,17 +30,7 @@
             </a>
          </li>
 
-         @can('viewAny', \App\Models\User::class)
-
-         <li>
-             <a href="{{ route('operator.users.index') }}" class="flex items-center px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand">
-                <svg class="w-5 h-5 transition duration-75 group-hover:text-fg-brand" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <span class="ms-3">Manajemen Akun</span>
-             </a>
-         </li>
-         @endcan
+         
 
          <li>
             <button type="button" class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand" aria-controls="dropdown-akademik" data-collapse-toggle="dropdown-akademik">
@@ -53,9 +43,11 @@
                 </svg>
             </button>
             <ul id="dropdown-akademik" class="hidden py-2 space-y-2">
+                 @can('viewAny', \App\Models\User::class)
                 <li>
                     <a href="{{ route('sekolah.index') }}" class="flex items-center w-full pl-11 px-2 py-1.5 text-body rounded-base hover:bg-neutral-tertiary hover:text-fg-brand group">Data Sekolah</a>
                 </li>
+                @endcan
 
                 <li>
                     <a href="{{ route('operator.users.index') }}" class="flex items-center w-full pl-11 px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand">Manajemen Akun</a>

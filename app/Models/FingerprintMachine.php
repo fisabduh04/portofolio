@@ -16,5 +16,8 @@ class FingerprintMachine extends Model
         'comkey',
         'location',
         'status',
+        'is_scheduler_active',
+        'scheduler_start_time',
+        'scheduler_end_time',
     ];
 }

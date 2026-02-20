@@ -25,6 +25,7 @@ use App\Http\Controllers\FingerprintMachineController;
 use App\Http\Controllers\SekolahController;
 use App\Http\Controllers\PegawaiWajibHadirController;
 use App\Http\Controllers\SpecialEventController;
+use App\Http\Controllers\PegawaiIzinController;
 
 
 
@@ -110,14 +111,14 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::post('store', [PegawaiAttendanceController::class, 'store'])->name('store');
             Route::post('process', [PegawaiAttendanceController::class, 'process'])->name('process');
             Route::get('report', [PegawaiAttendanceController::class, 'report'])->name('report');
-            Route::get('report/employee', [\App\Http\Controllers\AbsensiPegawaiReportController::class, 'index'])->name('report.employee');
-            Route::get('report/employee/export', [\App\Http\Controllers\AbsensiPegawaiReportController::class, 'export'])->name('report.employee.export');
+            Route::get('report/employee', [AbsensiPegawaiReportController::class, 'index'])->name('report.employee');
+            Route::get('report/employee/export', [AbsensiPegawaiReportController::class, 'export'])->name('report.employee.export');
             Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
             Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
             
             // Wajib Hadir Routes
-            Route::get('wajib-hadir', [\App\Http\Controllers\PegawaiWajibHadirController::class, 'index'])->name('wajib-hadir.index');
-            Route::post('wajib-hadir', [\App\Http\Controllers\PegawaiWajibHadirController::class, 'store'])->name('wajib-hadir.store');
+            Route::get('wajib-hadir', [PegawaiWajibHadirController::class, 'index'])->name('wajib-hadir.index');
+            Route::post('wajib-hadir', [PegawaiWajibHadirController::class, 'store'])->name('wajib-hadir.store');
 
             Route::prefix('payroll')->name('payroll.')->group(function () {
                 Route::get('/', [PayrollController::class, 'index'])->name('index');
@@ -125,10 +126,10 @@ Route::middleware(['auth', 'active'])->group(function () {
             });
 
             // Special Events
-            Route::resource('events', \App\Http\Controllers\SpecialEventController::class);
+            Route::resource('events', SpecialEventController::class);
             
             // Perizinan (Izin/Sakit/Cuti)
-            Route::resource('izin', \App\Http\Controllers\PegawaiIzinController::class);
+            Route::resource('izin', PegawaiIzinController::class);
         });
 
 

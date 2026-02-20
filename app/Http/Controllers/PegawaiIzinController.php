@@ -30,7 +30,7 @@ class PegawaiIzinController extends Controller
 
     public function create()
     {
-        $pegawais = Pegawai::orderBy('name')->get();
+        $pegawais = Pegawai::where('aktif', 'Aktif')->orderBy('name')->pluck('name', 'id');
         return view('attendance.izin.create', compact('pegawais'));
     }
 

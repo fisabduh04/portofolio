@@ -22,6 +22,29 @@
                 
                 <x-form.input name="location" label="Lokasi" placeholder="Lantai 1, Depan Lift" />
 
+                <div class="p-4 mb-4 bg-gray-50 rounded-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-4">Pengaturan Scheduler (Tarik Data Otomatis)</h3>
+                    
+                    <div class="flex items-center mb-4">
+                        <input id="is_scheduler_active" type="checkbox" name="is_scheduler_active" value="1" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        <label for="is_scheduler_active" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Aktifkan Scheduler</label>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="scheduler_start_time" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Jam Mulai</label>
+                            <input type="time" name="scheduler_start_time" id="scheduler_start_time" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
+                        </div>
+                        <div>
+                            <label for="scheduler_end_time" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Jam Selesai</label>
+                            <input type="time" name="scheduler_end_time" id="scheduler_end_time" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
+                        </div>
+                        <p class="col-span-2 text-xs text-gray-500 dark:text-gray-400">
+                            Jika aktif, sistem akan menarik data secara otomatis dalam rentang waktu ini.
+                        </p>
+                    </div>
+                </div>
+
                 <div class="flex items-center">
                     <input id="status" type="checkbox" name="status" value="1" checked class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                     <label for="status" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Status Aktif</label>
