@@ -13,7 +13,7 @@ use App\Policies\UserPolicy;
 
 class UserProvisioningController extends Controller
 {
-    private const ROLES = ['admin', 'operator', 'guru', 'siswa', 'kepala'];
+    private const ROLES = ['admin', 'operator', 'guru', 'siswa', 'kepala', 'staff'];
 
     public function index(Request $request)
     {
@@ -194,7 +194,10 @@ class UserProvisioningController extends Controller
             'kepala'   => 4,
             'admin'    => 3,
             'operator' => 2,
-            default    => 1, // Guru & Siswa
+            'guru'     => 1,
+            'staff'    => 1,
+            'siswa'    => 1,
+            default    => 0,
         };
     }
 }

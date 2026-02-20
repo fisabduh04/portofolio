@@ -59,4 +59,15 @@ class Pegawai extends Model
         // Return the first enrollment ID found, or null
         return $this->fingerprintEnrollments->first()?->fingerprint_user_id;
     }
+
+    public function specialEvents()
+    {
+        return $this->belongsToMany(SpecialEvent::class, 'special_event_participants');
+    }
+
+    public function scheduleOverrides()
+    {
+        return $this->hasMany(PegawaiScheduleOverride::class);
+    }
+    }
 }

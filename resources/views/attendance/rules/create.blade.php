@@ -8,11 +8,23 @@
 
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-base shadow-sm mt-4">
         <div class="p-4 sm:p-6">
-            <form action="{{ route('attendance.rules.store') }}" method="POST" class="space-y-6">
+            <form action="{{ route('attendance.rules.store') }}" method="POST" class="space-y-6" x-data="{ ruleType: 'Standard' }">
                 @csrf
                 
-                <div>
-                    <x-form.input name="name" label="Nama Aturan" placeholder="Contoh: Staff Kantor, Guru Piket" required />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <x-form.input name="name" label="Nama Aturan" placeholder="Contoh: Staff Kantor, Guru Piket" required />
+                    </div>
+                     <div>
+                        <label for="rule_type" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tipe Aturan</label>
+                        <select id="rule_type" name="rule_type" x-model="ruleType" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" required>
+                            <option value="Standard">Standard (Staff/Karyawan)</option>
+                            <option value="Teacher">Guru (Ikut Jadwal Mengajar)</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400" x-show="ruleType === 'Teacher'">
+                            Aturan ini akan mengikuti Jadwal Pelajaran (Otomatis).
+                        </p>
+                    </div>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4">
@@ -53,7 +65,7 @@
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Potongan gaji jika scan masuk lewat dari Toleransi.</p>
                 </div>
 
-                <div>
+                <div x-show="ruleType === 'Standard'" x-transition>
                     <span class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Hari Kerja</span>
                     <div class="flex flex-wrap gap-4">
                         @foreach(['Mon' => 'Senin', 'Tue' => 'Selasa', 'Wed' => 'Rabu', 'Thu' => 'Kamis', 'Fri' => 'Jumat', 'Sat' => 'Sabtu', 'Sun' => 'Minggu'] as $key => $label)
@@ -63,6 +75,7 @@
                         </div>
                         @endforeach
                     </div>
+                    <p class="mt-2 text-xs text-gray-500">Pilih hari kerja wajib untuk pegawai dengan aturan ini.</p>
                 </div>
 
                 <div class="flex items-center justify-end space-x-2">

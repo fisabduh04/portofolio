@@ -132,7 +132,30 @@ class PegawaiAttendanceController extends Controller
                 sum(total_honor) as grand_total
             ')
             ->groupBy('pegawai_id')
-            ->get();
+            ->get()
+            ->keyBy('pegawai_id');
+
+        // 2. Fetch All Active Employees
+        $activePegawais = Pegawai::where('aktif', 'Aktif')->with(['ruleAllocations' => function($query) use ($year) {
+            $query->whereHas('tahun', function($q) use ($year) {
+                $q->where('tahun', $year);
+            })->with('attendanceRule');
+        }])->orderBy('name')->get();
+
+        // 3. Merge Data (Left Join Logic)
+        $report = $activePegawais->map(function($pegawai) use ($stats) {
+            $stat = $stats->get($pegawai->id);
+            
+            return (object) [
+                'pegawai' => $pegawai,
+                'hadir_count' => $stat->hadir_count ?? 0,
+                'telat_count' => $stat->telat_count ?? 0,
+                'alpha_count' => $stat->alpha_count ?? 0,
+                'total_gaji' => $stat->total_gaji ?? 0,
+                'total_makan' => $stat->total_makan ?? 0,
+                'grand_total' => $stat->grand_total ?? 0,
+            ];
+        });
 
         return view('attendance.report', compact('report', 'month', 'year'));
     }
@@ -182,5 +205,102 @@ class PegawaiAttendanceController extends Controller
             DB::rollBack();
             return back()->with('type', 'error')->with('message', 'Gagal memperbarui konfigurasi: ' . $e->getMessage());
         }
+    }
+
+    public function rekapPegawai(Request $request)
+    {
+        $pegawaiId = $request->input('pegawai_id');
+        $month = $request->input('month', date('m'));
+        $year = $request->input('year', date('Y'));
+        
+        $pegawais = Pegawai::where('aktif', 'Aktif')->orderBy('name')->get();
+        
+        $attendanceData = collect([]);
+        $stats = [
+            'total_hadir' => 0,
+            'total_durasi_jam' => 0, // Decimal hours
+            'total_durasi_formatted' => '00:00:00'
+        ];
+        
+        $selectedPegawai = null;
+        
+        if ($pegawaiId) {
+            $selectedPegawai = Pegawai::find($pegawaiId);
+            
+            if ($selectedPegawai) {
+                // Get start and end of month
+                $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+                $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+                
+                // Fetch attendance for range
+                $dbAttendance = PegawaiAbsensi::where('pegawai_id', $pegawaiId)
+                    ->whereBetween('tanggal', [$startDate->toDateString(), $endDate->toDateString()])
+                    ->get()
+                    ->keyBy('tanggal');
+                    
+                // Generate full date range
+                $attendanceData = collect([]);
+                $current = $startDate->copy();
+                $totalSeconds = 0;
+
+                $joinDate = $selectedPegawai->created_at ? $selectedPegawai->created_at->startOfDay() : null;
+                
+                while ($current->lte($endDate)) {
+                    $dateStr = $current->toDateString();
+                    
+                    if ($dbAttendance->has($dateStr)) {
+                        $log = $dbAttendance->get($dateStr);
+                        $attendanceData->push($log);
+                        
+                        // Process Totals (Existing Logic)
+                        if ($log->status == 'Hadir' || $log->status == 'Telat' || $log->status == 'Hadir (Event)') {
+                            $stats['total_hadir']++;
+                            
+                            if ($log->durasi_kerja) {
+                                $parts = explode(':', $log->durasi_kerja);
+                                if (count($parts) === 3) {
+                                    $totalSeconds += ($parts[0] * 3600) + ($parts[1] * 60) + $parts[2];
+                                }
+                            }
+                        }
+                    } else {
+                        // Check for "Belum Bekerja" or "Libur"
+                        $statusSpec = '-';
+                        if ($joinDate && $current->lt($joinDate)) {
+                            $statusSpec = 'Belum Bekerja';
+                        } elseif ($current->isWeekend()) {
+                            $statusSpec = 'Libur';
+                        }
+
+                        // Create Empty Placeholder
+                        $attendanceData->push((object)[
+                            'tanggal' => $dateStr,
+                            'jam_masuk' => '-',
+                            'jam_pulang' => '-',
+                            'status' => $statusSpec,
+                            'attendance_source' => '-',
+                            'durasi_kerja' => '-'
+                        ]);
+                    }
+                    
+                    $current->addDay();
+                }
+                
+                // Format total duration
+                $hours = floor($totalSeconds / 3600);
+                $minutes = floor(($totalSeconds % 3600) / 60);
+                $seconds = $totalSeconds % 60;
+                $stats['total_durasi_formatted'] = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+                $stats['total_durasi_jam'] = round($totalSeconds / 3600, 2);
+            }
+        }
+
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+        
+        return view('attendance.rekap_pegawai', compact('pegawais', 'attendanceData', 'stats', 'month', 'year', 'pegawaiId', 'selectedPegawai', 'monthNames'));
     }
 }
