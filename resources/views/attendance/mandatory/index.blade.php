@@ -42,8 +42,8 @@
                                         <div class="text-xs text-gray-500 font-normal">{{ $pegawai->jabatan ?? 'Pegawai' }}</div>
                                     </td>
                                     @php
-                                        // $pegawai->wajib_hadir is automatically cast to array by Model
-                                        $manualDays = $pegawai->wajib_hadir ?? [];
+                                        // Use relationship instead of removed JSON column
+                                        $manualDays = $pegawai->wajibHadirs->pluck('hari')->toArray();
                                         $autoDays = $automaticDays[$pegawai->id] ?? [];
                                     @endphp
                                     @foreach($days as $day)
