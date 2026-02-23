@@ -69,5 +69,5 @@ class Pegawai extends Model
     {
         return $this->hasMany(PegawaiScheduleOverride::class);
     }
-    }
 }
+

@@ -115,34 +115,20 @@ class PegawaiAttendanceController extends Controller
         $month = $request->input('month', now()->month);
         $year = $request->input('year', now()->year);
 
-        $report = PegawaiAbsensi::with(['pegawai.ruleAllocations' => function($query) use ($year) {
-            $query->whereHas('tahun', function($q) use ($year) {
-                $q->where('tahun', $year);
-            })->with('attendanceRule');
-        }])
-            ->whereMonth('tanggal', $month)
-            ->whereYear('tanggal', $year)
-            ->selectRaw('
-                pegawai_id,
-                sum(case when status in ("Hadir", "Telat") then 1 else 0 end) as hadir_count,
-                sum(case when status = "Telat" then 1 else 0 end) as telat_count,
-                sum(case when status = "Alpha" then 1 else 0 end) as alpha_count,
-                sum(nominal_gaji) as total_gaji,
-                sum(nominal_makan) as total_makan,
-                sum(total_honor) as grand_total
-            ')
-            ->groupBy('pegawai_id')
-            ->get()
-            ->keyBy('pegawai_id');
+        // 1. Get Aggregated Stats from Service
+        $stats = $this->attendanceService->getMonthlyStats($month, $year);
 
         // 2. Fetch All Active Employees
-        $activePegawais = Pegawai::where('aktif', 'Aktif')->with(['ruleAllocations' => function($query) use ($year) {
-            $query->whereHas('tahun', function($q) use ($year) {
-                $q->where('tahun', $year);
-            })->with('attendanceRule');
-        }])->orderBy('name')->get();
+        $activePegawais = Pegawai::where('aktif', 'Aktif')
+            ->with(['ruleAllocations' => function($query) use ($year) {
+                $query->whereHas('tahun', function($q) use ($year) {
+                    $q->where('tahun', $year);
+                })->with('attendanceRule');
+            }])
+            ->orderBy('name')
+            ->get();
 
-        // 3. Merge Data (Left Join Logic)
+        // 3. Merge Data
         $report = $activePegawais->map(function($pegawai) use ($stats) {
             $stat = $stats->get($pegawai->id);
             
@@ -151,6 +137,7 @@ class PegawaiAttendanceController extends Controller
                 'hadir_count' => $stat->hadir_count ?? 0,
                 'telat_count' => $stat->telat_count ?? 0,
                 'alpha_count' => $stat->alpha_count ?? 0,
+                'izin_count' => $stat->izin_count ?? 0,
                 'total_gaji' => $stat->total_gaji ?? 0,
                 'total_makan' => $stat->total_makan ?? 0,
                 'grand_total' => $stat->grand_total ?? 0,
