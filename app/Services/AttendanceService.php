@@ -330,4 +330,25 @@ class AttendanceService
             'status_label' => 'Libur',
         ];
     }
+    /**
+     * Get aggregated monthly attendance statistics for all employees.
+     */
+    public function getMonthlyStats($month, $year)
+    {
+        return PegawaiAbsensi::whereMonth('tanggal', $month)
+            ->whereYear('tanggal', $year)
+            ->selectRaw('
+                pegawai_id,
+                sum(case when status in ("Hadir", "Telat", "Hadir (Event)") then 1 else 0 end) as hadir_count,
+                sum(case when status = "Telat" then 1 else 0 end) as telat_count,
+                sum(case when status = "Alpha" then 1 else 0 end) as alpha_count,
+                sum(case when status in ("Sakit", "Cuti") then 1 else 0 end) as izin_count,
+                sum(nominal_gaji) as total_gaji,
+                sum(nominal_makan) as total_makan,
+                sum(total_honor) as grand_total
+            ')
+            ->groupBy('pegawai_id')
+            ->get()
+            ->keyBy('pegawai_id');
+    }
 }

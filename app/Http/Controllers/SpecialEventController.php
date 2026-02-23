@@ -4,6 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\SpecialEvent;
 use App\Models\Pegawai;
+use App\Services\AttendanceService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class SpecialEventController extends Controller
+{
     protected $attendanceService;
 
     public function __construct(AttendanceService $attendanceService)

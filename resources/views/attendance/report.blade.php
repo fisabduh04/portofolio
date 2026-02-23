@@ -7,11 +7,12 @@
 
     <x-layout.sidebar.sub-menu :items="[
         ['name' => 'Dashboard', 'href' => route('attendance.index')],
+        ['name' => 'Laporan Bulanan', 'href' => route('attendance.report'), 'active' => true],
+        ['name' => 'Laporan Individu', 'href' => route('attendance.report.employee')],
         ['name' => 'Aturan & Jam Kerja', 'href' => route('attendance.rules.index')],
         ['name' => 'Mesin Fingerprint', 'href' => route('attendance.fingerprint.index')],
         ['name' => 'Events', 'href' => route('attendance.events.index')],
         ['name' => 'Konfigurasi', 'href' => route('attendance.setting')],
-        ['name' => 'Laporan Bulanan', 'href' => route('attendance.report'), 'active' => true],
         ['name' => 'Payroll', 'href' => route('attendance.payroll.index')]
     ]" />
 
@@ -28,21 +29,9 @@
                         <input type="hidden" name="end_date" value="{{ \Carbon\Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString() }}">
                         <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors bg-yellow-600 rounded-base hover:bg-yellow-700 focus:ring-4 focus:ring-yellow-300 shadow-sm" title="Gunakan ini jika mengubah aturan gaji di tengah bulan.">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                        </button>
                             Hitung Ulang
                         </button>
                     </form>
-
-                    <!-- Link ke Laporan Per Pegawai -->
-
-    <x-tabs :links="[
-        ['name' => 'Data Absensi', 'href' => route('attendance.index')],
-        ['name' => 'Konfigurasi', 'href' => route('attendance.setting')],
-        ['name' => 'Laporan Bulanan', 'href' => route('attendance.report'), 'active' => true],
-        ['name' => 'Rekap Per Pegawai', 'href' => route('attendance.report.employee')],
-        ['name' => 'Payroll', 'href' => route('attendance.payroll.index')]
-    ]" />
-
 
                     <!-- Filter (Right Side) -->
                     <form action="{{ route('attendance.report') }}" method="GET" class="flex items-center gap-2">
