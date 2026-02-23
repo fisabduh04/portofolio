@@ -7,11 +7,12 @@
 
     <x-layout.sidebar.sub-menu :items="[
         ['name' => 'Dashboard', 'href' => route('attendance.index')],
+        ['name' => 'Laporan Bulanan', 'href' => route('attendance.report'), 'active' => true],
+        ['name' => 'Laporan Individu', 'href' => route('attendance.report.employee')],
         ['name' => 'Aturan & Jam Kerja', 'href' => route('attendance.rules.index')],
         ['name' => 'Mesin Fingerprint', 'href' => route('attendance.fingerprint.index')],
         ['name' => 'Events', 'href' => route('attendance.events.index')],
         ['name' => 'Konfigurasi', 'href' => route('attendance.setting')],
-        ['name' => 'Laporan Bulanan', 'href' => route('attendance.report'), 'active' => true],
         ['name' => 'Payroll', 'href' => route('attendance.payroll.index')]
     ]" />
 

@@ -26,6 +26,7 @@ use App\Http\Controllers\SekolahController;
 use App\Http\Controllers\PegawaiWajibHadirController;
 use App\Http\Controllers\SpecialEventController;
 use App\Http\Controllers\PegawaiIzinController;
+use App\Http\Controllers\AbsensiPegawaiReportController;
 
 
 
