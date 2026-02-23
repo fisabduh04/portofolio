@@ -33,17 +33,6 @@
                         </button>
                     </form>
 
-                    <!-- Link ke Laporan Per Pegawai -->
-
-    <x-tabs :links="[
-        ['name' => 'Data Absensi', 'href' => route('attendance.index')],
-        ['name' => 'Konfigurasi', 'href' => route('attendance.setting')],
-        ['name' => 'Laporan Bulanan', 'href' => route('attendance.report'), 'active' => true],
-        ['name' => 'Rekap Per Pegawai', 'href' => route('attendance.report.employee')],
-        ['name' => 'Payroll', 'href' => route('attendance.payroll.index')]
-    ]" />
-
-
                     <!-- Filter (Right Side) -->
                     <form action="{{ route('attendance.report') }}" method="GET" class="flex items-center gap-2">
                         @php
