@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use App\Models\kelas;
-use App\Models\siswa;
+use App\Models\Kelas;
+use App\Models\Siswa;
 
 
 class Tahun extends Model

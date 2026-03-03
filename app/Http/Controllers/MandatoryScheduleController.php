@@ -5,6 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
 use Illuminate\Http\Request;
+use App\Models\Jadwal;
+use App\Models\JadwalPiket; 
+use App\Models\Tahun;
+use App\Models\PegawaiWajibHadir;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class MandatoryScheduleController extends Controller
 {
@@ -32,13 +40,13 @@ class MandatoryScheduleController extends Controller
             $auto = [];
             
             // 1. Get Teaching Schedule (Jadwal)
-            $jadwals = \App\Models\Jadwal::where('pegawai_id', $pegawai->id)->pluck('hari')->toArray();
+            $jadwals = Jadwal::where('pegawai_id', $pegawai->id)->pluck('hari')->toArray();
             foreach($jadwals as $hari) {
                 $auto[] = ucfirst(strtolower($hari));
             }
 
             // 2. Get Picket Schedule (JadwalPiket)
-            $pikets = \App\Models\JadwalPiket::where('pegawai_id', $pegawai->id)->pluck('hari')->toArray();
+            $pikets = JadwalPiket::where('pegawai_id', $pegawai->id)->pluck('hari')->toArray();
             foreach($pikets as $hari) {
                 $auto[] = ucfirst(strtolower($hari));
             }
@@ -51,7 +59,7 @@ class MandatoryScheduleController extends Controller
 
     public function store(Request $request)
     {
-        $activeYear = \App\Models\Tahun::aktif()->first();
+        $activeYear = Tahun::aktif()->first();
         
         if (!$activeYear) {
             return redirect()->back()->with('error', 'Tidak ada Tahun Ajaran yang aktif.');

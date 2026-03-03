@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\jenispilihan;
+use App\Models\Jenispilihan;
 use Illuminate\Http\Request;
 
 class JenispilihanController extends Controller

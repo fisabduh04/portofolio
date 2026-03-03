@@ -184,8 +184,6 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/jadwal/export', [JadwalController::class, 'export'])->name('jadwal.export');
         Route::post('/jadwal/import', [JadwalController::class, 'import'])->name('jadwal.import');
         
-        Route::post('/jadwal/import', [JadwalController::class, 'import'])->name('jadwal.import');
-        
         // Resource constrained to IDs only (numbers) to prevent conflict with /jadwal/presensi-harian
         Route::resource('jadwal', JadwalController::class)
             ->except(['index'])

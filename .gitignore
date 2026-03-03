@@ -19,3 +19,7 @@ yarn-error.log
 /.vscode
 
 .codegpt
+
+# Backup & copy folders (jangan di-commit)
+/backups
+/factories - Copy

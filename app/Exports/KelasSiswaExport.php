@@ -3,8 +3,8 @@
 namespace App\Exports;
 
 use App\Models\KelasSiswa;
-use App\Models\siswa;
-use App\Models\kelas;
+use App\Models\Siswa;
+use App\Models\Kelas;
 use App\Models\tahun;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;

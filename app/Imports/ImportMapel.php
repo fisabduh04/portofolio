@@ -2,7 +2,7 @@
 
 namespace App\Imports;
 
-use App\Models\mapel;
+use App\Models\Mapel;
 use App\Models\jurusan;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\ToModel;

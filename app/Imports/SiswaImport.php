@@ -3,7 +3,7 @@
 namespace App\Imports;
 
 
-use App\Models\siswa;
+use App\Models\Siswa;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;

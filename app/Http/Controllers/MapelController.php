@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\MapelExport;
 use App\Imports\ImportMapel;
-use App\Models\mapel;
+use App\Models\Mapel;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 

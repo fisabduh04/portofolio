@@ -2,7 +2,7 @@
 
 namespace App\Imports;
 
-use App\Models\kelas;
+use App\Models\Kelas;
 use Maatwebsite\Excel\Concerns\ToModel;
 use App\Models\jurusan;
 use Maatwebsite\Excel\Concerns\Importable;

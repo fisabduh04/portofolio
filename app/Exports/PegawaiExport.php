@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\pegawai;
+use App\Models\Pegawai;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\FromQuery;

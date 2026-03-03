@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\PegawaiExport;
 use App\Imports\PegawaiImport;
-use App\Models\pegawai;
+use App\Models\Pegawai;
 use App\Models\AttendanceRule;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
