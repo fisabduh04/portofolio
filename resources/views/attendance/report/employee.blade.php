@@ -79,10 +79,15 @@
             @if($selectedPegawai)
                 <!-- Professional Print Header -->
                 <div class="print-only mb-8 text-black">
-                    <div class="text-center border-b-2 border-black pb-4 mb-4">
-                        <h1 class="text-2xl font-bold uppercase">{{ cache('global_sekolah_data')->nama_sekolah ?? 'NAMA SEKOLAH' }}</h1>
-                        <p class="text-sm">{{ cache('global_sekolah_data')->alamat_sekolah ?? 'Alamat Sekolah' }}</p>
-                    </div>
+                    @php
+                        $sekolahPrint = (object) [
+                            'nama_sekolah' => cache('global_sekolah_data')->nama_sekolah ?? 'NAMA SEKOLAH',
+                            'alamat' => cache('global_sekolah_data')->alamat_sekolah ?? 'Alamat Sekolah',
+                            'email' => cache('global_sekolah_data')->email_sekolah ?? '-',
+                            'no_telp' => cache('global_sekolah_data')->telp_sekolah ?? '-',
+                        ];
+                    @endphp
+                    <x-print.letterhead :sekolah="$sekolahPrint" :logo="cache('global_sekolah_data')->logo_path ?? null" size="lg" />
                     <div class="text-center mb-6">
                         <h2 class="text-xl font-bold uppercase underline">LAPORAN KEHADIRAN PEGAWAI</h2>
                     </div>

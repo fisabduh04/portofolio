@@ -16,14 +16,7 @@
 <body class="bg-white p-4 font-serif text-black">
 
     <!-- Header / Kop Surat -->
-    <div class="flex items-center gap-4 mb-4 border-b-4 border-double border-black pb-2">
-        <img src="{{ $logo ?? asset('img/logo.png') }}" class="w-16 h-16 object-contain" alt="Logo">
-        <div class="flex-1 text-center">
-            <h1 class="text-2xl font-bold uppercase tracking-wider">{{ $sekolah->nama_sekolah ?? 'NAMA SEKOLAH' }}</h1>
-            <p class="text-sm font-semibold">{{ $sekolah->alamat ?? 'Alamat Sekolah' }}</p>
-             <p class="text-sm">Email: {{ $sekolah->email ?? '-' }} | Telp: {{ $sekolah->no_telp ?? '-' }}</p>
-        </div>
-    </div>
+    <x-print.letterhead :sekolah="$sekolah" :logo="$logo ?? null" size="md" />
 
     <!-- Judul Laporan -->
     <div class="text-center mb-6">
