@@ -20,14 +20,12 @@
                 Verifikasi
             </button>
         </form>
-        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+        <form action="{{ route('logout') }}" method="POST" class="mt-4">
             @csrf
+            <button type="submit" class="block w-full text-center text-sm text-gray-600 hover:underline">
+                Keluar
+            </button>
         </form>
-        <a href="{{ route('logout') }}"
-            onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-            class="block text-center text-sm text-gray-600 mt-4 hover:underline">
-            Keluar
-        </a>
 
     </div>
 </x-layout.auth>

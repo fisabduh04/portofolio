@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slip Gaji - {{ $pegawai->name }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -82,16 +81,6 @@
     </div>
 
     <div class="container">
-        @php
-            $sekolahPrint = (object) [
-                'nama_sekolah' => cache('global_sekolah_data')->nama_sekolah ?? 'NAMA SEKOLAH',
-                'alamat' => cache('global_sekolah_data')->alamat_sekolah ?? 'Alamat Sekolah',
-                'email' => cache('global_sekolah_data')->email_sekolah ?? '-',
-                'no_telp' => cache('global_sekolah_data')->telp_sekolah ?? '-',
-            ];
-        @endphp
-        <x-print.letterhead :sekolah="$sekolahPrint" :logo="cache('global_sekolah_data')->logo_path ?? null" size="md" />
-
         <div class="header">
             <h1>SLIP GAJI PEGAWAI</h1>
             <p>Periode: {{ \Carbon\Carbon::createFromDate($year, $month, 1)->translatedFormat('F Y') }}</p>

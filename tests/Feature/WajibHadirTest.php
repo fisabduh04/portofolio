@@ -63,8 +63,18 @@ class WajibHadirTest extends TestCase
         // Assuming (pegawai_id, hari, jam, tahun_id) unique?
         // We just deleted all jadwals for this pegawai, so should be safe.
         // However, mapel_id/kelas_id might be foreign keys. Need valid ones.
-        $kelas = \App\Models\Kelas::first() ?? \App\Models\Kelas::create(['nama' => 'X-TEST', 'tahun_id' => $tahun->id, 'jurusan_id' => 1]); // Mock
-        $mapel = \App\Models\Mapel::first() ?? \App\Models\Mapel::create(['nama' => 'TEST-MAPEL']);
+        $jurusan = \App\Models\Jurusan::first() ?? \App\Models\Jurusan::firstOrCreate(
+            ['kode' => 'TEST', 'jurusan' => 'TEST'],
+            ['deskripsi' => 'TEST']
+        );
+        $kelas = \App\Models\Kelas::firstOrCreate(
+            ['kelas' => 'X-TEST', 'jurusan_id' => $jurusan->id],
+            ['ket' => 'Test']
+        );
+        $mapel = \App\Models\Mapel::firstOrCreate(
+            ['mapel' => 'TEST-MAPEL', 'jurusan_id' => $jurusan->id],
+            ['kode' => null, 'ket' => 'Test']
+        );
 
         $jadwal = Jadwal::create([
             'tahun_id' => $tahun->id,
@@ -81,9 +91,17 @@ class WajibHadirTest extends TestCase
 
         // 3. Hit Store Endpoint (Simulate Manual Check for TUE)
         // Must authenticate first - route requires 'auth' middleware
-        $adminUser = User::where('role', 'admin')->first();
+        $adminUser = User::whereIn('role', ['admin', 'operator'])
+            ->where('is_active', 1)
+            ->first();
         if (!$adminUser) {
-            $adminUser = User::where('role', 'operator')->first();
+            $adminUser = User::create([
+                'name' => 'Admin Test',
+                'email' => 'admin-test-' . uniqid() . '@example.com',
+                'password' => bcrypt('password'),
+                'role' => 'admin',
+                'is_active' => 1,
+            ]);
         }
         $this->actingAs($adminUser);
         

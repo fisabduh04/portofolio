@@ -73,9 +73,10 @@ if ($zk->connect()) {
         if (strpos($body, 'POST DATA OK') !== false) {
             echo "[SUCCESS] Data berhasil disinkronkan!\n";
             
-            // OPTIONAL: Hapus log di mesin agar tidak penuh (Hati-hati!)
+            // PERINGATAN KEAMANAN: Jangan mengaktifkan penghapusan otomatis!
+            // Menghapus data di mesin secara otomatis sangat berisiko jika sinkronisasi gagal di tengah jalan.
+            // Biarkan Operator menghapus log secara manual melalui menu mesin jika memori sudah penuh.
             // $zk->clearAttendance(); 
-            // echo "[INFO] Log di mesin dihapus.\n";
         } else {
             echo "[ERROR] API menolak data.\n";
         }

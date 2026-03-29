@@ -35,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
         if (!$this->app->runningInConsole()) {
             
             // 3. Gunakan Cache agar tidak membebani database di SETIAP refresh halaman
-            $sekolah = Cache::rememberForever('global_sekolah_data', function () {
+            $sekolah = Cache::remember('global_sekolah_data', now()->addHours(4), function () {
                 try {
                     return Sekolah::first();
                 } catch (\Exception $e) {
@@ -43,10 +43,13 @@ class AppServiceProvider extends ServiceProvider
                 }
             });
 
+            if (!$sekolah) {
+                Cache::forget('global_sekolah_data');
+                $sekolah = new Sekolah();
+            }
+
             // 4. Logika Logo: Jika ada di DB pakai DB, jika tidak pakai default
-            $logo = ($sekolah && $sekolah->logo) 
-                    ? asset('storage/' . $sekolah->logo) 
-                    : asset('img/logo.png');
+            $logo = $sekolah->logo_url;
 
             View::share('sekolah', $sekolah);
             View::share('logo', $logo);
