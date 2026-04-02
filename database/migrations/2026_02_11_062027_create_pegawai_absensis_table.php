@@ -19,10 +19,12 @@ return new class extends Migration
             $table->time('jam_pulang')->nullable();
             $table->time('durasi_kerja')->nullable();
             $table->string('status')->nullable(); // Hadir, Telat, Alpha, Izin
+            $table->string('attendance_source')->nullable()->comment('Fingerprint, Manual, Event, System');
             $table->decimal('nominal_gaji', 10, 2)->default(0);
             $table->decimal('nominal_makan', 10, 2)->default(0);
             $table->decimal('total_honor', 10, 2)->default(0);
             $table->timestamps();
+            $table->unsignedBigInteger('created_by')->nullable(); // Audit trail
 
             $table->unique(['pegawai_id', 'tanggal']);
         });

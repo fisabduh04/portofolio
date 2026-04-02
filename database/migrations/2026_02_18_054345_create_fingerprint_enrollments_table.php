@@ -27,28 +27,7 @@ return new class extends Migration
             $table->unique(['fingerprint_machine_id', 'fingerprint_user_id'], 'unique_machine_user_id');
         });
 
-        // DATA MIGRATION: Move existing fingerprint_id to this new table
-        // We will assume existing IDs belong to "any" machine (null) or a default one.
-        // For safer compatibility, let's leave machine_id null for legacy data.
-        
-        $pegawais = \Illuminate\Support\Facades\DB::table('pegawais')
-            ->whereNotNull('fingerprint_id')
-            ->where('fingerprint_id', '!=', '')
-            ->get();
-
-        foreach ($pegawais as $pegawai) {
-            try {
-                \Illuminate\Support\Facades\DB::table('fingerprint_enrollments')->insert([
-                    'pegawai_id' => $pegawai->id,
-                    'fingerprint_machine_id' => null, // Legacy data
-                    'fingerprint_user_id' => $pegawai->fingerprint_id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            } catch (\Exception $e) {
-                // Ignore duplicates
-            }
-        }
+        // Data migration dihapus karena kolom fingerprint_id sudah di-drop dari skema pegawais
     }
 
     /**

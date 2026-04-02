@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->string('status',50)->nullable();//sertifikasi atau tidak?
             $table->string('aktif',50)->nullable();//aktif, cuti, berhenti dll?
+            $table->json('wajib_hadir')->nullable()->comment('Array hari wajib hadir (e.g. ["Senin", "Rabu"])');
             $table->string('email')->nullable();
             $table->string('nuptk')->nullable();
             $table->enum('jk',['L','P'])->nullable();
@@ -40,8 +41,10 @@ return new class extends Migration
             $table->string('nokk',50)->nullable();
             $table->string('foto')->nullable();
             $table->text('deskripsi')->nullable();
-            $table->string('password',50)->nullable(); // Updated line for password field
             $table->timestamps();
+
+            // Index untuk pencarian
+            $table->index('name');
         });
     }
 

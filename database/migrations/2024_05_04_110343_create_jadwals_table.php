@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('jadwals', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tahun_id');
-            $table->foreignId('kelas_id');
-            $table->foreignId('pegawai_id');
-            $table->foreignId('mapel_id');
+            $table->foreignId('tahun_id')->constrained('tahuns')->onDelete('cascade');
+            $table->foreignId('kelas_id')->constrained('kelas')->onDelete('cascade');
+            $table->foreignId('pegawai_id')->constrained('pegawais')->onDelete('cascade');
+            $table->foreignId('mapel_id')->constrained('mapels')->onDelete('cascade');
             $table->string('hari', 10)->nullable();
             $table->integer('jam');
             $table->time('mulai');
@@ -24,6 +24,10 @@ return new class extends Migration
             $table->string('status', 100)->nullable();
             $table->string('ket')->nullable();
             $table->timestamps();
+
+            // Index untuk performa query
+            $table->index(['hari', 'tahun_id']);
+            $table->index(['mulai', 'akhir']);
         });
     }
 

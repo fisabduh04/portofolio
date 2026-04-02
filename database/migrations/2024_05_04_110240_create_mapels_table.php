@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('kode')->nullable();
             $table->string('mapel');
-            $table->foreignId('jurusan_id')->nullable();
+            $table->foreignId('jurusan_id')->nullable()->constrained('jurusans')->onDelete('set null');
             $table->string('ket')->nullable();
             $table->text('deskripsi')->nullable();
             $table->timestamps();

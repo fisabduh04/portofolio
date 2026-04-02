@@ -19,6 +19,9 @@ return new class extends Migration
             $table->integer('comkey')->default(0);
             $table->string('location')->nullable();
             $table->boolean('status')->default(true); // Active/Inactive
+            $table->boolean('is_scheduler_active')->default(false);
+            $table->time('scheduler_start_time')->nullable();
+            $table->time('scheduler_end_time')->nullable();
             $table->timestamps();
         });
     }

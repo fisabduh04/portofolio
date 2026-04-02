@@ -13,11 +13,17 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('pegawai_id')->nullable(); // FK ke pegawais (tabel belum ada saat ini)
             $table->string('name');
             $table->string('username')->unique()->nullable();
             $table->string('email')->unique();
+            $table->string('role', 20)->default('guru');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->boolean('is_active')->default(true);
+            $table->text('two_factor_secret')->nullable();
+            $table->text('two_factor_recovery_codes')->nullable();
+            $table->timestamp('two_factor_confirmed_at')->nullable();
             $table->string('foto')->nullable();
             $table->rememberToken();
             $table->timestamps();

@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('logbooks', function (Blueprint $table) {
             $table->id();
+            $table->enum('kategori', ['mapel', 'piket_masuk', 'piket_pulang'])->default('mapel');
             $table->date('tanggal')->nullable();
             $table->foreignId('jadwal_id')->nullable()->constrained('jadwals');
+            $table->foreignId('kelas_id')->nullable()->constrained('kelas')->onDelete('cascade');
             $table->foreignId('pegawai_id')->nullable()->constrained('pegawais');
             $table->text('materi')->nullable();
             $table->text('catatan')->nullable();

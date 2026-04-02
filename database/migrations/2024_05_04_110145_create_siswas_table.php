@@ -18,6 +18,7 @@ return new class extends Migration
         $table->enum('jk',['L','P'])->nullable();
         $table->string('nisn',50)->nullable();
         $table->string('status',50)->nullable();// santri atau bukan
+        $table->string('foto')->nullable();
         $table->string('aktif',50)->nullable();// Aktif, Berhenti, Pindah
         $table->string('tempatlahir',50)->nullable();
         $table->date('tanggallahir')->nullable();
@@ -81,6 +82,11 @@ return new class extends Migration
         $table->integer('jmlsaudara')->nullable();
         $table->integer('jarakrumah')->nullable();
         $table->text('deskripsi')->nullable();
+
+        // Index untuk pencarian
+        $table->index('nama');
+        $table->index('rombelsaatini');
+
         $table->timestamps();
         });
     }

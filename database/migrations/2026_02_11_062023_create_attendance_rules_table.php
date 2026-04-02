@@ -14,14 +14,17 @@ return new class extends Migration
         Schema::create('attendance_rules', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->enum('rule_type', ['Standard', 'Teacher'])->default('Standard');
             $table->time('jam_masuk');
             $table->time('jam_pulang');
             $table->time('scan_masuk_start');
             $table->time('scan_pulang_end');
-            $table->integer('toleransi_telat')->default(0); // Minutes
+            $table->integer('toleransi_telat')->default(0); // Menit
             $table->decimal('bantuan_makan', 10, 2)->default(0);
             $table->decimal('gaji_harian', 10, 2)->default(0);
             $table->decimal('gaji_per_jam', 10, 2)->nullable();
+            $table->json('hari_kerja')->nullable(); // Default Mon-Fri
+            $table->decimal('denda_telat', 10, 2)->default(0);
             $table->timestamps();
         });
     }
