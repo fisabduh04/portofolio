@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\kelas;
+use App\Models\Kelas;
 
 class KelasSeeder extends Seeder
 {
@@ -13,23 +13,23 @@ class KelasSeeder extends Seeder
      */
     public function run(): void
     {
-        Kelas::create(['tingkat' => '1', 'kelas' => 'X A TKJ', 'jurusan_id' => 1, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '2', 'kelas' => 'XI A TKJ', 'jurusan_id' => 1, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '3', 'kelas' => 'XII A TKJ', 'jurusan_id' => 1, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '1', 'kelas' => 'X B TKJ', 'jurusan_id' => 1, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '2', 'kelas' => 'XI B TKJ', 'jurusan_id' => 1, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '3', 'kelas' => 'XII B TKJ', 'jurusan_id' => 1, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '1', 'kelas' => 'X A MM', 'jurusan_id' => 2, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '2', 'kelas' => 'XI A MM', 'jurusan_id' => 2, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '3', 'kelas' => 'XII A MM', 'jurusan_id' => 2, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '1', 'kelas' => 'X B MM', 'jurusan_id' => 2, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '2', 'kelas' => 'XI B MM', 'jurusan_id' => 2, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '3', 'kelas' => 'XII B MM', 'jurusan_id' => 2, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '1', 'kelas' => 'X TBSM', 'jurusan_id' => 3, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '2', 'kelas' => 'XI TBSM', 'jurusan_id' => 3, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '3', 'kelas' => 'XII TBSM', 'jurusan_id' => 3, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '1', 'kelas' => 'X TB', 'jurusan_id' => 4, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '2', 'kelas' => 'XI TB', 'jurusan_id' => 4, 'ket' => 'aktif']);
-        Kelas::create(['tingkat' => '3', 'kelas' => 'XII TB', 'jurusan_id' => 4, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'X A TKJ'], ['tingkat' => '1', 'jurusan_id' => 1, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XI A TKJ'], ['tingkat' => '2', 'jurusan_id' => 1, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XII A TKJ'], ['tingkat' => '3', 'jurusan_id' => 1, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'X B TKJ'], ['tingkat' => '1', 'jurusan_id' => 1, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XI B TKJ'], ['tingkat' => '2', 'jurusan_id' => 1, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XII B TKJ'], ['tingkat' => '3', 'jurusan_id' => 1, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'X A MM'], ['tingkat' => '1', 'jurusan_id' => 2, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XI A MM'], ['tingkat' => '2', 'jurusan_id' => 2, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XII A MM'], ['tingkat' => '3', 'jurusan_id' => 2, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'X B MM'], ['tingkat' => '1', 'jurusan_id' => 2, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XI B MM'], ['tingkat' => '2', 'jurusan_id' => 2, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XII B MM'], ['tingkat' => '3', 'jurusan_id' => 2, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'X TBSM'], ['tingkat' => '1', 'jurusan_id' => 3, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XI TBSM'], ['tingkat' => '2', 'jurusan_id' => 3, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XII TBSM'], ['tingkat' => '3', 'jurusan_id' => 3, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'X TB'], ['tingkat' => '1', 'jurusan_id' => 4, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XI TB'], ['tingkat' => '2', 'jurusan_id' => 4, 'ket' => 'aktif']);
+        Kelas::updateOrCreate(['kelas' => 'XII TB'], ['tingkat' => '3', 'jurusan_id' => 4, 'ket' => 'aktif']);
     }
 }

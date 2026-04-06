@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\tahun;
+use App\Models\Tahun;
 
 class TahunAjaranSeeder extends Seeder
 {
@@ -13,21 +13,25 @@ class TahunAjaranSeeder extends Seeder
      */
     public function run(): void
     {
-        tahun::create(['tahun'=>'Tahun Ajaran 2023/2024',
-        'semester'=>'Genap',
-        'tanggalmulai'=>'2024-02-01',
-        'tanggalakhir'=>'2024-06-01',
-        'isActive'=>'1',
-        'deskripsi'=>'',
-    ]);
+        Tahun::updateOrCreate(
+            ['tahun' => 'Tahun Ajaran 2025/2026', 'semester' => 'Genap'],
+            [
+                'tanggalmulai' => '2025-02-01',
+                'tanggalakhir' => '2025-06-01',
+                'isActive' => '1',
+                'deskripsi' => null,
+            ]
+        );
 
-        tahun::create(['tahun'=>'Tahun Ajaran 2024/2025',
-        'semester'=>'Ganjil',
-        'tanggalmulai'=>'2024-06-01',
-        'tanggalakhir'=>'2024-12-01',
-        'isActive'=>'0',
-        'deskripsi'=>'',
-    ]);
+        Tahun::updateOrCreate(
+            ['tahun' => 'Tahun Ajaran 2025/2026', 'semester' => 'Ganjil'],
+            [
+                'tanggalmulai' => '2025-06-01',
+                'tanggalakhir' => '2025-12-01',
+                'isActive' => '0',
+                'deskripsi' => null,
+            ]
+        );
     }
 }
 // tahun
