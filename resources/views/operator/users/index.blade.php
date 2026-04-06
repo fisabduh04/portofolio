@@ -78,7 +78,7 @@
                     </div>
                     <input type="text" name="q" value="{{ $q }}" 
                         class="block w-full p-2.5 ps-10 pr-36 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
-                        placeholder="Cari Nama / Email / NUPTK..." oninput="this.form.submit()">
+                        placeholder="Cari Nama / Email / NUPTK..." oninput="clearTimeout(this.delay); this.delay = setTimeout(() => { this.form.submit() }, 1000);">
                         
                     {{-- Role Filter --}}
                     <select name="filter_role" onchange="this.form.submit()" class="absolute right-0 top-0 h-full border-l border-gray-300 bg-gray-50 text-gray-900 text-sm rounded-r-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white w-32">
