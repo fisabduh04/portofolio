@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\jurusan;
+use App\Models\Jurusan;
 use Illuminate\Http\Request;
 
 class JurusanController extends Controller
@@ -12,7 +12,7 @@ class JurusanController extends Controller
      */
     public function index()
     {
-        $jurusan=jurusan::all();
+        $jurusan=Jurusan::all();
         return view('jurusan.index',compact('jurusan'));
     }
 

@@ -263,7 +263,15 @@ class SiswaController extends Controller
      */
     public function update(Request $request, Siswa $siswa)
     {
-        // dd($request->all());
+        // Handle AJAX request specifically for real-time status updates
+        if ($request->ajax() || $request->wantsJson()) {
+            if ($request->has('aktif')) {
+                $siswa->update(['aktif' => $request->aktif]);
+                return response()->json(['success' => true, 'message' => 'Status berhasil diubah']);
+            }
+        }
+
+        // Standard Form Update
         $request->validate([
             'nama'=>'required',
             'nipd'=>'required',

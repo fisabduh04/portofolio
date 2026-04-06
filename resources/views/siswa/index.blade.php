@@ -119,23 +119,14 @@
                                             <span class="text-xs text-gray-500">{{ $sis->nisn }}</span>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        @if ($sis->aktif == 'Aktif')
-                                            <span class="inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-green-900 dark:text-green-300">
-                                                <span class="w-2 h-2 me-1 bg-green-500 rounded-full animate-pulse"></span>
-                                                Aktif
-                                            </span>
-                                        @elseif ($sis->aktif == 'Lulus')
-                                            <span class="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                                                 <svg class="w-2 h-2 me-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/></svg>
-                                                Lulus
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
-                                                <span class="w-2 h-2 me-1 bg-red-500 rounded-full"></span>
-                                                {{ $sis->aktif }}
-                                            </span>
-                                        @endif
+                                    <td class="px-6 py-4 min-w-[140px]">
+                                        <select onchange="updateSiswaStatus({{ $sis->id }}, this)"
+                                            class="text-xs rounded-full cursor-pointer block w-full p-2 border transition-colors duration-200 focus:outline-none focus:ring-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                            <option value="Aktif" class="text-green-600 bg-green-50" {{ $sis->aktif == 'Aktif' ? 'selected' : '' }}>Aktif</option>
+                                            <option value="Lulus" class="text-blue-600 bg-blue-50" {{ $sis->aktif == 'Lulus' ? 'selected' : '' }}>Lulus</option>
+                                            <option value="Non-Aktif" class="text-red-600 bg-red-50" {{ $sis->aktif == 'Non-Aktif' ? 'selected' : '' }}>Non-Aktif</option>
+                                        </select>
+                                        <span id="status-msg-{{ $sis->id }}" class="hidden text-[10px] mt-1 ml-2 font-medium italic"></span>
                                     </td>
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex items-center justify-end gap-2">
@@ -315,6 +306,85 @@
                     }, 800); // 800ms delay for auto-submit
                 });
             }
+        });
+
+        // --- Inline Status Update for Siswa (Fetch API) ---
+        function updateSiswaStatus(id, selectElement) {
+            const statusBaru = selectElement.value;
+            const msgSpan = document.getElementById(`status-msg-${id}`);
+
+            // Update Color Immediately
+            updateSiswaSelectColor(selectElement);
+
+            // Show "Menyimpan..."
+            if(msgSpan) {
+                msgSpan.innerText = 'Menyimpan...';
+                msgSpan.classList.remove('hidden', 'text-green-600', 'text-red-600');
+                msgSpan.classList.add('text-gray-500');
+            }
+            selectElement.disabled = true;
+
+            const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+            const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
+
+            fetch(`/siswa/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    _method: 'PUT',
+                    aktif: statusBaru
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    if(msgSpan) {
+                        msgSpan.innerText = 'Tersimpan!';
+                        msgSpan.classList.remove('text-gray-500');
+                        msgSpan.classList.add('text-green-600');
+                        setTimeout(() => { msgSpan.classList.add('hidden'); }, 2000);
+                    }
+                } else {
+                    throw new Error('Gagal menyimpan');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Gagal menyimpan perubahan status.");
+                if(msgSpan) {
+                    msgSpan.innerText = 'Gagal!';
+                    msgSpan.classList.remove('text-gray-500');
+                    msgSpan.classList.add('text-red-600');
+                }
+            })
+            .finally(() => {
+                selectElement.disabled = false;
+            });
+        }
+
+        function updateSiswaSelectColor(select) {
+            select.className = "text-xs rounded-full font-medium shadow-sm cursor-pointer block w-full p-2 border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 dark:bg-gray-700 dark:border-gray-600";
+            switch(select.value) {
+                case 'Aktif':
+                    select.classList.add('bg-green-50', 'text-green-700', 'border-green-300', 'focus:ring-green-500');
+                    break;
+                case 'Lulus':
+                    select.classList.add('bg-blue-50', 'text-blue-700', 'border-blue-300', 'focus:ring-blue-500');
+                    break;
+                case 'Non-Aktif':
+                default:
+                    select.classList.add('bg-red-50', 'text-red-700', 'border-red-300', 'focus:ring-red-500');
+            }
+        }
+
+        // Initialize colors on load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('select[onchange^="updateSiswaStatus"]').forEach(select => {
+                updateSiswaSelectColor(select);
+            });
         });
     </script>
 </x-layout.layout>
