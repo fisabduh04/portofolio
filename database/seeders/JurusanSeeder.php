@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\jurusan;
+use App\Models\Jurusan;
 
 class JurusanSeeder extends Seeder
 {
@@ -13,10 +13,22 @@ class JurusanSeeder extends Seeder
      */
     public function run(): void
     {
-        jurusan::create(['kode'=>'TKJ','jurusan'=>'Teknik Komputer dan Jaringan','deskripsi'=>'']);
-        jurusan::create(['kode'=>'MM','jurusan'=>'Multimedia','deskripsi'=>'']);
-        jurusan::create(['kode'=>'TBSM','jurusan'=>'Teknik dan Bisnis Sepeda Motor','deskripsi'=>'']);
-        jurusan::create(['kode'=>'TB','jurusan'=>'Tata Busana','deskripsi'=>'']);
+        Jurusan::updateOrCreate(
+            ['kode' => 'TKJ'], 
+            ['jurusan' => 'Teknik Komputer dan Jaringan', 'deskripsi' => null]
+        );
+        Jurusan::updateOrCreate(
+            ['kode' => 'MM'], 
+            ['jurusan' => 'Multimedia', 'deskripsi' => null]
+        );
+        Jurusan::updateOrCreate(
+            ['kode' => 'TBSM'], 
+            ['jurusan' => 'Teknik dan Bisnis Sepeda Motor', 'deskripsi' => null]
+        );
+        Jurusan::updateOrCreate(
+            ['kode' => 'TB'], 
+            ['jurusan' => 'Tata Busana', 'deskripsi' => null]
+        );
     }
 }
 // nama table yang diinput
