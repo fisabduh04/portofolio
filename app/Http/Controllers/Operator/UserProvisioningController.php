@@ -115,12 +115,18 @@ class UserProvisioningController extends Controller
 
         // JIKA status berubah jadi AKTIF, kirim email reset password
         if ($wasInactive && (int) $user->is_active === 1) {
-            $status = Password::sendResetLink(['email' => $user->email]);
-            
-            if ($status !== Password::RESET_LINK_SENT) {
-                return back()->with('success', 'Akun aktif, namun gagal mengirim email reset password. Silakan coba fitur "Resend Reset".');
+            try {
+                $status = Password::sendResetLink(['email' => $user->email]);
+                
+                if ($status !== Password::RESET_LINK_SENT) {
+                    return back()->with('success', 'Akun aktif, namun gagal mengirim email reset password. Silakan coba fitur "Resend Reset".');
+                }
+                return back()->with('success', 'Akun diaktifkan! Link atur password telah dikirim ke email pegawai.');
+            } catch (\Exception $e) {
+                // Tangkap error jika konfigurasi email di server (Hostinger) salah/belum diatur
+                \Illuminate\Support\Facades\Log::error('Aktivasi User - Gagal mengirim email: ' . $e->getMessage());
+                return back()->with('warning', 'Akun berhasil diaktifkan, namun sistem gagal mengirim email reset password. Pastikan konfigurasi SMTP email (.env) sudah benar.');
             }
-            return back()->with('success', 'Akun diaktifkan! Link atur password telah dikirim ke email pegawai.');
         }
 
         return back()->with('success', 'Status akun berhasil diperbarui.');
