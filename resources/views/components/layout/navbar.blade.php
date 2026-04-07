@@ -9,8 +9,8 @@
             </svg>
          </button>
         <a href="{{ route('dashboard.index') }}" class="flex ms-2 md:me-24">
-          <img src="{{ $logo ?? asset('img/logo.png') }}" class="h-6 me-3" alt="{{ $sekolah->nama_sekolah ?? 'SMK AL-MIFTAH' }} Logo" />
-          <span class="self-center text-lg font-semibold whitespace-nowrap dark:text-white">{{ $sekolah->nama_sekolah ?? 'SMK AL-MIFTAH' }}</span>
+          <img src="{{ $sekolah->logo_url  }}" class="h-6 me-3" alt="{{ $sekolah->nama_sekolah ?? 'SISTEM INFORMASI SEKOLAH' }} Logo" />
+          <span class="self-center text-lg font-semibold whitespace-nowrap dark:text-white">{{ $sekolah->nama_sekolah ?? 'SISTEM INFORMASI SEKOLAH' }}</span>
         </a>
       </div>
       <div class="flex items-center">
@@ -18,7 +18,7 @@
             <div>
               <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" aria-expanded="false" data-dropdown-toggle="dropdown-user">
                 <span class="sr-only">Open user menu</span>
-                <img class="w-8 h-8 rounded-full" src="{{ asset('img/almiftah.jpg') }}" alt="user photo">
+                <img class="w-8 h-8 rounded-full" src="{{ $sekolah->logo_url }}" alt="user photo">
               </button>
             </div>
             <div class="z-50 hidden bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-44" id="dropdown-user">

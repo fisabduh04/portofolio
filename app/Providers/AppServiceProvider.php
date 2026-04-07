@@ -52,7 +52,6 @@ class AppServiceProvider extends ServiceProvider
             $logo = $sekolah->logo_url;
 
             View::share('sekolah', $sekolah);
-            View::share('logo', $logo);
         }
     }
         

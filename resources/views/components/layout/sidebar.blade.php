@@ -4,10 +4,10 @@
     <div class="h-full px-3 py-4 overflow-y-auto bg-neutral-primary-soft border-e border-default">
         <div class="flex items-center justify-between mb-5">
             <a href="{{ route('dashboard.index') }}" class="flex items-center ps-2.5">
-                <img src="{{ $logo ?? asset('img/logo.png') }}" class="h-6 me-3"
-                    alt="{{ $sekolah->nama_sekolah ?? 'SMK AL-MIFTAH' }} Logo" />
+                <img src="{{ $sekolah->logo_url}}" class="h-6 me-3"
+                    alt="{{ $sekolah->nama_sekolah ?? 'SISTEM INFORMASI SEKOLAH' }} Logo" />
                 <span
-                    class="self-center text-lg text-heading font-semibold whitespace-nowrap">{{ $sekolah->nama_sekolah ?? 'SMK AL-MIFTAH' }}</span>
+                    class="self-center text-lg text-heading font-semibold whitespace-nowrap">{{ $sekolah->nama_sekolah ?? 'SISTEM INFORMASI SEKOLAH' }}</span>
             </a>
             <button type="button" data-drawer-hide="top-bar-sidebar" aria-controls="top-bar-sidebar"
                 class="text-body bg-transparent hover:bg-neutral-tertiary rounded-lg text-sm w-8 h-8 md:hidden inline-flex justify-center items-center">

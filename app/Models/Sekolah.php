@@ -9,7 +9,34 @@ class Sekolah extends Model
 {
     use HasFactory;
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'nama_sekolah',
+        'npsn',
+        'nss',
+        'status_sekolah',
+        'bentuk_pendidikan',
+        'kepala_sekolah',
+        'alamat',
+        'rt',
+        'rw',
+        'desa',
+        'kecamatan',
+        'kabupaten',
+        'provinsi',
+        'kode_pos',
+        'email',
+        'website',
+        'no_telp',
+        'no_fax',
+        'lintang',
+        'bujur',
+        'sk_pendirian',
+        'tgl_sk_pendirian',
+        'sk_izin_operasional',
+        'tgl_sk_izin_operasional',
+        'logo',
+        'kop_surat',
+    ];
 
     // Cast dates
     protected $casts = [
