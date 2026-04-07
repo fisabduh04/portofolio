@@ -36,12 +36,19 @@ return [
             'throw' => false,
         ],
 
+        // 'public' => [
+        //     'driver' => 'local',
+        //     'root' => storage_path('app/public'),
+        //     'url' => env('APP_URL').'/storage',
+        //     'visibility' => 'public',
+        //     'throw' => false,
+        // ],
+
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'root' => env('PUBLIC_DISK_ROOT', storage_path('app/public')),
+            'url' => env('PUBLIC_DISK_URL', env('APP_URL').'/storage'),
             'visibility' => 'public',
-            'throw' => false,
         ],
 
         's3' => [
