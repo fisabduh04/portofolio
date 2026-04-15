@@ -1,17 +1,36 @@
-@extends('errors.layout')
+@extends('errors::layout')
 
-@section('title', __('Under Maintenance'))
-@section('code', '503')
-@section('message', __('Under Maintenance'))
+@section('title', __('Service Unavailable'))
 
 @section('content')
-    <div class="flex flex-col items-center justify-center">
-        <svg class="w-24 h-24 mb-6 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
-        </svg>
-        <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white">{{ __('We are currently performing maintenance.') }}</h1>
-        <p class="mb-6 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 xl:px-48 dark:text-gray-400">
-            {{ __('We apologize for the inconvenience and will be back online shortly.') }}
-        </p>
+    {{-- Ikon Ilustrasi --}}
+    <div class="mb-8 flex justify-center">
+        <div class="relative w-24 h-24 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+            <svg class="w-12 h-12 text-purple-600 dark:text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+        </div>
+    </div>
+
+    {{-- Error Code --}}
+    <h1 class="text-7xl lg:text-9xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-500 drop-shadow-sm">
+        503
+    </h1>
+    
+    {{-- Pesan Manusia --}}
+    <h2 class="text-3xl lg:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+        Sedang Dalam Perbaikan
+    </h2>
+    <p class="text-lg text-gray-600 dark:text-gray-400 mb-10 max-w-lg mx-auto">
+        Tunggu sebentar! Kami sedang melakukan pemeliharaan rutin untuk meningkatkan kualitas layanan. Harap kembali beberapa saat lagi.
+    </p>
+    
+    {{-- Call to Action --}}
+    <div>
+        <button onclick="window.location.reload()" class="inline-flex items-center justify-center px-6 py-3.5 text-base font-medium text-white transition-all duration-200 bg-purple-600 border border-transparent rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-800 shadow-lg shadow-purple-600/30">
+            <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            Muat Ulang Halaman
+        </button>
     </div>
 @endsection
