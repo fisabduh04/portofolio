@@ -2,97 +2,106 @@
 
 namespace App\Imports;
 
-
 use App\Models\Siswa;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-
-
+use Illuminate\Support\Facades\Log;
 
 class SiswaImport implements ToModel, WithHeadingRow
 {
     use Importable;
+
+    // Menyimpan daftar baris yang dilewati beserta alasannya
+    public array $skippedRows = [];
+
     /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
-    public function model(array $row){
+     * @param array $row
+     *
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
+    public function model(array $row)
+    {
+        // Skip baris yang NIPD atau nama-nya kosong (kolom wajib untuk identifikasi)
+        if (empty($row['nipd']) || empty($row['nama'])) {
+            $this->skippedRows[] = [
+                'data'   => $row['nipd'] ?? '-',
+                'alasan' => 'Kolom "nipd" atau "nama" kosong',
+            ];
+            Log::info('Import Siswa: Baris dilewati', $row);
+            return null;
+        }
 
-        // $tanggalLahir = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['tanggallahir'])->format('Y-m-d');
-
-        return siswa::updateOrCreate(
-            ['nipd' => $row['nipd']], // Kunci untuk mencari dan memutuskan apakah akan update atau insert
+        return Siswa::updateOrCreate(
+            ['nipd' => $row['nipd']], // Kunci unik untuk update atau insert
             [
-                'nama' => $row['nama'],
-                'alamat' => $row['alamat'],
-                'jk' => $row['jenis_kelamin'],
-                'nisn'=>$row['nisn'],
-                'status'=>$row['status'],
-                'aktif'=>$row['aktif'],
-                'tempatlahir'=>$row['tempat_lahir'],
-                'tanggallahir'=>$row['tanggallahir'],
-                'nik'=>$row['nik'],
-                'agama'=>$row['agama'],
-                'alamat'=>$row['alamat'],
-                'rt'=>$row['rt'],
-                'rw'=>$row['rw'],
-                'dusun'=>$row['dusun'],
-                'kelurahan'=>$row['kelurahan'],
-                'kecamatan'=>$row['kecamatan'],
-                'kode_pos'=>$row['kode_pos'],
-                'jenis_tinggal'=>$row['jenis_tinggal'],
-                'alat_transportasi'=>$row['alat_transportasi'],
-                'telepon'=>$row['telepon'],
-                'hp'=>$row['hp'],
-                'email'=>$row['email'],
-                'skhun'=>$row['skhun'],
-                'penerima_kps'=>$row['penerima_kps'],
-                'nokps'=>$row['nokps'],
-                'ayah'=>$row['ayah'],
-                'tahunlahirayah'=>$row['tahunlahirayah'],
-                'pendidikanayah'=>$row['pendidikanayah'],
-                'pekerjaanayah'=>$row['pekerjaanayah'],
-                'penghasilanayah'=>$row['penghasilanayah'],
-                'nikayah'=>$row['nikayah'],
-                'namaibu'=>$row['namaibu'],
-                'tahunlahiribu'=>$row['tahunlahiribu'],
-                'pendidikanibu'=>$row['pendidikanibu'],
-                'pekerjaanibu'=>$row['pekerjaanibu'],
-                'penghasilanibu'=>$row['penghasilanibu'],
-                'nikibu'=>$row['nikibu'],
-                'namawali'=>$row['namawali'],
-                'tahunlahirwali'=>$row['tahunlahirwali'],
-                'pendidikanwali'=>$row['pendidikanwali'],
-                'pekerjaanwali'=>$row['pekerjaanwali'],
-                'penghasilanwali'=>$row['penghasilanwali'],
-                'nikwali'=>$row['nikwali'],
-                'rombelsaatini'=>$row['rombelsaatini'],
-                'nopesertaunas'=>$row['nopesertaunas'],
-                'noijazah'=>$row['noijazah'],
-                'penerimakip'=>$row['penerimakip'],
-                'nomorkip'=>$row['nomorkip'],
-                'namadikip'=>$row['namadikip'],
-                'nomorkks'=>$row['nomorkks'],
-                'noaktalahir'=>$row['noaktalahir'],
-                'bank'=>$row['bank'],
-                'nomor_rekening_bank'=>$row['nomor_rekening_bank'],
-                'rekening_atas_nama'=>$row['rekening_atas_nama'],
-                'layakpip'=>$row['layakpip'],
-                'alasanlayakpip'=>$row['alasanlayakpip'],
-                'kebutuhankhusus'=>$row['kebutuhankhusus'],
-                'sekolahasal'=>$row['sekolahasal'],
-                'anakke'=>$row['anakke'],
-                'lintang'=>$row['lintang'],
-                'bujur'=>$row['bujur'],
-                'nokk'=>$row['nokk'],
-                'beratbadan'=>$row['beratbadan'],
-                'tinggibadan'=>$row['tinggibadan'],
-                'lingkarkepala'=>$row['lingkarkepala'],
-                'jmlsaudara'=>$row['jmlsaudara'],
-                'jarakrumah'=>$row['jarakrumah'],
+                'nama'                  => $row['nama'],
+                'jk'                    => $row['jenis_kelamin']         ?? null,
+                'nisn'                  => $row['nisn']                  ?? null,
+                'status'                => $row['status']                ?? null,
+                'aktif'                 => $row['aktif']                 ?? null,
+                'tempatlahir'           => $row['tempat_lahir']          ?? null,
+                'tanggallahir'          => $row['tanggallahir']          ?? null,
+                'nik'                   => $row['nik']                   ?? null,
+                'agama'                 => $row['agama']                 ?? null,
+                'alamat'                => $row['alamat']                ?? null,
+                'rt'                    => $row['rt']                    ?? null,
+                'rw'                    => $row['rw']                    ?? null,
+                'dusun'                 => $row['dusun']                 ?? null,
+                'kelurahan'             => $row['kelurahan']             ?? null,
+                'kecamatan'             => $row['kecamatan']             ?? null,
+                'kode_pos'              => $row['kode_pos']              ?? null,
+                'jenis_tinggal'         => $row['jenis_tinggal']         ?? null,
+                'alat_transportasi'     => $row['alat_transportasi']     ?? null,
+                'telepon'               => $row['telepon']               ?? null,
+                'hp'                    => $row['hp']                    ?? null,
+                'email'                 => $row['email']                 ?? null,
+                'skhun'                 => $row['skhun']                 ?? null,
+                'penerima_kps'          => $row['penerima_kps']          ?? null,
+                'nokps'                 => $row['nokps']                 ?? null,
+                'ayah'                  => $row['ayah']                  ?? null,
+                'tahunlahirayah'        => $row['tahunlahirayah']        ?? null,
+                'pendidikanayah'        => $row['pendidikanayah']        ?? null,
+                'pekerjaanayah'         => $row['pekerjaanayah']        ?? null,
+                'penghasilanayah'       => $row['penghasilanayah']       ?? null,
+                'nikayah'               => $row['nikayah']               ?? null,
+                'namaibu'               => $row['namaibu']               ?? null,
+                'tahunlahiribu'         => $row['tahunlahiribu']         ?? null,
+                'pendidikanibu'         => $row['pendidikanibu']         ?? null,
+                'pekerjaanibu'          => $row['pekerjaanibu']          ?? null,
+                'penghasilanibu'        => $row['penghasilanibu']        ?? null,
+                'nikibu'                => $row['nikibu']                ?? null,
+                'namawali'              => $row['namawali']              ?? null,
+                'tahunlahirwali'        => $row['tahunlahirwali']        ?? null,
+                'pendidikanwali'        => $row['pendidikanwali']        ?? null,
+                'pekerjaanwali'         => $row['pekerjaanwali']        ?? null,
+                'penghasilanwali'       => $row['penghasilanwali']       ?? null,
+                'nikwali'               => $row['nikwali']               ?? null,
+                'rombelsaatini'         => $row['rombelsaatini']         ?? null,
+                'nopesertaunas'         => $row['nopesertaunas']         ?? null,
+                'noijazah'              => $row['noijazah']              ?? null,
+                'penerimakip'           => $row['penerimakip']           ?? null,
+                'nomorkip'              => $row['nomorkip']              ?? null,
+                'namadikip'             => $row['namadikip']             ?? null,
+                'nomorkks'              => $row['nomorkks']              ?? null,
+                'noaktalahir'           => $row['noaktalahir']           ?? null,
+                'bank'                  => $row['bank']                  ?? null,
+                'nomor_rekening_bank'   => $row['nomor_rekening_bank']   ?? null,
+                'rekening_atas_nama'    => $row['rekening_atas_nama']    ?? null,
+                'layakpip'              => $row['layakpip']              ?? null,
+                'alasanlayakpip'        => $row['alasanlayakpip']        ?? null,
+                'kebutuhankhusus'       => $row['kebutuhankhusus']       ?? null,
+                'sekolahasal'           => $row['sekolahasal']           ?? null,
+                'anakke'                => $row['anakke']                ?? null,
+                'lintang'               => $row['lintang']               ?? null,
+                'bujur'                 => $row['bujur']                 ?? null,
+                'nokk'                  => $row['nokk']                  ?? null,
+                'beratbadan'            => $row['beratbadan']            ?? null,
+                'tinggibadan'           => $row['tinggibadan']           ?? null,
+                'lingkarkepala'         => $row['lingkarkepala']         ?? null,
+                'jmlsaudara'            => $row['jmlsaudara']            ?? null,
+                'jarakrumah'            => $row['jarakrumah']            ?? null,
             ]
-            );
+        );
     }
 }

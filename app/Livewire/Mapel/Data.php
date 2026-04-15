@@ -190,23 +190,40 @@ class Data extends Component
     }
 
    
-    public function import()
+    // Lifecycle hook: otomatis dipanggil Livewire saat property $file berubah (upload selesai)
+    public function updatedFile()
     {
         $this->validate([
             'file' => 'required|file|mimes:xlsx,xls', // Validasi file
         ]);
 
         try {
-            Excel::import(new ImportMapel, $this->file); // Gunakan $this->file
-            $this->dispatch('showToast', message: 'Data berhasil diimport!', type: 'success');
+            // Simpan ke variable agar bisa akses $skippedRows setelah import
+            $importer = new ImportMapel;
+            Excel::import($importer, $this->file);
+
+            $jumlahSkip = count($importer->skippedRows);
+
+            if ($jumlahSkip > 0) {
+                // Ada baris yang dilewati — beri tahu user secara spesifik
+                $detail = collect($importer->skippedRows)
+                    ->map(fn($r) => "• [{$r['data']}]: {$r['alasan']}")
+                    ->join(' | ');
+                $this->dispatch('showToast',
+                    message: "{$jumlahSkip} baris dilewati: {$detail}",
+                    type: 'warning'
+                );
+            } else {
+                $this->dispatch('showToast', message: 'Semua data berhasil diimport!', type: 'success');
+            }
         } catch (\Exception $e) {
             $this->dispatch('showToast', message: 'Import Gagal: ' . $e->getMessage(), type: 'error');
         }
 
         $this->reset('file'); // Reset setelah import
         $this->resetPage(); // Reset ke halaman 1 setelah import
-
     }
+
 
     public function export()
     {

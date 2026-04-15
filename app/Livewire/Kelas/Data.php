@@ -268,22 +268,34 @@ class Data extends Component
     }
     public function import()
     {
-        // Pastikan file ada dan valid
-        if ($this->file) {
-            // Menggunakan Maatwebsite Excel untuk mengimpor file
-            Excel::import(new KelasImport, $this->file);
-            // Excel::import(new KelasImport, $this->file->getRealPath());
-
-
-            // Mengirimkan pesan sukses
-
-        $this->dispatch('showToast', message: 'Data berhasil diimport!', type: 'success');
-
-        } else {
-            // Menampilkan pesan error jika tidak ada file
-        $this->dispatch('showToast', message: 'Data gagal diimport!', type: 'error');
-
+        if (!$this->file) {
+            $this->dispatch('showToast', message: 'Tidak ada file yang dipilih!', type: 'error');
+            return;
         }
+
+        try {
+            // Simpan ke variable agar bisa akses $skippedRows setelah import
+            $importer = new KelasImport;
+            Excel::import($importer, $this->file);
+
+            $jumlahSkip = count($importer->skippedRows);
+
+            if ($jumlahSkip > 0) {
+                // Ada baris yang dilewati — beri tahu user secara spesifik
+                $detail = collect($importer->skippedRows)
+                    ->map(fn($r) => "• [{$r['data']}]: {$r['alasan']}")
+                    ->join(' | ');
+                $this->dispatch('showToast',
+                    message: "{$jumlahSkip} baris dilewati: {$detail}",
+                    type: 'warning'
+                );
+            } else {
+                $this->dispatch('showToast', message: 'Semua data berhasil diimport!', type: 'success');
+            }
+        } catch (\Exception $e) {
+            $this->dispatch('showToast', message: 'Import Gagal: ' . $e->getMessage(), type: 'error');
+        }
+
         $this->reset('file');
     }
 

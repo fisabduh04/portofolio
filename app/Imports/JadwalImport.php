@@ -9,25 +9,32 @@ use App\Models\Pegawai;
 use App\Models\Tahun;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class JadwalImport implements ToModel, WithHeadingRow
 {
+    // Menyimpan daftar baris yang dilewati beserta alasannya
+    public array $skippedRows = [];
+
     /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
+     * @param array $row
+     *
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
     public function model(array $row)
     {
-        // Skip empty rows
-        if (!isset($row['hari']) || !isset($row['jam'])) {
+        // Skip baris yang hari atau jam-nya kosong (kolom wajib jadwal)
+        if (empty($row['hari']) || empty($row['jam'])) {
+            $this->skippedRows[] = [
+                'data'   => ($row['hari'] ?? '-') . ' / ' . ($row['jam'] ?? '-'),
+                'alasan' => 'Kolom "hari" atau "jam" kosong',
+            ];
+            Log::info('Import Jadwal: Baris dilewati', $row);
             return null;
         }
 
-        // Helper to find ID by Name or use ID directly
+        // Cari tahun aktif sebagai fallback jika kolom tahun di Excel tidak diisi
         $tahunId = $this->findId(Tahun::class, $row['tahun'] ?? null, 'tahun');
-        // Fallback to active year if not found
         if (!$tahunId) {
             $activeTahun = Tahun::aktif()->first();
             $tahunId = $activeTahun ? $activeTahun->id : null;
@@ -40,28 +47,30 @@ class JadwalImport implements ToModel, WithHeadingRow
             'mapel_id'   => $this->findId(Mapel::class, $row['mapel'] ?? null, 'mapel'),
             'pegawai_id' => $this->findId(Pegawai::class, $row['guru'] ?? null, 'name'),
             'jam'        => $row['jam'],
-            'mulai'      => $row['mulai'],
-            'akhir'      => $row['akhir'],
+            'mulai'      => $row['mulai']      ?? null,
+            'akhir'      => $row['akhir']      ?? null,
             'ket'        => $row['keterangan'] ?? null,
         ]);
     }
 
+    /**
+     * Cari ID record berdasarkan nama atau langsung gunakan jika sudah berupa ID angka.
+     * Mendukung pencarian exact dan fuzzy (LIKE) sebagai fallback.
+     */
     private function findId($model, $value, $column)
     {
         if (empty($value)) return null;
 
-        // If it's numeric, assume it's an ID
+        // Jika sudah angka, asumsikan itu adalah ID langsung
         if (is_numeric($value)) {
-            // Optional: verify it exists? For speed, we might skip verify or do a quick check
-            return $value; 
+            return $value;
         }
 
-        // Try to find by column (e.g. name)
-        // Fuzzy match or exact? Let's try exact first.
+        // Cari exact match terlebih dahulu
         $record = $model::where($column, $value)->first();
         if ($record) return $record->id;
 
-        // Try 'like' search for forgiveness
+        // Fallback: cari dengan LIKE (lebih fleksibel)
         $record = $model::where($column, 'like', '%' . $value . '%')->first();
         if ($record) return $record->id;
 
