@@ -20,4 +20,23 @@ class Jurusan extends Model
     {
         return $this->hasMany(Mapel::class);
     }
+
+    /**
+     * Accessor: Warna badge berdasarkan ID jurusan.
+     * Tambahkan ID baru di sini kalau jurusan bertambah.
+     */
+    public function getBadgeColorAttribute(): string
+    {
+        // Mapping ID jurusan ke warna badge
+        $colors = [
+            1 => 'blue',
+            2 => 'green',
+            3 => 'yellow',
+            4 => 'purple',
+            5 => 'red',
+            6 => 'indigo',
+        ];
+
+        return $colors[$this->id] ?? 'gray';
+    }
 }

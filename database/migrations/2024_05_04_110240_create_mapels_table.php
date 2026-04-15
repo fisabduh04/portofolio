@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('mapels', function (Blueprint $table) {
             $table->id();
-            $table->string('kode')->nullable();
+            $table->string('kode')->unique()->nullable();
             $table->string('mapel');
             $table->foreignId('jurusan_id')->nullable()->constrained('jurusans')->onDelete('set null');
             $table->string('ket')->nullable();

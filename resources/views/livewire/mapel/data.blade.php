@@ -220,21 +220,11 @@
                                             @endforeach
                                         </select>
                                     @else
-                                        @if ($m->jurusan->id == 1)
-                                            <x-badge color="blue" text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
-                                        @elseif($m->jurusan->id == 2)
-                                            <x-badge color="green" text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
-                                        @elseif($m->jurusan->id == 3)
-                                            <x-badge color="yellow" text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
-                                        @elseif($m->jurusan->id == 4)
-                                            <x-badge color="purple" text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
-                                        @elseif($m->jurusan->id == 5)
-                                            <x-badge color="red" text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
-                                        @elseif($m->jurusan->id == 6)
-                                            <x-badge color="indigo" text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
-                                        @else
-                                            <x-badge color="gray" text="{{ $m->jurusan->jurusan ?? 'Semua Jurusan' }}" />
-                                        @endif
+                                        {{-- Null-safe: jika jurusan dihapus (null), tetap aman --}}
+                                        <x-badge
+                                            color="{{ $m->jurusan?->badge_color ?? 'gray' }}"
+                                            text="{{ $m->jurusan?->jurusan ?? 'Tanpa Jurusan' }}"
+                                        />
                                     @endif
                                 </td>
                                 <td class="px-4 py-3">
