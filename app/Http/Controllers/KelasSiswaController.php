@@ -19,7 +19,7 @@ class KelasSiswaController extends Controller
         // dd($request->all());
         $kelas = Kelas::all(['id', 'kelas']);
         $tahun = Tahun::aktif()->get(['id', 'tahun', 'semester']);
-        $siswa = Siswa::all(['id', 'nipd', 'nama']);
+        $siswa = Siswa::aktif()->get(['id', 'nipd', 'nama']);
         $filterKelas = $request->filter_kelas ?? 'all';
         $filtertahun = $request->filter_tahun ?? 'all';
         $query = KelasSiswa::with(['siswa', 'kelas', 'tahun']);

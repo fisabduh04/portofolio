@@ -45,4 +45,10 @@ class Siswa extends Model
     {
         return $this->hasMany(Absensi::class);
     }
+
+    public function scopeAktif($query)
+    {
+        return $query->where('aktif', 'Aktif');
+    }
+
 }

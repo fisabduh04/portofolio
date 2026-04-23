@@ -86,7 +86,7 @@ return new class extends Migration
         // Index untuk pencarian
         $table->index('nama');
         $table->index('rombelsaatini');
-
+        $table->index('aktif');
         $table->timestamps();
         });
     }
