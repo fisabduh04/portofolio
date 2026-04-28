@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Enums\UserRole;
 use App\Models\JadwalPiket;
 
 class User extends Authenticatable
@@ -48,8 +49,19 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
     }
+
+    /**
+     * Helper methods untuk pengecekan role yang lebih bersih.
+     */
+    public function isAdmin(): bool { return $this->role === UserRole::Admin; }
+    public function isOperator(): bool { return $this->role === UserRole::Operator; }
+    public function isKepala(): bool { return $this->role === UserRole::Kepala; }
+    public function isManagement(): bool { return $this->role?->isManagement() ?? false; }
+    public function canManagePayroll(): bool { return $this->role?->canManagePayroll() ?? false; }
+
     public function pegawai()
     {
         return $this->belongsTo(Pegawai::class);
@@ -57,7 +69,8 @@ class User extends Authenticatable
 
     public function isPiketToday()
     {
-        if (in_array($this->role, ['admin', 'operator', 'kepala'])) {
+        // Gunakan logika terpusat dari Enum
+        if ($this->isManagement()) {
             return true;
         }
 

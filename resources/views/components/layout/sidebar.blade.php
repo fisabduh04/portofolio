@@ -138,11 +138,13 @@
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Dashboard
                             Absensi</a>
                     </li>
+                    @if(auth()->user()->canManagePayroll())
                     <li>
                         <a href="{{ route('attendance.payroll.index') }}"
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Payroll
                             & Gaji</a>
                     </li>
+                    @endif
                     <li>
                         <a href="{{ route('attendance.report') }}"
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Laporan

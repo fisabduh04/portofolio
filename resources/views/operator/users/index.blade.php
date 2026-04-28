@@ -83,8 +83,8 @@
                     {{-- Role Filter --}}
                     <select name="filter_role" onchange="this.form.submit()" class="absolute right-0 top-0 h-full border-l border-gray-300 bg-gray-50 text-gray-900 text-sm rounded-r-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white w-32">
                         <option value="" class="text-gray-500">Semua Role</option>
-                        @foreach(['admin', 'operator', 'guru', 'siswa', 'kepala'] as $rol)
-                            <option value="{{ $rol }}" {{ request('filter_role') == $rol ? 'selected' : '' }}>{{ ucfirst($rol) }}</option>
+                        @foreach(\App\Enums\UserRole::cases() as $roleCase)
+                            <option value="{{ $roleCase->value }}" {{ request('filter_role') == $roleCase->value ? 'selected' : '' }}>{{ $roleCase->label() }}</option>
                         @endforeach
                     </select>
                 </form>
@@ -279,13 +279,12 @@
                                                             <div>
                                                                 <label for="role-{{ $p->id }}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Role Awal</label>
                                                                 <select name="role" id="role-{{ $p->id }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
-                                                                    <option value="guru" selected>Guru</option>
-                                                                    <option value="siswa">Siswa</option>
-                                                                    <option value="operator">Operator</option>
-                                                                    <option value="admin">Admin</option>
-                                                                    @if(auth()->user()->role === 'kepala')
-                                                                        <option value="kepala">Kepala</option>
-                                                                    @endif
+                                                                    @foreach(\App\Enums\UserRole::cases() as $roleCase)
+                                                                        @if($roleCase->value === 'kepala' && !auth()->user()->isKepala())
+                                                                            @continue
+                                                                        @endif
+                                                                        <option value="{{ $roleCase->value }}">{{ $roleCase->label() }}</option>
+                                                                    @endforeach
                                                                 </select>
                                                             </div>
                                                             
@@ -335,14 +334,17 @@
         @if($user && auth()->user()->can('manage', $user))
             <div id="roleDropdown-{{ $user->id }}" class="z-50 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-xl w-44 dark:bg-gray-700">
                 <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-                    @foreach(['admin','operator','guru','siswa','kepala'] as $r)
-                        @php if ($r === 'kepala' && auth()->user()->role !== 'kepala') continue; @endphp
+                    @foreach(\App\Enums\UserRole::cases() as $roleCase)
+                        @php 
+                            $r = $roleCase->value;
+                            if ($r === 'kepala' && !auth()->user()->isKepala()) continue; 
+                        @endphp
                         <li>
                             <form action="{{ route('operator.users.update-role', $user->id) }}" method="POST">
                                 @csrf @method('PATCH')
                                 <input type="hidden" name="role" value="{{ $r }}">
-                                <button type="submit" class="block w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white {{ $user->role === $r ? 'bg-gray-50 font-bold' : '' }}">
-                                    {{ ucfirst($r) }}
+                                <button type="submit" class="block w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white {{ $user->role === $roleCase ? 'bg-gray-50 font-bold' : '' }}">
+                                    {{ $roleCase->label() }}
                                 </button>
                             </form>
                         </li>

@@ -22,8 +22,8 @@ class RoleMiddleware
             abort(403, 'Akun Anda belum aktif.');
         }
 
-        // 3. Normalisasi role (hindari error huruf besar/kecil)
-        $userRole = strtolower((string) $user->role);
+        // 3. Normalisasi role
+        $userRole = $user->role->value;
         $allowedRoles = array_map(
             fn ($role) => strtolower((string) $role),
             $roles

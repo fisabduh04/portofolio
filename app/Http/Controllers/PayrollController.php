@@ -60,6 +60,12 @@ class PayrollController extends Controller
 
     public function slip(Request $request, $id)
     {
+        // SECURITY CHECK: Hanya pengelola yang boleh lihat milik orang lain
+        $user = auth()->user();
+        if (!$user->canManagePayroll() && (int) $user->pegawai_id !== (int) $id) {
+            abort(403, 'Tindakan Ditolak: Anda hanya diperbolehkan melihat slip gaji milik Anda sendiri.');
+        }
+
         $month = $request->input('month', date('n'));
         $year = $request->input('year', date('Y'));
         

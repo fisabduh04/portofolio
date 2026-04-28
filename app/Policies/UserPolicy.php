@@ -12,7 +12,7 @@ class UserPolicy
      */
     public function viewAny(User $actor): bool
     {
-        return in_array($actor->role, ['admin', 'operator', 'kepala']);
+        return $actor->isManagement();
     }
 
     /**
@@ -20,30 +20,19 @@ class UserPolicy
      */
     public function manage(User $actor, User $target): bool
     {
-        // 1. Self-immunity: Cannot manage self (deactivate/change role)
+        // 1. Self-immunity: Cannot manage self
         if ($actor->id === $target->id) {
             return false;
         }
 
-        // 2. Define Hierarchy Ranks
-        $ranks = [
-            'kepala'   => 4,
-            'admin'    => 3,
-            'operator' => 2,
-            'guru'     => 1,
-            'siswa'    => 1,
-        ];
-
-        $actorRank  = $ranks[$actor->role] ?? 0;
-        $targetRank = $ranks[$target->role] ?? 0;
-
-        // 3. Special Case: Kepala can manage other Kepala (if multiple exist)
-        if ($actor->role === 'kepala' && $target->role === 'kepala') {
-            return true;
+        // 2. ATURAN KHUSUS KEPALA:
+        // Hanya Kepala yang boleh menyentuh akun Kepala lain (termasuk mempromosikan orang jadi Kepala)
+        if ($target->isKepala() && !$actor->isKepala()) {
+            return false;
         }
 
-        // 4. General Rule: Actor must have Higher OR Equal rank than Target
-        return $actorRank >= $targetRank;
+        // 3. General Rule: Actor must have Higher OR Equal rank than Target
+        return $actor->role->rank() >= $target->role->rank();
     }
     
     // Alias for updating role

@@ -9,12 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use App\Policies\UserPolicy; 
+use App\Enums\UserRole;
 
 class UserProvisioningController extends Controller
 {
-    private const ROLES = ['admin', 'operator', 'guru', 'siswa', 'kepala', 'staff'];
-
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
@@ -32,7 +30,7 @@ class UserProvisioningController extends Controller
                  $query->whereHas('user', function ($q) use ($request) {
                      $q->where('role', $request->filter_role);
                  });
-            })
+             })
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();
@@ -42,29 +40,21 @@ class UserProvisioningController extends Controller
 
     /**
      * Menyimpan Data User Baru (Create Account).
-     *
-     * Alur Logika:
-     * 1. Validasi input (email unik, role valid).
-     * 2. Cek Otorisasi: Apakah user yang login punya wewenang membuat role tersebut?
-     *    (Misal: Operator tidak boleh membuat akun Admin).
-     * 3. Buat user dengan status default Non-Aktif (0).
      */
     public function store(Request $request)
     {
         $data = $request->validate([
             'pegawai_id' => ['required', 'integer', 'exists:pegawais,id'],
             'email'      => ['required', 'email', 'max:255', 'unique:users,email'],
-            'role'       => ['required', 'in:' . implode(',', self::ROLES)],
+            'role'       => ['required', 'in:' . implode(',', array_column(UserRole::cases(), 'value'))],
         ]);
 
         // CEK WEWENANG (Authorization)
-        // Kita hitung rank role yang mau dibuat vs rank user yang login.
-        $targetRank = $this->getRank($data['role']);
-        $myRank     = $this->getRank($request->user()->role);
+        $targetRole = UserRole::from($data['role']);
+        $myRole     = $request->user()->role;
 
         // Jika Rank saya lebih kecil dari Rank yang mau dibuat, TOLAK.
-        // Kecuali saya adalah 'kepala'.
-        if ($myRank < $targetRank && $request->user()->role !== 'kepala') {
+        if ($myRole->rank() < $targetRole->rank() && !$request->user()->isKepala()) {
              return back()->with('error', 'Anda tidak memiliki wewenang untuk membuat user dengan role lebih tinggi dari Anda.');
         }
 
@@ -82,21 +72,18 @@ class UserProvisioningController extends Controller
             'pegawai_id' => $pegawai->id,
             'name'       => $pegawai->name ?? 'Pegawai',
             'email'      => strtolower(trim($data['email'])),
-            'password'   => bcrypt(Str::random(40)), // Password acak karena nanti akan di-reset user
+            'password'   => bcrypt(Str::random(40)), 
             'role'       => $data['role'],
-            'is_active'  => 0, // Default inactive (Harus diaktifkan manual agar kirim email)
+            'is_active'  => 0, 
         ]);
 
         return redirect()
             ->route('operator.users.index')
-            ->with('success', "Akun {$user->role} berhasil dibuat (Status: Nonaktif). Silakan aktifkan untuk mengirim email password.");
+            ->with('success', "Akun {$user->role->label()} berhasil dibuat (Status: Nonaktif). Silakan aktifkan untuk mengirim email password.");
     }
 
     /**
      * Mengubah Status Aktif/Nonaktif (Switch ON/OFF).
-     *
-     * Fitur Penting:
-     * - Jika akun diubah dari Non-Aktif menjadi Aktif, sistem OTOMATIS mengirim email reset password.
      */
     public function toggleActive(User $user)
     {
@@ -123,7 +110,6 @@ class UserProvisioningController extends Controller
                 }
                 return back()->with('success', 'Akun diaktifkan! Link atur password telah dikirim ke email pegawai.');
             } catch (\Exception $e) {
-                // Tangkap error jika konfigurasi email di server (Hostinger) salah/belum diatur
                 \Illuminate\Support\Facades\Log::error('Aktivasi User - Gagal mengirim email: ' . $e->getMessage());
                 return back()->with('warning', 'Akun berhasil diaktifkan, namun sistem gagal mengirim email reset password. Pastikan konfigurasi SMTP email (.env) sudah benar.');
             }
@@ -134,12 +120,11 @@ class UserProvisioningController extends Controller
 
     /**
      * Mengubah Role (Jabatan) User.
-     * Contoh: Mengangkat Guru menjadi Operator.
      */
     public function updateRole(Request $request, User $user)
     {
         $data = $request->validate([
-            'role' => ['required', 'in:' . implode(',', self::ROLES)],
+            'role' => ['required', 'in:' . implode(',', array_column(UserRole::cases(), 'value'))],
         ]);
 
         // 1. Cek Policy Dasar: Boleh gak saya edit user ini?
@@ -148,11 +133,10 @@ class UserProvisioningController extends Controller
         }
 
         // 2. Cek Policy Lanjutan: Boleh gak saya mengangkat dia ke role baru ini?
-        // (Saya tidak boleh mengangkat orang jadi atasan saya).
-        $newRoleRank = $this->getRank($data['role']);
-        $myRank      = $this->getRank($request->user()->role);
+        $newRole = UserRole::from($data['role']);
+        $myRole  = $request->user()->role;
 
-        if ($request->user()->role !== 'kepala' && $myRank < $newRoleRank) {
+        if (!$request->user()->isKepala() && $myRole->rank() < $newRole->rank()) {
              return back()->with('error', 'Tindakan Ditolak: Anda tidak bisa menaikkan role ke tingkat yang lebih tinggi dari Anda.');
         }
 
@@ -163,7 +147,6 @@ class UserProvisioningController extends Controller
 
     /**
      * Mengirim Ulang Link Reset Password.
-     * Digunakan jika email pertama tidak sampai atau kadaluarsa.
      */
     public function resendReset(Request $request)
     {
@@ -191,19 +174,5 @@ class UserProvisioningController extends Controller
         }
 
         return back()->with('success', 'Link reset password berhasil dikirim ulang.');
-    }
-
-    // Helper sederhana untuk mengubah Role string (teks) menjadi angka (rank)
-    private function getRank(string $role): int
-    {
-        return match ($role) {
-            'kepala'   => 4,
-            'admin'    => 3,
-            'operator' => 2,
-            'guru'     => 1,
-            'staff'    => 1,
-            'siswa'    => 1,
-            default    => 0,
-        };
     }
 }

@@ -142,10 +142,13 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('wajib-hadir', [PegawaiWajibHadirController::class, 'index'])->name('wajib-hadir.index');
             Route::post('wajib-hadir', [PegawaiWajibHadirController::class, 'store'])->name('wajib-hadir.store');
 
-            Route::prefix('payroll')->name('payroll.')->group(function () {
-                Route::get('/', [PayrollController::class, 'index'])->name('index');
-                Route::get('{id}/slip', [PayrollController::class, 'slip'])->name('slip');
+            // PAYROLL MANAGEMENT (Admin, Operator, Bendahara)
+            Route::middleware(['role:admin,operator,bendahara'])->group(function () {
+                Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
             });
+
+            // SELF SERVICE (Semua User bisa buka slip sendiri)
+            Route::get('payroll/{id}/slip', [PayrollController::class, 'slip'])->name('payroll.slip');
 
             // Special Events
             Route::resource('events', SpecialEventController::class);
