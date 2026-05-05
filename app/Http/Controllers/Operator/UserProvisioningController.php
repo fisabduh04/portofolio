@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use App\Enums\UserRole;
+use Illuminate\Support\Facades\Log;
 
 class UserProvisioningController extends Controller
 {
@@ -77,6 +78,13 @@ class UserProvisioningController extends Controller
             'is_active'  => 0, 
         ]);
 
+        // Log aktivitas pembuatan user
+        Log::info("User Provisioning - Akun baru dibuat oleh ID: " . auth()->id(), [
+            'target_user_id' => $user->id,
+            'role' => $user->role->value,
+            'email' => $user->email
+        ]);
+
         return redirect()
             ->route('operator.users.index')
             ->with('success', "Akun {$user->role->label()} berhasil dibuat (Status: Nonaktif). Silakan aktifkan untuk mengirim email password.");
@@ -114,6 +122,12 @@ class UserProvisioningController extends Controller
                 return back()->with('warning', 'Akun berhasil diaktifkan, namun sistem gagal mengirim email reset password. Pastikan konfigurasi SMTP email (.env) sudah benar.');
             }
         }
+
+        // Log perubahan status
+        Log::info("User Provisioning - Status user diperbarui oleh ID: " . auth()->id(), [
+            'target_user_id' => $user->id,
+            'is_active' => $user->is_active
+        ]);
 
         return back()->with('success', 'Status akun berhasil diperbarui.');
     }

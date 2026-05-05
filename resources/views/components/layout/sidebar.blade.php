@@ -36,6 +36,7 @@
                 </a>
             </li>
 
+            @can('manage-data-master')
             <li>
                 <button type="button"
                     class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand"
@@ -54,7 +55,6 @@
                             d="m1 1 4 4 4-4" />
                     </svg>
                 </button>
-                @can('viewAny', \App\Models\User::class)
                     <ul id="dropdown-akademik" class="hidden py-2 space-y-2">
                         <li>
                             <a href="{{ route('sekolah.index') }}"
@@ -103,9 +103,10 @@
                         </li>
 
                     </ul>
-                @endcan
             </li>
+            @endcan
 
+            @can('view-kepegawaian')
             <!-- Menu Kepegawaian Baru -->
             <li>
                 <button type="button"
@@ -175,6 +176,7 @@
                     </li>
                 </ul>
             </li>
+            @endcan
 
             <li>
                 <button type="button"
@@ -239,6 +241,7 @@
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Jadwal
                             Mata Pelajaran</a>
                     </li>
+                    @can('manage-jadwal')
                     <li>
                         <a href="{{ route('jadwal-piket.index') }}"
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Jadwal
@@ -249,9 +252,11 @@
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Jadwal
                             Libur</a>
                     </li>
+                    @endcan
                 </ul>
             </li>
 
+            @can('view-rekapitulasi')
             <li>
                 <button type="button"
                     class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base group {{ request()->routeIs('absensi.rekap*', 'jadwal.rekap') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}"
@@ -296,6 +301,7 @@
 
                 </ul>
             </li>
+            @endcan
 
 
         </ul>

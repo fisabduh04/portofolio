@@ -30,6 +30,25 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Paginator::useTailwind();
 
+        // --- Definisi Akses Menu (Gates) ---
+        Gate::define('view-kepegawaian', function (User $user) {
+            return in_array($user->role->value, ['kepala', 'admin', 'operator', 'staff', 'bendahara']);
+        });
+
+        Gate::define('view-rekapitulasi', function (User $user) {
+            return in_array($user->role->value, ['kepala', 'admin', 'operator', 'staff']);
+        });
+
+        Gate::define('manage-jadwal', function (User $user) {
+            return in_array($user->role->value, ['admin', 'operator']);
+        });
+
+        Gate::define('manage-data-master', function (User $user) {
+            return in_array($user->role->value, ['admin', 'operator']);
+        });
+
+        // ------------------------------------
+
         // 2. Optimasi: Hanya jalankan query jika aplikasi TIDAK sedang berjalan di terminal (CLI/Migration)
         // Ini mencegah error saat Anda menjalankan 'php artisan migrate' di server baru
         if (!$this->app->runningInConsole()) {

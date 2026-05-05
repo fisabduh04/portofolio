@@ -110,10 +110,6 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/absensi/export-tahunan', [AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.export-tahunan'); 
         Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
         
-        // Piket Routes
-        Route::get('/absensi/piket', [AbsensiController::class, 'piket'])->name('absensi.piket');
-        Route::post('/absensi/piket/check-in', [AbsensiController::class, 'piketCheckIn'])->name('absensi.piket.check-in');
-        Route::post('/absensi/piket/check-out', [AbsensiController::class, 'piketCheckOut'])->name('absensi.piket.check-out');
 
         // PEGAWAI ATTENDANCE SYSTEM
         Route::prefix('attendance')->name('attendance.')->group(function () {
@@ -163,7 +159,13 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::middleware(['role:guru,admin,operator,kepala'])->group(function () {
         Route::get('/jadwal', [JadwalController::class, 'index'])->name('jadwal.index');
         Route::get('/jadwal/presensi-harian', [JadwalController::class, 'presensiHarianGuru'])->name('jadwal.presensiHarian');
-        // Absensi Harian Routes (Guru Piket)
+        
+        // Piket Routes (Akses khusus hari piket)
+        Route::get('/absensi/piket', [AbsensiController::class, 'piket'])->name('absensi.piket');
+        Route::post('/absensi/piket/check-in', [AbsensiController::class, 'piketCheckIn'])->name('absensi.piket.check-in');
+        Route::post('/absensi/piket/check-out', [AbsensiController::class, 'piketCheckOut'])->name('absensi.piket.check-out');
+
+        // Absensi Harian Routes
         Route::get('/absensi/harian', [AbsensiController::class, 'indexHarian'])->name('absensi.harian.index');
         Route::get('/absensi/harian/create', [AbsensiController::class, 'createHarian'])->name('absensi.harian.create');
         Route::post('/absensi/harian', [AbsensiController::class, 'storeHarian'])->name('absensi.harian.store');

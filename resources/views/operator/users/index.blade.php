@@ -161,14 +161,7 @@
                                         <div class="relative inline-block text-left group">
                                             {{-- Role Badge --}}
                                             @php
-                                                $roleColors = [
-                                                    'kepala' => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-                                                    'admin' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-                                                    'operator' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-                                                    'guru' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-                                                    'siswa' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-                                                ];
-                                                $colorClass = $roleColors[$user->role] ?? $roleColors['siswa'];
+                                                $colorClass = $user->role->color();
                                             @endphp
                                             
                                             <button type="button" 
@@ -180,7 +173,7 @@
                                                     class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold {{ $colorClass }} border border-transparent opacity-80 cursor-not-allowed transition-all"
                                                 @endcan
                                                 >
-                                                {{ ucfirst($user->role) }}
+                                                {{ $user->role->label() }}
                                                 @can('updateRole', $user)
                                                     <svg class="w-2.5 h-2.5 opacity-60" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
                                                 @endcan
