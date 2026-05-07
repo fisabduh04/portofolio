@@ -135,7 +135,6 @@
                                             <!-- Separate Delete Form for Single Item -->
                                             <x-btn data-modal-target="popup-modal-{{ $sis->id }}" data-modal-toggle="popup-modal-{{ $sis->id }}" icon="trash" color="red" variant="ghost" size="sm" class="!p-2" />
                                         </div>
-                                        <x-modal.hapus :id="$sis->id" :action="route('siswa.destroy', $sis->id)" />
                                     </td>
                                 </tr>
                             @empty
@@ -152,6 +151,11 @@
                     </table>
                 </form>
             </div>
+
+            <!-- Individual Deletion Modals (Moved outside form to prevent nested forms) -->
+            @foreach ($siswa as $sis)
+                <x-modal.hapus :id="$sis->id" :action="route('siswa.destroy', $sis->id)" />
+            @endforeach
 
             <!-- Footer Pagination -->
             <div class="flex flex-col items-center justify-between gap-4 mt-6 sm:flex-row">

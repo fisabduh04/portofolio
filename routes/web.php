@@ -74,11 +74,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('importpegawai', [PegawaiController::class, 'import'])->name('importpegawai');
     Route::get('exportpegawai', [PegawaiController::class, 'export'])->name('exportpegawai');
 
-    // Route siswa
-    Route::resource('siswa', SiswaController::class);
-    Route::delete('/siswa/{siswa}', [SiswaController::class, 'destroy'])->name('siswa.destroy');
-    Route::get('exportsiswa', [SiswaController::class, 'export'])->name('exportsiswa');
-    Route::post('importsiswa', [SiswaController::class, 'import'])->name('importsiswa');
+    // Route siswa (Akses umum untuk index/show bisa di sini jika diperlukan, tapi sebaiknya dikonsolidasikan)
+    // Route::resource('siswa', SiswaController::class);
 
     // Route Kelas Siswa
     Route::delete('/kelassiswa/bulk-delete', [KelasSiswaController::class, 'destroy'])->name('kelassiswa.bulkDelete');
@@ -216,7 +213,6 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('exportpegawai', [PegawaiController::class, 'export'])->name('exportpegawai');
         // Siswa
         Route::delete('/siswa/bulk-delete', [SiswaController::class, 'bulkDelete'])->name('siswa.bulkDelete');
-        Route::delete('/siswa/{siswa}', [SiswaController::class, 'destroy'])->name('siswa.destroy');
         Route::get('exportsiswa', [SiswaController::class, 'export'])->name('exportsiswa');
         Route::post('importsiswa', [SiswaController::class, 'import'])->name('importsiswa');
         // Kelas Siswa
