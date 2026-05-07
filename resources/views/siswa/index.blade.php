@@ -19,7 +19,7 @@
                     </a>
 
                     <!-- Bulk Delete (Hidden by default) -->
-                    <button id="bulk-delete-btn" class="hidden inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 transition-colors bg-white border border-red-200 rounded-base hover:bg-red-50 focus:ring-4 focus:ring-red-100 dark:bg-gray-800 dark:text-red-400 dark:border-red-900 dark:hover:bg-gray-700 dark:focus:ring-gray-700 shadow-sm animate-fade-in">
+                    <button id="bulk-delete-btn" data-modal-target="popup-modal-bulk" data-modal-toggle="popup-modal-bulk" class="hidden inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 transition-colors bg-white border border-red-200 rounded-base hover:bg-red-50 focus:ring-4 focus:ring-red-100 dark:bg-gray-800 dark:text-red-400 dark:border-red-900 dark:hover:bg-gray-700 dark:focus:ring-gray-700 shadow-sm animate-fade-in">
                         <svg class="w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
                         </svg>
@@ -183,7 +183,8 @@
     </div>
     
     <!-- Bulk Delete Warning Modal -->
-    <x-modal.hapus id="bulk" action="#" />
+    <!-- Bulk Delete Warning Modal -->
+    <x-modal.hapus id="bulk" action="#" formTarget="bulk-action-form" message="Apakah Anda yakin ingin menghapus data siswa yang dipilih?" />
 
     <!-- Import Modal -->
     <div id="small-modal" tabindex="-1" class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
@@ -274,13 +275,14 @@
                 });
             });
 
-            // Handle Bulk Delete
-            bulkDeleteBtn.addEventListener('click', function() {
-                if (confirm('Apakah Anda yakin ingin menghapus data yang dipilih?')) {
+            // Handle Bulk Delete - Mengatur URL target tanpa menggunakan browser confirm()
+            if (bulkDeleteBtn) {
+                bulkDeleteBtn.addEventListener('click', function(e) {
+                    // Set action form ke route bulk delete
                     bulkActionForm.action = "{{ route('siswa.bulkDelete') }}";
-                    bulkActionForm.submit();
-                }
-            });
+                    // Modal akan terbuka otomatis via data-modal-target
+                });
+            }
             
             // Handle Dynamic Export
             exportBtn.addEventListener('click', function(e) {
