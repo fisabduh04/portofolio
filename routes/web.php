@@ -177,6 +177,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::resource('pegawai', PegawaiController::class);
         Route::resource('kelas', KelasController::class);
         Route::resource('mapel', MapelController::class);
+        // Siswa Specific Routes (Must be before resource)
+        Route::delete('/siswa/bulk-delete', [SiswaController::class, 'bulkDelete'])->name('siswa.bulkDelete');
+        Route::get('exportsiswa', [SiswaController::class, 'export'])->name('exportsiswa');
+        Route::post('importsiswa', [SiswaController::class, 'import'])->name('importsiswa');
         Route::resource('siswa', SiswaController::class);
         Route::resource('kelassiswa', KelasSiswaController::class);
         // Jadwal Specific Routes (Must be before resource to avoid ID conflict)
@@ -211,10 +215,6 @@ Route::middleware(['auth', 'active'])->group(function () {
         // Pegawai
         Route::post('importpegawai', [PegawaiController::class, 'import'])->name('importpegawai');
         Route::get('exportpegawai', [PegawaiController::class, 'export'])->name('exportpegawai');
-        // Siswa
-        Route::delete('/siswa/bulk-delete', [SiswaController::class, 'bulkDelete'])->name('siswa.bulkDelete');
-        Route::get('exportsiswa', [SiswaController::class, 'export'])->name('exportsiswa');
-        Route::post('importsiswa', [SiswaController::class, 'import'])->name('importsiswa');
         // Kelas Siswa
         Route::get('/kelas-siswa-export', [KelasSiswaController::class, 'export'])->name('kelas-siswa-export');
         Route::post('kelas-siswa-import', [KelasSiswaController::class, 'import'])->name('kelas-siswa-import');

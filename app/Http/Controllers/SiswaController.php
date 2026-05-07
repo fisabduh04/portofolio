@@ -65,6 +65,7 @@ class SiswaController extends Controller
     public function bulkDelete(Request $request)
     {
         $ids = $request->input('ids');
+        \Log::info('Bulk Delete Request IDs:', ['ids' => $ids]);
         
         if ($ids) {
             $siswa = Siswa::whereIn('id', $ids)->get();

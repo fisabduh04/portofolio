@@ -278,9 +278,9 @@
             // Handle Bulk Delete - Mengatur URL target tanpa menggunakan browser confirm()
             if (bulkDeleteBtn) {
                 bulkDeleteBtn.addEventListener('click', function(e) {
-                    // Set action form ke route bulk delete
-                    bulkActionForm.action = "{{ route('siswa.bulkDelete') }}";
-                    // Modal akan terbuka otomatis via data-modal-target
+                    // Set action form ke route bulk delete secara eksplisit
+                    bulkActionForm.setAttribute('action', "{{ route('siswa.bulkDelete') }}");
+                    console.log('Bulk Action Form Action set to:', bulkActionForm.action);
                 });
             }
             
