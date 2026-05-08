@@ -59,13 +59,13 @@
             </div>
             <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
                 {{-- Simpan Semua Baris + Tahun (hidden until new rows added) --}}
-                @if(in_array(auth()->user()->role, ['admin', 'operator']))
+                @if(in_array(auth()->user()->role->value, ['admin', 'operator']))
                 <div id="btnSimpanWrapper" class="hidden flex items-center gap-2">
                     <select id="tahun_bulk" name="tahun_id" form="bulkFormJadwal"
                         class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 dark:bg-gray-600 dark:border-gray-500 dark:text-white">
                         <option value="">-- Tahun Ajaran --</option>
                         @foreach ($tahun as $t)
-                            <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
+                            <option value="{{ $t->id }}" {{ old('tahun_id', request('filter_tahun')) == $t->id ? 'selected' : '' }}>
                                 {{ $t->tahun }} - {{ $t->semester }}
                             </option>
                         @endforeach
@@ -75,7 +75,7 @@
                 @endif
 
                 {{-- Primary Action: Tambah --}}
-                @if(in_array(auth()->user()->role, ['admin', 'operator']))
+                @if(in_array(auth()->user()->role->value, ['admin', 'operator']))
                 <x-btn onclick="tambah()" color="blue" size="sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                     <span>Tambah Jadwal</span>
@@ -337,7 +337,7 @@
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                                     </a>
 
-                                    @if(in_array(auth()->user()->role, ['admin', 'operator']))
+                                    @if(in_array(auth()->user()->role->value, ['admin', 'operator']))
                                     {{-- Edit Button --}}
                                     <x-btn onclick="editRow({{ $j->id }})" icon="pencil-square" color="blue" variant="ghost" size="sm" class="!p-2" />
                                     {{-- Delete Button --}}

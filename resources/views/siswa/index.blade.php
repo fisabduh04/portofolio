@@ -225,7 +225,7 @@
     <!-- Logic for Bulk Actions -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-             const checkAll = document.getElementById('checkbox-all');
+            const checkAll = document.getElementById('checkbox-all');
             const checkboxes = document.querySelectorAll('.checkbox-item');
             const selectedCount = document.getElementById('selected-count');
             const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
