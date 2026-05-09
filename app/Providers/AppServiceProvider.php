@@ -47,6 +47,14 @@ class AppServiceProvider extends ServiceProvider
             return in_array($user->role->value, ['admin', 'operator']);
         });
 
+        Gate::define('manage-sekolah', function (User $user) {
+            return in_array($user->role->value, ['admin', 'kepala', 'operator']);
+        });
+
+        Gate::define('is-guru', function (User $user) {
+            return $user->role->value === 'guru';
+        });
+
         // ------------------------------------
 
         // 2. Optimasi: Hanya jalankan query jika aplikasi TIDAK sedang berjalan di terminal (CLI/Migration)

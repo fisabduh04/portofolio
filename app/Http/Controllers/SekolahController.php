@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class SekolahController extends Controller
 {
@@ -16,10 +17,8 @@ class SekolahController extends Controller
      */
     public function index()
     {
-        // 1. Otorisasi: Hanya Admin, Kepala Sekolah, dan Operator yang boleh akses halaman ini
-        if (!in_array(auth()->user()->role, ['admin', 'kepala', 'operator'])) {
-            abort(403, 'Anda tidak memiliki akses untuk melihat konfigurasi sekolah.');
-        }
+        // 1. Otorisasi menggunakan Gate
+        Gate::authorize('manage-sekolah');
 
         $sekolah = Sekolah::first();
 
@@ -36,10 +35,8 @@ class SekolahController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Otorisasi: Hanya Admin, Kepala Sekolah, dan Operator yang boleh mengubah data
-        if (!in_array(auth()->user()->role, ['admin', 'kepala', 'operator'])) {
-            abort(403, 'Anda tidak memiliki akses untuk mengubah data sekolah.');
-        }
+        // 1. Otorisasi menggunakan Gate
+        Gate::authorize('manage-sekolah');
 
         // 2. Validasi Ketat (MIME Types & Sanitasi)
         // Kita gunakan strip_tags untuk membersihkan input text dari potensi XSS
