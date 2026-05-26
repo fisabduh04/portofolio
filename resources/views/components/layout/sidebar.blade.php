@@ -39,9 +39,10 @@
             @can('manage-data-master')
             <li>
                 <button type="button"
-                    class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand"
-                    aria-controls="dropdown-akademik" data-collapse-toggle="dropdown-akademik">
-                    <svg class="w-5 h-5 transition duration-75 group-hover:text-fg-brand" aria-hidden="true"
+                    class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base group {{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}"
+                    aria-controls="dropdown-akademik" data-collapse-toggle="dropdown-akademik"
+                    aria-expanded="{{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*') ? 'true' : 'false' }}">
+                    <svg class="w-5 h-5 transition duration-75 {{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -49,13 +50,13 @@
                         <path d="M6 12v5c3.333 3 8.667 3 12 0v-5" />
                     </svg>
                     <span class="flex-1 text-left ms-3 rtl:text-right whitespace-nowrap">Data Master</span>
-                    <svg class="w-3 h-3 group-hover:text-fg-brand" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    <svg class="w-3 h-3 {{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                         fill="none" viewBox="0 0 10 6">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m1 1 4 4 4-4" />
                     </svg>
                 </button>
-                    <ul id="dropdown-akademik" class="hidden py-2 space-y-2">
+                    <ul id="dropdown-akademik" class="{{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*') ? '' : 'hidden' }} py-2 space-y-2">
                         <li>
                             <a href="{{ route('sekolah.index') }}"
                                 class="flex items-center w-full pl-11 px-2 py-1.5 text-body rounded-base hover:bg-neutral-tertiary hover:text-fg-brand group">Data
@@ -110,9 +111,10 @@
             <!-- Menu Kepegawaian Baru -->
             <li>
                 <button type="button"
-                    class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand"
-                    aria-controls="dropdown-kepegawaian" data-collapse-toggle="dropdown-kepegawaian">
-                    <svg class="w-5 h-5 transition duration-75 group-hover:text-fg-brand" aria-hidden="true"
+                    class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base group {{ request()->routeIs('attendance.*') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}"
+                    aria-controls="dropdown-kepegawaian" data-collapse-toggle="dropdown-kepegawaian"
+                    aria-expanded="{{ request()->routeIs('attendance.*') ? 'true' : 'false' }}">
+                    <svg class="w-5 h-5 transition duration-75 {{ request()->routeIs('attendance.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -122,13 +124,13 @@
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
                     <span class="flex-1 text-left ms-3 rtl:text-right whitespace-nowrap">Kepegawaian</span>
-                    <svg class="w-3 h-3 group-hover:text-fg-brand" aria-hidden="true"
+                    <svg class="w-3 h-3 {{ request()->routeIs('attendance.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m1 1 4 4 4-4" />
                     </svg>
                 </button>
-                <ul id="dropdown-kepegawaian" class="hidden py-2 space-y-2">
+                <ul id="dropdown-kepegawaian" class="{{ request()->routeIs('attendance.*') ? '' : 'hidden' }} py-2 space-y-2">
                     <li>
                         <a href="{{ route('attendance.rules.index') }}"
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Aturan
@@ -180,9 +182,10 @@
 
             <li>
                 <button type="button"
-                    class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand"
-                    aria-controls="dropdown-presensi" data-collapse-toggle="dropdown-presensi">
-                    <svg class="w-5 h-5 transition duration-75 group-hover:text-fg-brand" aria-hidden="true"
+                    class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base group {{ request()->routeIs('jadwal.presensiHarian', 'absensi.harian.*', 'absensi.piket') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}"
+                    aria-controls="dropdown-presensi" data-collapse-toggle="dropdown-presensi"
+                    aria-expanded="{{ request()->routeIs('jadwal.presensiHarian', 'absensi.harian.*', 'absensi.piket') ? 'true' : 'false' }}">
+                    <svg class="w-5 h-5 transition duration-75 {{ request()->routeIs('jadwal.presensiHarian', 'absensi.harian.*', 'absensi.piket') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -190,13 +193,13 @@
                             d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     <span class="flex-1 text-left ms-3 rtl:text-right whitespace-nowrap">Presensi</span>
-                    <svg class="w-3 h-3 group-hover:text-fg-brand" aria-hidden="true"
+                    <svg class="w-3 h-3 {{ request()->routeIs('jadwal.presensiHarian', 'absensi.harian.*', 'absensi.piket') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m1 1 4 4 4-4" />
                     </svg>
                 </button>
-                <ul id="dropdown-presensi" class="hidden py-2 space-y-2">
+                <ul id="dropdown-presensi" class="{{ request()->routeIs('jadwal.presensiHarian', 'absensi.harian.*', 'absensi.piket') ? '' : 'hidden' }} py-2 space-y-2">
                     <li>
                         <a href="{{ route('jadwal.presensiHarian') }}"
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Presensi
@@ -220,22 +223,23 @@
 
             <li>
                 <button type="button"
-                    class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base group hover:bg-neutral-tertiary hover:text-fg-brand"
-                    aria-controls="dropdown-absensi" data-collapse-toggle="dropdown-absensi">
-                    <svg class="w-5 h-5 transition duration-75 group-hover:text-fg-brand" aria-hidden="true"
+                    class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base group {{ request()->routeIs('jadwal.index', 'jadwal-piket.*', 'hari-libur.*') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}"
+                    aria-controls="dropdown-absensi" data-collapse-toggle="dropdown-absensi"
+                    aria-expanded="{{ request()->routeIs('jadwal.index', 'jadwal-piket.*', 'hari-libur.*') ? 'true' : 'false' }}">
+                    <svg class="w-5 h-5 transition duration-75 {{ request()->routeIs('jadwal.index', 'jadwal-piket.*', 'hari-libur.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
                         <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
                     </svg>
                     <span class="flex-1 text-left ms-3 rtl:text-right whitespace-nowrap">Jadwal</span>
-                    <svg class="w-3 h-3 group-hover:text-fg-brand" aria-hidden="true"
+                    <svg class="w-3 h-3 {{ request()->routeIs('jadwal.index', 'jadwal-piket.*', 'hari-libur.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m1 1 4 4 4-4" />
                     </svg>
                 </button>
-                <ul id="dropdown-absensi" class="hidden py-2 space-y-2">
+                <ul id="dropdown-absensi" class="{{ request()->routeIs('jadwal.index', 'jadwal-piket.*', 'hari-libur.*') ? '' : 'hidden' }} py-2 space-y-2">
                     <li>
                         <a href="{{ route('jadwal.index') }}"
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Jadwal
