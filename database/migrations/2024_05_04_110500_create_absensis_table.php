@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('logbook_id')->constrained('logbooks')->onDelete('cascade');
             $table->foreignId('siswa_id')->index()->constrained('siswas')->onDelete('cascade');
-            $table->enum('status', ['Hadir', 'Sakit', 'Izin', 'Alpha', 'Pulang'])->index()->default('Hadir');
+            $table->enum('status', ['Hadir', 'Sakit', 'Izin', 'Alpha', 'Pulang'])->nullable()->index();
             $table->text('keterangan')->nullable(); // Diubah ke text agar bisa mencatat alasan lebih detil
             $table->timestamps();
             
