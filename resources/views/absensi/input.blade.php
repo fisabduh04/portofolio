@@ -130,6 +130,19 @@
                                         <div class="flex items-center justify-between md:justify-center gap-2">
                                             <span class="text-xs font-semibold text-gray-400 md:hidden">Status:</span>
                                             <div class="flex gap-2">
+                                                @foreach(['Hadir' => 'H', 'Sakit' => 'S', 'Izin' => 'I', 'Alpha' => 'A'] as $label => $short)
+                                                <label class="cursor-pointer group">
+                                                    <input type="radio" 
+                                                           name="attendance[{{ $siswa->id }}][status]" 
+                                                           value="{{ $label }}" 
+                                                           class="hidden peer"
+                                                           data-type="{{ $label }}"
+                                                           {{ $existingStatus == $label ? 'checked' : '' }}>
+                                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all
+                                                        @if($label == 'Hadir') peer-checked:bg-emerald-500 peer-checked:border-emerald-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-emerald-200
+                                                        @elseif($label == 'Sakit') peer-checked:bg-amber-500 peer-checked:border-amber-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-amber-200
+                                                        @elseif($label == 'Izin') peer-checked:bg-blue-500 peer-checked:border-blue-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-blue-200
+                                                        @elseif($label == 'Alpha') peer-checked:bg-rose-500 peer-checked:border-rose-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-rose-200
                                                         @endif">
                                                         <span class="text-xs font-bold">{{ $short }}</span>
                                                     </div>

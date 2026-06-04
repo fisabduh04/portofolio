@@ -96,7 +96,7 @@
 
                                 @foreach($students as $index => $siswa)
                                 @php
-                                    $existingStatus = $attendanceMap[$siswa->id]->status ?? 'Hadir';
+                                    $existingStatus = $attendanceMap[$siswa->id]->status ?? null;
                                     $existingNote = $attendanceMap[$siswa->id]->keterangan ?? '';
                                 @endphp
                                 <tr class="block md:table-row bg-white dark:bg-gray-800 border md:border-none border-gray-100 dark:border-gray-700 rounded-xl shadow-sm md:shadow-none p-4 md:p-0 hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors text-sm">

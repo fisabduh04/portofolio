@@ -18,7 +18,7 @@ return new class extends Migration
             $table->enum('status', ['Hadir', 'Sakit', 'Izin', 'Alpha', 'Pulang'])->nullable()->index();
             $table->text('keterangan')->nullable(); // Diubah ke text agar bisa mencatat alasan lebih detil
             $table->timestamps();
-            
+
             // Index komposit untuk mempercepat laporan bulanan/semester per siswa
             $table->index(['siswa_id', 'status']);
         });
