@@ -45,7 +45,7 @@
                 <th rowspan="2" class="w-8">No</th>
                 <th rowspan="2" class="text-left" style="min-width: 150px;">Nama Siswa</th>
                 <th colspan="{{ count($dates) }}">Tanggal</th>
-                <th colspan="6">Total</th>
+                <th colspan="5">Total</th>
             </tr>
             <tr class="bg-gray-100">
                 @foreach($dates as $d)
@@ -56,7 +56,6 @@
                 <th class="bg-blue-100 w-8">I</th>
                 <th class="bg-red-100 w-8">A</th>
                 <th class="bg-purple-100 w-8">P</th>
-                <th class="bg-indigo-100 w-8">T</th>
             </tr>
         </thead>
         <tbody>
@@ -69,21 +68,19 @@
                         $dayData = $student->statuses[$d] ?? ['code' => '-', 'is_libur' => false];
                         $code = $dayData['code'];
                         $bg = '';
-                        if($code == 'H') $bg = 'bg-green-100';
+                        if($code == 'H' || $code == 'T') $bg = 'bg-green-100';
                         elseif($code == 'S') $bg = 'bg-yellow-100';
                         elseif($code == 'I') $bg = 'bg-blue-100';
                         elseif($code == 'A') $bg = 'bg-red-100';
                         elseif($code == 'P') $bg = 'bg-purple-100';
-                        elseif($code == 'T') $bg = 'bg-indigo-100';
                     @endphp
-                    <td class="{{ $bg }}">{{ $code !== '-' ? $code : '' }}</td>
+                    <td class="{{ $bg }}">{{ $code !== '-' ? ($code == 'T' ? 'H' : $code) : '' }}</td>
                 @endforeach
-                <td class="font-bold">{{ $student->stats['H'] }}</td>
+                <td class="font-bold">{{ ($student->stats['H'] ?? 0) + ($student->stats['T'] ?? 0) }}</td>
                 <td class="font-bold">{{ $student->stats['S'] }}</td>
                 <td class="font-bold">{{ $student->stats['I'] }}</td>
                 <td class="font-bold">{{ $student->stats['A'] ?? 0 }}</td>
                 <td class="font-bold">{{ $student->stats['P'] ?? 0 }}</td>
-                <td class="font-bold">{{ $student->stats['T'] ?? 0 }}</td>
             </tr>
             @endforeach
         </tbody>

@@ -51,7 +51,6 @@
                     <th class="px-2 py-2 border border-gray-300 text-center w-12">I</th>
                     <th class="px-2 py-2 border border-gray-300 text-center w-12 bg-red-50 text-red-700">A</th>
                     <th class="px-2 py-2 border border-gray-300 text-center w-12 bg-purple-50 text-purple-700">P</th>
-                    <th class="px-2 py-2 border border-gray-300 text-center w-12 bg-indigo-50 text-indigo-700">T</th>
                     <th class="px-3 py-2 border border-gray-300">Keterangan</th>
                 </tr>
             </thead>
@@ -60,8 +59,8 @@
                 <tr class="break-inside-avoid">
                     <td class="px-3 py-2 border border-gray-300 text-center">{{ $loop->iteration }}</td>
                     <td class="px-3 py-2 border border-gray-300 font-medium">{{ $data->nama }}</td>
-                    <td class="px-2 py-2 border border-gray-300 text-center {{ $data->stats['Hadir'] > 0 ? 'bg-green-50 font-bold' : 'text-gray-300' }}">
-                        {{ $data->stats['Hadir'] > 0 ? $data->stats['Hadir'] : '-' }}
+                    <td class="px-2 py-2 border border-gray-300 text-center {{ (($data->stats['Hadir'] ?? 0) + ($data->stats['Telat'] ?? 0)) > 0 ? 'bg-green-50 font-bold' : 'text-gray-300' }}">
+                        {{ (($data->stats['Hadir'] ?? 0) + ($data->stats['Telat'] ?? 0)) > 0 ? (($data->stats['Hadir'] ?? 0) + ($data->stats['Telat'] ?? 0)) : '-' }}
                     </td>
                     <td class="px-2 py-2 border border-gray-300 text-center {{ $data->stats['Sakit'] > 0 ? 'bg-yellow-50 font-bold' : 'text-gray-300' }}">
                         {{ $data->stats['Sakit'] > 0 ? $data->stats['Sakit'] : '-' }}
@@ -74,9 +73,6 @@
                     </td>
                     <td class="px-2 py-2 border border-gray-300 text-center {{ ($data->stats['Pulang'] ?? 0) > 0 ? 'bg-purple-50 text-purple-600 font-bold' : 'text-gray-300' }}">
                         {{ ($data->stats['Pulang'] ?? 0) > 0 ? $data->stats['Pulang'] : '-' }}
-                    </td>
-                    <td class="px-2 py-2 border border-gray-300 text-center {{ ($data->stats['Telat'] ?? 0) > 0 ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-gray-300' }}">
-                        {{ ($data->stats['Telat'] ?? 0) > 0 ? $data->stats['Telat'] : '-' }}
                     </td>
                     <td class="px-3 py-2 border border-gray-300 text-xs text-gray-600">
                         @if($data->details->count() > 0)
