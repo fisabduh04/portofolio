@@ -20,11 +20,11 @@ class DashboardController extends Controller
         // 2. Statistik Presensi Hari Ini
         $today = now()->toDateString();
         $todayStats = [
-            'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0
+            'Hadir' => 0, 'Pulang' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0,
         ];
-        
+
         // Ambil data absensi hari ini lewat Logbook
-        $todayAbsensi = \App\Models\Absensi::whereHas('logbook', function($q) use ($today) {
+        $todayAbsensi = \App\Models\Absensi::whereHas('logbook', function ($q) use ($today) {
             $q->where('tanggal', $today);
         })->get();
 
@@ -33,8 +33,8 @@ class DashboardController extends Controller
                 $todayStats[$ab->status]++;
             }
         }
-        
-        $totalHadirToday = $todayStats['Hadir'];
+
+        $totalHadirToday = $todayStats['Hadir'] + $todayStats['Pulang'];
         $attendanceRate = $totalSiswa > 0 ? round(($totalHadirToday / $totalSiswa) * 100, 1) : 0;
 
         // 3. Tren Kehadiran 7 Hari Terakhir
@@ -46,21 +46,21 @@ class DashboardController extends Controller
         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
             $currentDate = $date->toDateString();
             $dates[] = $date->format('d M'); // Label sumbu X
-            
-            // Hitung hadir pada tanggal tersebut
-            $countHadir = \App\Models\Absensi::whereHas('logbook', function($q) use ($currentDate) {
+
+            // Hitung hadir/pulang pada tanggal tersebut
+            $countHadir = \App\Models\Absensi::whereHas('logbook', function ($q) use ($currentDate) {
                 $q->where('tanggal', $currentDate);
-            })->where('status', 'Hadir')->count();
-            
+            })->whereIn('status', ['Hadir', 'Pulang'])->count();
+
             $trendData[] = $countHadir;
         }
 
         // 4. Statistik Kepegawaian (Employee Stats)
         $totalPegawaiAktif = \App\Models\Pegawai::where('aktif', 'Aktif')->count();
-        
+
         // Today's Employee Attendance
         $todayPegawaiStats = [
-            'Hadir' => 0, 'Telat' => 0, 'Izin' => 0, 'Alpha' => 0, 'Sakit' => 0
+            'Hadir' => 0, 'Telat' => 0, 'Izin' => 0, 'Alpha' => 0, 'Sakit' => 0,
         ];
 
         $todayPegawaiAbsensi = \App\Models\PegawaiAbsensi::with('pegawai')
@@ -72,12 +72,14 @@ class DashboardController extends Controller
             if (isset($todayPegawaiStats[$status])) {
                 $todayPegawaiStats[$status]++;
             } else {
-                 // Handle unexpected status
-                 if (!isset($todayPegawaiStats['Lainnya'])) $todayPegawaiStats['Lainnya'] = 0;
-                 $todayPegawaiStats['Lainnya']++;
+                // Handle unexpected status
+                if (! isset($todayPegawaiStats['Lainnya'])) {
+                    $todayPegawaiStats['Lainnya'] = 0;
+                }
+                $todayPegawaiStats['Lainnya']++;
             }
         }
-        
+
         // Calculate Rates
         $pegawaiHadirCount = $todayPegawaiStats['Hadir'] + $todayPegawaiStats['Telat'];
         $pegawaiAttendanceRate = $totalPegawaiAktif > 0 ? round(($pegawaiHadirCount / $totalPegawaiAktif) * 100, 1) : 0;
@@ -88,27 +90,27 @@ class DashboardController extends Controller
 
         // Employee Monthly Trend (Last 7 Days for consistency with Student Chart)
         $pegawaiTrendData = [];
-        // Re-use $dates from Student section or create new if needed. 
+        // Re-use $dates from Student section or create new if needed.
         // We can reuse the loop structure but query PegawaiAbsensi.
-        
+
         foreach ($dates as $index => $dateLabel) {
             // Need the actual date object from previous loop or reconstruct it.
-            // Simpler: Just query based on the date string if we stored it, 
+            // Simpler: Just query based on the date string if we stored it,
             // but $dates only has labels "d M".
             // Let's reconstruct the date loop to be safe and efficient.
-             $loopDate = $startDate->copy()->addDays($index)->toDateString();
-             
-             $countHadirPegawai = \App\Models\PegawaiAbsensi::where('tanggal', $loopDate)
+            $loopDate = $startDate->copy()->addDays($index)->toDateString();
+
+            $countHadirPegawai = \App\Models\PegawaiAbsensi::where('tanggal', $loopDate)
                 ->whereIn('status', ['Hadir', 'Telat', 'Hadir (Event)'])
                 ->count();
-            
+
             $pegawaiTrendData[] = $countHadirPegawai;
         }
 
         return view('dashboard.index', compact(
             'totalSiswa', 'totalPegawai', 'totalKelas', 'totalJurusan',
             'todayStats', 'attendanceRate', 'dates', 'trendData',
-            'totalPegawaiAktif', 'todayPegawaiStats', 'pegawaiAttendanceRate', 
+            'totalPegawaiAktif', 'todayPegawaiStats', 'pegawaiAttendanceRate',
             'lateEmployees', 'earlyBirds', 'pegawaiTrendData'
         ));
     }

@@ -83,7 +83,7 @@
                 </div>
                 <div class="text-3xl font-bold text-gray-900 dark:text-white">{{ $attendanceRate }}%</div>
                 <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    {{ $todayStats['Hadir'] }} Hadir dari {{ $totalSiswa }} Siswa
+                    {{ $todayStats['Hadir'] + $todayStats['Pulang'] }} Hadir dari {{ $totalSiswa }} Siswa
                 </div>
             </div>
         </div>
@@ -111,10 +111,14 @@
                 <div class="py-4" id="today-composition-chart"></div>
 
                 {{-- Legend Custom --}}
-                <div class="grid grid-cols-4 gap-2 text-center mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="grid grid-cols-5 gap-2 text-center mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">Hadir</div>
                         <div class="text-lg font-bold text-blue-600">{{ $todayStats['Hadir'] }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Pulang</div>
+                        <div class="text-lg font-bold text-green-600">{{ $todayStats['Pulang'] }}</div>
                     </div>
                     <div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">Sakit</div>
@@ -459,11 +463,12 @@
             const compositionOptions = {
                 series: [
                     {{ $todayStats['Hadir'] }},
+                    {{ $todayStats['Pulang'] }},
                     {{ $todayStats['Sakit'] }},
                     {{ $todayStats['Izin'] }},
                     {{ $todayStats['Alpha'] }}
                 ],
-                colors: ["#1C64F2", "#fdba74", "#fde047", "#F05252"], // Blue, Orange (S), Yellow (I), Red (A)
+                colors: ["#1C64F2", "#10B981", "#fdba74", "#fde047", "#F05252"], // Blue (H), Green (P), Orange (S), Yellow (I), Red (A)
                 chart: {
                     height: 320,
                     width: "100%",
@@ -513,7 +518,7 @@
                         top: -2
                     },
                 },
-                labels: ["Hadir", "Sakit", "Izin", "Alpha"],
+                labels: ["Hadir", "Pulang", "Sakit", "Izin", "Alpha"],
                 dataLabels: {
                     enabled: false
                 },
