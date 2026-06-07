@@ -180,16 +180,22 @@
                     @if(isset($existingLogbook) && $existingLogbook->foto)
                     <div class="mb-4">
                         <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Foto Tersimpan:</p>
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="flex flex-wrap gap-2">
                             @foreach(json_decode($existingLogbook->foto) as $foto)
-                            <div class="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group">
-                                <img src="{{ asset('storage/' . $foto) }}" class="w-full h-full object-cover">
-                                <a href="{{ asset('storage/' . $foto) }}" target="_blank" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">
-                                    Lihat Full
-                                </a>
+                            <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group shadow-sm hover:scale-105 transition-transform" id="saved-photo-{{ md5($foto) }}">
+                                <img src="{{ asset('storage/' . $foto) }}" class="w-full h-full object-cover cursor-pointer" onclick="openGlobalLightbox('{{ asset('storage/' . $foto) }}')">
+                                <button type="button" onclick="deleteSavedPhoto('{{ $foto }}', 'saved-photo-{{ md5($foto) }}')" class="absolute top-1 right-1 bg-red-600/80 hover:bg-red-700 text-white rounded-full p-1 shadow transition-colors z-10 cursor-pointer" title="Hapus foto dari database">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path></svg>
+                                </div>
                             </div>
                             @endforeach
                         </div>
+                        <div id="deleted-photos-container"></div>
                     </div>
                     @endif
 
@@ -217,29 +223,71 @@
     </form>
 
 <script>
+    // Selected files array to handle files before uploading
+    let selectedFiles = [];
+
     window.handleFiles = function(files) {
         const previewContainer = document.getElementById('image-preview-container');
         if (!previewContainer) return;
-        previewContainer.innerHTML = ''; 
+
         if (files && files.length > 0) {
             Array.from(files).forEach(file => {
                 if (file.type.match('image.*')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const div = document.createElement('div');
-                        div.className = 'relative aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm group';
-                        div.innerHTML = `
-                            <img src="${e.target.result}" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <span class="text-white text-[10px] font-medium">${(file.size/1024).toFixed(1)} KB</span>
-                            </div>
-                        `;
-                        previewContainer.appendChild(div);
+                    // Check duplicate
+                    const isDuplicate = selectedFiles.some(f => f.name === file.name && f.size === file.size);
+                    if (!isDuplicate) {
+                        selectedFiles.push(file);
                     }
-                    reader.readAsDataURL(file);
                 }
             });
         }
+
+        renderPreviews();
+        updateFileInput();
+    }
+
+    function renderPreviews() {
+        const previewContainer = document.getElementById('image-preview-container');
+        if (!previewContainer) return;
+
+        previewContainer.innerHTML = ''; // Clear previous previews
+
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.className = 'relative aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm group';
+                
+                div.innerHTML = `
+                    <img src="${e.target.result}" class="w-full h-full object-cover cursor-pointer" onclick="openGlobalLightbox('${e.target.result}')">
+                    <button type="button" onclick="removeSelectedFile(${index})" class="absolute top-1.5 right-1.5 bg-red-600/80 hover:bg-red-700 text-white rounded-full p-1 shadow transition-colors z-10 cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1.5 pointer-events-none">
+                        <span class="text-white text-[10px] font-medium truncate w-full">${(file.size/1024).toFixed(1)} KB</span>
+                    </div>
+                `;
+                previewContainer.appendChild(div);
+            }
+            reader.readAsDataURL(file);
+        });
+    }
+
+    window.removeSelectedFile = function(index) {
+        selectedFiles.splice(index, 1);
+        renderPreviews();
+        updateFileInput();
+    }
+
+    function updateFileInput() {
+        const fileInput = document.getElementById('dropzone-file');
+        if (!fileInput) return;
+        
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -267,6 +315,58 @@
 
         updateStats();
     });
+
+    // Lightbox modal functions
+    function openGlobalLightbox(src) {
+        const lightbox = document.getElementById('globalLightbox');
+        const img = document.getElementById('lightboxImage');
+        if (lightbox && img) {
+            img.src = src;
+            lightbox.classList.remove('hidden');
+            lightbox.classList.add('flex');
+            setTimeout(() => {
+                lightbox.classList.remove('opacity-0');
+                lightbox.classList.add('opacity-100');
+            }, 10);
+        }
+    }
+
+    function closeGlobalLightbox() {
+        const lightbox = document.getElementById('globalLightbox');
+        if (lightbox) {
+            lightbox.classList.remove('opacity-100');
+            lightbox.classList.add('opacity-0');
+            setTimeout(() => {
+                lightbox.classList.remove('flex');
+                lightbox.classList.add('hidden');
+            }, 300);
+        }
+    }
+
+    // Delete saved photo handler
+    window.deleteSavedPhoto = function(path, elementId) {
+        showConfirmModal('Apakah Anda yakin ingin menghapus foto ini dari server?', function() {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.remove();
+            }
+            
+            const container = document.getElementById('deleted-photos-container');
+            if (container) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'deleted_photos[]';
+                input.value = path;
+                container.appendChild(input);
+            }
+        });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeGlobalLightbox();
+        }
+    });
 </script>
 
 <style>
@@ -276,5 +376,17 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     }
 </style>
+
+<!-- Global Lightbox Modal -->
+<div id="globalLightbox" class="fixed inset-0 z-[9999] hidden flex-col items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300 opacity-0" onclick="closeGlobalLightbox()">
+    <div class="absolute top-4 right-4 flex items-center gap-3">
+        <button onclick="closeGlobalLightbox()" class="text-white hover:text-gray-300 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors focus:outline-none cursor-pointer" aria-label="Close Lightbox">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+    <div class="max-w-[90%] max-h-[85vh] relative" onclick="event.stopPropagation()">
+        <img id="lightboxImage" src="" class="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain border border-white/10">
+    </div>
+</div>
 </x-layout.layout>
 

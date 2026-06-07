@@ -124,7 +124,7 @@
 
         @if($selectedKelas)
             {{-- Statistik Cards (Modern Design) --}}
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {{-- Total Siswa --}}
                 <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
                     <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-gray-600 bg-gray-100 rounded-lg dark:bg-gray-700 dark:text-gray-300">
@@ -189,6 +189,19 @@
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Alpha'] }}</h3>
                     </div>
                 </div>
+
+                {{-- Pulang --}}
+                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-purple-600 bg-purple-100 rounded-lg dark:bg-purple-900/30 dark:text-purple-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
+                            Pulang
+                        </p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Pulang'] ?? 0 }}</h3>
+                    </div>
+                </div>
             </div>
 
             {{-- Main Logic Explanation (Dismissible Alert) --}}
@@ -238,6 +251,7 @@
                                 <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20">Sakit</th>
                                 <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20">Izin</th>
                                 <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20">Alpha</th>
+                                <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20">Pulang</th>
                                 <th scope="col" class="px-6 py-4 text-left font-semibold tracking-wider">Detail Ketidakhadiran</th>
                             </tr>
                         </thead>
@@ -283,12 +297,22 @@
                                             <span class="text-gray-300">-</span>
                                         @endif
                                     </td>
+                                    <td class="px-4 py-4">
+                                        @if($data->stats['Pulang'] > 0)
+                                            <span class="inline-flex items-center justify-center w-8 h-8 text-sm font-bold text-purple-800 bg-purple-100 rounded-full dark:bg-purple-900 dark:text-purple-300 border border-purple-200">
+                                                {{ $data->stats['Pulang'] }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-300">-</span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 text-left text-xs">
                                         @php
                                             $alphaDetails = $data->details->where('status', 'Alpha');
                                             $sakitDetails = $data->details->where('status', 'Sakit');
                                             $izinDetails  = $data->details->where('status', 'Izin');
-                                            $hasDetails   = $alphaDetails->count() > 0 || $sakitDetails->count() > 0 || $izinDetails->count() > 0;
+                                            $pulangDetails = $data->details->where('status', 'Pulang');
+                                            $hasDetails   = $alphaDetails->count() > 0 || $sakitDetails->count() > 0 || $izinDetails->count() > 0 || $pulangDetails->count() > 0;
                                         @endphp
 
                                         @if($hasDetails)
@@ -312,6 +336,14 @@
                                                 {{-- Izin --}}
                                                 @foreach($izinDetails as $log)
                                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
+                                                        <span class="font-bold">{{ $log->mapel }}</span>
+                                                        <span class="font-normal opacity-80">({{ $log->guru }})</span>
+                                                    </span>
+                                                @endforeach
+
+                                                {{-- Pulang --}}
+                                                @foreach($pulangDetails as $log)
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-purple-700 bg-purple-100 rounded-full border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800">
                                                         <span class="font-bold">{{ $log->mapel }}</span>
                                                         <span class="font-normal opacity-80">({{ $log->guru }})</span>
                                                     </span>
@@ -366,13 +398,14 @@
                                      {{-- Status Verdict Badge --}}
                                     <td class="px-6 py-4 text-center">
                                          @php
-                                            $badgeClasses = match($data->daily_status) {
-                                                'Hadir' => 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
-                                                'Alpha' => 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
-                                                'Sakit' => 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800',
-                                                'Izin' => 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800',
-                                                default => 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
-                                            };
+                                             $badgeClasses = match($data->daily_status) {
+                                                 'Hadir' => 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
+                                                 'Alpha' => 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
+                                                 'Sakit' => 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800',
+                                                 'Izin' => 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800',
+                                                 'Pulang' => 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800',
+                                                 default => 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
+                                             };
                                          @endphp
                                          <span class="{{ $badgeClasses }} text-xs font-semibold px-3 py-1 rounded-full border shadow-sm">
                                             {{ $data->daily_status }}
@@ -384,21 +417,26 @@
                                         <div class="flex flex-wrap items-center gap-1.5">
                                             @forelse($data->details as $index => $log)
                                                 @php
-                                                    $sessionColor = match($log->status) {
-                                                        'Hadir' => 'bg-blue-500 hover:bg-blue-600 shadow-blue-200',
-                                                        'Alpha' => 'bg-red-500 hover:bg-red-600 shadow-red-200',
-                                                        'Sakit' => 'bg-orange-400 hover:bg-orange-500 shadow-orange-200',
-                                                        'Izin' => 'bg-yellow-400 hover:bg-yellow-500 shadow-yellow-200',
-                                                        default => 'bg-gray-400'
-                                                    };
+                                                     $sessionColor = match($log->status) {
+                                                         'Hadir' => 'bg-blue-500 hover:bg-blue-600 shadow-blue-200',
+                                                         'Alpha' => 'bg-red-500 hover:bg-red-600 shadow-red-200',
+                                                         'Sakit' => 'bg-orange-400 hover:bg-orange-500 shadow-orange-200',
+                                                         'Izin' => 'bg-yellow-400 hover:bg-yellow-500 shadow-yellow-200',
+                                                         'Pulang' => 'bg-purple-500 hover:bg-purple-600 shadow-purple-200',
+                                                         default => 'bg-gray-400'
+                                                     };
                                                     // Unique ID for Tooltip
                                                     $tooltipId = 'tooltip-'.$data->id.'-'.$index;
                                                 @endphp
                                                 
                                                 {{-- Interactive Dot/Block --}}
-                                                <div data-tooltip-target="{{ $tooltipId }}" class="group relative cursor-pointer">
+                                                <div data-tooltip-target="{{ $tooltipId }}" class="group relative cursor-pointer"
+                                                     onclick="showSessionDetail('{{ addslashes($log->mapel) }}', '{{ addslashes($log->guru) }}', '{{ $log->jam_ke }}', '{{ $log->status }}', '{{ addslashes(str_replace(["\r", "\n"], ' ', $log->catatan ?? '')) }}', '{{ rawurlencode($log->foto ?? '') }}')">
                                                     <div class="h-8 w-2 md:w-8 md:h-8 rounded-md {{ $sessionColor }} flex items-center justify-center text-white text-[10px] font-bold shadow-sm transition-all duration-200 ease-in-out hover:scale-110 hover:shadow-md ring-1 ring-white/20">
                                                         <span class="hidden md:inline">{{ substr($log->status, 0, 1) }}</span>
+                                                        @if(isset($log->foto) && !empty(json_decode($log->foto)))
+                                                            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border border-white dark:border-gray-800" title="Ada dokumentasi foto"></span>
+                                                        @endif
                                                     </div>
                                                 </div>
 
@@ -411,6 +449,12 @@
                                                         <p>Status: <span class="font-bold {{ $log->status == 'Alpha' ? 'text-red-300' : 'text-blue-300' }}">{{ $log->status }}</span></p>
                                                         @if($log->is_piket_sub)
                                                             <p class="text-purple-300 mt-1 italic text-[10px]">Note: Guru Pengganti</p>
+                                                        @endif
+                                                        @if(isset($log->foto) && !empty(json_decode($log->foto)))
+                                                            <div class="pt-1.5 border-t border-gray-600 mt-1.5 flex items-center gap-1 text-emerald-300 font-semibold text-[10px] uppercase tracking-wider">
+                                                                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 012 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                                                {{ count(json_decode($log->foto)) }} Foto Dokumentasi (Klik detail)
+                                                            </div>
                                                         @endif
                                                     </div>
                                                     <div class="tooltip-arrow" data-popper-arrow></div>
@@ -440,7 +484,12 @@
                                             @if($data->stats['Izin'] > 0) 
                                                 <span class="px-2 py-0.5 bg-yellow-50 text-yellow-600 rounded border border-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-900">
                                                     {{ $data->stats['Izin'] }} Izin
-                                                </span>
+                                                 </span>
+                                            @endif
+                                            @if($data->stats['Pulang'] > 0) 
+                                                <span class="px-2 py-0.5 bg-purple-50 text-purple-600 rounded border border-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-900">
+                                                    {{ $data->stats['Pulang'] }} Pulang
+                                                 </span>
                                             @endif
                                             @if($data->stats['Hadir'] > 0)
                                                 <span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900">{{ $data->stats['Hadir'] }} Hadir</span>
@@ -471,6 +520,7 @@
                      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-red-500 rounded-sm"></span> Alpha</div>
                      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-orange-400 rounded-sm"></span> Sakit</div>
                      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-yellow-400 rounded-sm"></span> Izin</div>
+                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-purple-500 rounded-sm"></span> Pulang</div>
                 </div>
             @endif
 
@@ -486,6 +536,190 @@
                 </p>
             </div>
         @endif
-            </div> {{-- End Main Content Wrapper --}}
-    </div>
-</x-layout.layout>
+             </div> {{-- End Main Content Wrapper --}}
+     </div>
+
+     <!-- Session Details & Documentation Modal -->
+     <div id="sessionDetailModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 opacity-0" onclick="closeSessionDetailModal()">
+         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-gray-100 dark:border-gray-700 relative m-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+             <button onclick="closeSessionDetailModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg bg-gray-50 dark:bg-gray-700/50 cursor-pointer">
+                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+             </button>
+             <div class="flex items-center gap-3 mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
+                 <div class="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
+                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                 </div>
+                 <div>
+                     <h3 id="modalMapel" class="text-base font-bold text-gray-900 dark:text-white leading-tight">-</h3>
+                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Jam Mulai: <span id="modalJam" class="font-semibold text-blue-600">-</span></p>
+                 </div>
+             </div>
+             <div class="space-y-4">
+                 <div>
+                     <span class="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">Guru Pengajar</span>
+                     <p id="modalGuru" class="text-sm text-gray-800 dark:text-gray-200 font-medium">-</p>
+                 </div>
+                 <div>
+                     <span class="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">Status Kehadiran Siswa</span>
+                     <span id="modalStatusBadge" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border">-</span>
+                 </div>
+                 <div>
+                     <span class="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">Catatan KBM</span>
+                     <p id="modalCatatan" class="text-sm text-gray-600 dark:text-gray-300 italic bg-gray-50 dark:bg-gray-900/40 p-3 rounded-lg border border-gray-100 dark:border-gray-800">-</p>
+                 </div>
+                 <div>
+                     <span class="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">Dokumentasi Foto</span>
+                     <div id="modalPhotoGallery" class="grid grid-cols-3 gap-2">
+                         <!-- Photos injected here -->
+                     </div>
+                     <p id="modalNoPhotos" class="text-xs text-gray-400 italic hidden">Tidak ada foto dokumentasi untuk sesi ini.</p>
+                 </div>
+             </div>
+         </div>
+     </div>
+
+     <!-- Global Lightbox Modal -->
+     <div id="globalLightbox" class="fixed inset-0 z-[9999] hidden flex-col items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300 opacity-0" onclick="closeGlobalLightbox()">
+         <div class="absolute top-4 right-4 flex items-center gap-3">
+             <button onclick="closeGlobalLightbox()" class="text-white hover:text-gray-300 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors focus:outline-none cursor-pointer" aria-label="Close Lightbox">
+                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+             </button>
+         </div>
+         <div class="max-w-[90%] max-h-[85vh] relative" onclick="event.stopPropagation()">
+             <img id="lightboxImage" src="" class="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain border border-white/10">
+         </div>
+     </div>
+
+     <script>
+         function showSessionDetail(mapel, guru, jam, status, catatan, encodedFoto) {
+             document.getElementById('modalMapel').innerText = mapel;
+             document.getElementById('modalGuru').innerText = guru;
+             document.getElementById('modalJam').innerText = jam;
+             
+             // Catatan
+             const catatanElem = document.getElementById('modalCatatan');
+             if (catatan && catatan !== '-') {
+                 catatanElem.innerText = catatan;
+                 catatanElem.classList.remove('text-gray-400', 'italic');
+             } else {
+                 catatanElem.innerText = 'Tidak ada catatan kejadian kelas.';
+                 catatanElem.classList.add('text-gray-400', 'italic');
+             }
+
+             // Status Badge styling
+             const statusBadge = document.getElementById('modalStatusBadge');
+             statusBadge.innerText = status;
+             statusBadge.className = 'inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ';
+             
+             let badgeColors = '';
+             if (status === 'Hadir') {
+                 badgeColors = 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800';
+             } else if (status === 'Alpha') {
+                 badgeColors = 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800';
+             } else if (status === 'Sakit') {
+                 badgeColors = 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800';
+             } else if (status === 'Izin') {
+                 badgeColors = 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800';
+             } else if (status === 'Pulang') {
+                 badgeColors = 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800';
+             }
+             statusBadge.className += badgeColors;
+
+             // Photos Gallery
+             const gallery = document.getElementById('modalPhotoGallery');
+             const noPhotos = document.getElementById('modalNoPhotos');
+             gallery.innerHTML = '';
+             
+             if (encodedFoto) {
+                 try {
+                     const fotoStr = decodeURIComponent(encodedFoto);
+                     const fotos = JSON.parse(fotoStr);
+                     
+                     if (Array.isArray(fotos) && fotos.length > 0) {
+                         noPhotos.classList.add('hidden');
+                         gallery.classList.remove('hidden');
+                         fotos.forEach(foto => {
+                             const path = "{{ asset('storage') }}/" + foto;
+                             const div = document.createElement('div');
+                             div.className = 'relative aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 cursor-pointer shadow-sm hover:scale-105 transition-all duration-200 group';
+                             div.onclick = function() { openGlobalLightbox(path); };
+                             
+                             div.innerHTML = `
+                                 <img src="${path}" class="w-full h-full object-cover animate-fade-in">
+                                 <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path></svg>
+                                 </div>
+                             `;
+                             gallery.appendChild(div);
+                         });
+                     } else {
+                         gallery.classList.add('hidden');
+                         noPhotos.classList.remove('hidden');
+                     }
+                 } catch (e) {
+                     console.error('Failed to parse photos json', e);
+                     gallery.classList.add('hidden');
+                     noPhotos.classList.remove('hidden');
+                 }
+             } else {
+                 gallery.classList.add('hidden');
+                 noPhotos.classList.remove('hidden');
+             }
+
+             // Open modal
+             const modal = document.getElementById('sessionDetailModal');
+             modal.classList.remove('hidden');
+             modal.classList.add('flex');
+             setTimeout(() => {
+                 modal.classList.remove('opacity-0');
+                 modal.classList.add('opacity-100');
+             }, 10);
+         }
+
+         function closeSessionDetailModal() {
+             const modal = document.getElementById('sessionDetailModal');
+             if (modal) {
+                 modal.classList.remove('opacity-100');
+                 modal.classList.add('opacity-0');
+                 setTimeout(() => {
+                     modal.classList.remove('flex');
+                     modal.classList.add('hidden');
+                 }, 300);
+             }
+         }
+
+         // Lightbox modal functions
+         function openGlobalLightbox(src) {
+             const lightbox = document.getElementById('globalLightbox');
+             const img = document.getElementById('lightboxImage');
+             if (lightbox && img) {
+                 img.src = src;
+                 lightbox.classList.remove('hidden');
+                 lightbox.classList.add('flex');
+                 setTimeout(() => {
+                     lightbox.classList.remove('opacity-0');
+                     lightbox.classList.add('opacity-100');
+                 }, 10);
+             }
+         }
+
+         function closeGlobalLightbox() {
+             const lightbox = document.getElementById('globalLightbox');
+             if (lightbox) {
+                 lightbox.classList.remove('opacity-100');
+                 lightbox.classList.add('opacity-0');
+                 setTimeout(() => {
+                     lightbox.classList.remove('flex');
+                     lightbox.classList.add('hidden');
+                 }, 300);
+             }
+         }
+
+         document.addEventListener('keydown', function(e) {
+             if (e.key === 'Escape') {
+                 closeSessionDetailModal();
+                 closeGlobalLightbox();
+             }
+         });
+     </script>
+ </x-layout.layout>

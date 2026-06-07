@@ -161,6 +161,25 @@
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                             Sudah Absen
                                         </span>
+                                        @if($jadwal->logbook && $jadwal->logbook->foto)
+                                            @php
+                                                $fotos = json_decode($jadwal->logbook->foto, true) ?? [];
+                                            @endphp
+                                            @if(count($fotos) > 0)
+                                                <div class="flex flex-wrap items-center gap-1.5 mt-2">
+                                                    @forelse($fotos as $foto)
+                                                        <div class="relative w-8 h-8 rounded overflow-hidden border border-gray-200 dark:border-gray-700 group cursor-pointer shadow-sm hover:scale-105 transition-transform" 
+                                                             onclick="openGlobalLightbox('{{ asset('storage/' . $foto) }}')">
+                                                            <img src="{{ asset('storage/' . $foto) }}" class="w-full h-full object-cover">
+                                                            <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path></svg>
+                                                            </div>
+                                                        </div>
+                                                    @empty
+                                                    @endforelse
+                                                </div>
+                                            @endif
+                                        @endif
                                     @else
                                         <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-rose-700 bg-rose-100 dark:bg-rose-900/30 dark:text-rose-300 rounded-full border border-rose-200 dark:border-rose-800">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -191,4 +210,50 @@
             @endif
         </div>
     </div>
+
+    <!-- Global Lightbox Modal -->
+    <div id="globalLightbox" class="fixed inset-0 z-[9999] hidden flex-col items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300 opacity-0" onclick="closeGlobalLightbox()">
+        <div class="absolute top-4 right-4 flex items-center gap-3">
+            <button onclick="closeGlobalLightbox()" class="text-white hover:text-gray-300 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors focus:outline-none cursor-pointer" aria-label="Close Lightbox">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="max-w-[90%] max-h-[85vh] relative" onclick="event.stopPropagation()">
+            <img id="lightboxImage" src="" class="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain border border-white/10">
+        </div>
+    </div>
+
+    <script>
+        function openGlobalLightbox(src) {
+            const lightbox = document.getElementById('globalLightbox');
+            const img = document.getElementById('lightboxImage');
+            if (lightbox && img) {
+                img.src = src;
+                lightbox.classList.remove('hidden');
+                lightbox.classList.add('flex');
+                setTimeout(() => {
+                    lightbox.classList.remove('opacity-0');
+                    lightbox.classList.add('opacity-100');
+                }, 10);
+            }
+        }
+
+        function closeGlobalLightbox() {
+            const lightbox = document.getElementById('globalLightbox');
+            if (lightbox) {
+                lightbox.classList.remove('opacity-100');
+                lightbox.classList.add('opacity-0');
+                setTimeout(() => {
+                    lightbox.classList.remove('flex');
+                    lightbox.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeGlobalLightbox();
+            }
+        });
+    </script>
 </x-layout.layout>

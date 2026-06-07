@@ -94,7 +94,8 @@
                     'Hadir' => ['color' => 'blue', 'text' => 'Kehadiran Normal'],
                     'Sakit' => ['color' => 'yellow', 'text' => 'Sakit'],
                     'Izin' => ['color' => 'indigo', 'text' => 'Izin'],
-                    'Alpha' => ['color' => 'red', 'text' => 'Alpha']
+                    'Alpha' => ['color' => 'red', 'text' => 'Alpha'],
+                    'Pulang' => ['color' => 'purple', 'text' => 'Pulang Cepat']
                 ] as $st => $meta)
                     @php 
                         $count = $stats[$st] ?? 0; 
