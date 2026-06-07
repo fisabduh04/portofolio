@@ -604,18 +604,18 @@
                                      {{-- Status Verdict Badge --}}
                                     <td class="px-6 py-4 text-center">
                                          @php
-                                             $badgeClasses = match($data->daily_status) {
+                                             $displayStatus = $data->daily_status == 'Telat' ? 'Hadir' : $data->daily_status;
+                                             $badgeClasses = match($displayStatus) {
                                                  'Hadir' => 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
                                                  'Alpha' => 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
                                                  'Sakit' => 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800',
                                                  'Izin' => 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800',
                                                  'Pulang' => 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800',
-                                                 'Telat' => 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800',
                                                  default => 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
                                              };
                                          @endphp
                                          <span class="{{ $badgeClasses }} text-xs font-semibold px-3 py-1 rounded-full border shadow-sm">
-                                            {{ $data->daily_status }}
+                                            {{ $displayStatus }}
                                          </span>
                                     </td>
 
@@ -699,13 +699,11 @@
                                                     {{ $data->stats['Pulang'] }} Pulang
                                                  </span>
                                             @endif
-                                            @if($data->stats['Telat'] > 0) 
-                                                <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded border border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-900">
-                                                    {{ $data->stats['Telat'] }} Telat
-                                                 </span>
-                                            @endif
-                                            @if($data->stats['Hadir'] > 0)
-                                                <span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900">{{ $data->stats['Hadir'] }} Hadir</span>
+                                            @php
+                                                $totalHadir = ($data->stats['Hadir'] ?? 0) + ($data->stats['Telat'] ?? 0);
+                                            @endphp
+                                            @if($totalHadir > 0)
+                                                <span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900">{{ $totalHadir }} Hadir</span>
                                             @endif
                                             @if(array_sum($data->stats) == 0)
                                                 <span class="text-gray-400">-</span>

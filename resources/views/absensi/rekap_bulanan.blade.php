@@ -202,7 +202,6 @@
                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span> Izin</div>
                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Alpha</div>
                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Pulang</div>
-                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Telat</div>
                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gray-200 border border-gray-300"></span> Libur/Kosong</div>
                 </div>
 
@@ -225,7 +224,6 @@
                                     <th scope="col" class="px-2 py-3 bg-gray-100 dark:bg-gray-800 font-bold w-10 text-yellow-700">I</th>
                                     <th scope="col" class="px-2 py-3 bg-gray-100 dark:bg-gray-800 font-bold w-10 text-red-700">A</th>
                                     <th scope="col" class="px-2 py-3 bg-gray-100 dark:bg-gray-800 font-bold w-10 text-purple-700">P</th>
-                                    <th scope="col" class="px-2 py-3 bg-gray-100 dark:bg-gray-800 font-bold w-10 text-indigo-700">T</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -267,8 +265,8 @@
                                                 $tooltipText = "Tgl $d: Pulang";
                                             }
                                             elseif($status == 'T') {
-                                                $dotClass = 'bg-indigo-500 border-indigo-500 shadow-sm shadow-indigo-200'; 
-                                                $tooltipText = "Tgl $d: Telat";
+                                                $dotClass = 'bg-blue-500 border-blue-500 shadow-sm shadow-blue-200'; 
+                                                $tooltipText = "Tgl $d: Telat (Terhitung Hadir)";
                                             }
                                         @endphp
                                         <td class="px-0.5 py-2 text-center relative group/cell border-r border-gray-50 dark:border-gray-800 {{ $dayData['is_libur'] ? 'bg-gray-50 dark:bg-gray-800/50' : '' }}">
@@ -277,16 +275,15 @@
                                             </div>
                                         </td>
                                     @endforeach
-                                    <td class="px-2 py-2 text-center font-bold text-blue-700 dark:text-blue-400 bg-gray-50 dark:bg-gray-800 border-l-2 border-gray-200 dark:border-gray-700">{{ $student->stats['H'] }}</td>
+                                    <td class="px-2 py-2 text-center font-bold text-blue-700 dark:text-blue-400 bg-gray-50 dark:bg-gray-800 border-l-2 border-gray-200 dark:border-gray-700">{{ ($student->stats['H'] ?? 0) + ($student->stats['T'] ?? 0) }}</td>
                                     <td class="px-2 py-2 text-center font-bold text-orange-700 dark:text-orange-400 bg-gray-50 dark:bg-gray-800">{{ $student->stats['S'] }}</td>
                                     <td class="px-2 py-2 text-center font-bold text-yellow-700 dark:text-yellow-400 bg-gray-50 dark:bg-gray-800">{{ $student->stats['I'] ?? 0 }}</td>
                                     <td class="px-2 py-2 text-center font-bold text-red-700 dark:text-red-400 bg-gray-50 dark:bg-gray-800">{{ $student->stats['A'] ?? 0 }}</td>
                                     <td class="px-2 py-2 text-center font-bold text-purple-700 dark:text-purple-400 bg-gray-50 dark:bg-gray-800">{{ $student->stats['P'] ?? 0 }}</td>
-                                    <td class="px-2 py-2 text-center font-bold text-indigo-700 dark:text-indigo-400 bg-gray-50 dark:bg-gray-800">{{ $student->stats['T'] ?? 0 }}</td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="{{ count($dates) + 5 }}" class="px-6 py-8 text-center text-gray-500">
+                                    <td colspan="{{ count($dates) + 6 }}" class="px-6 py-8 text-center text-gray-500">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg class="w-10 h-10 mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                             <p>Data presensi tidak ditemukan.</p>

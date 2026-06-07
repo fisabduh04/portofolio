@@ -184,8 +184,7 @@
                                     <th scope="col" class="px-4 py-3 text-yellow-700">Izin</th>
                                     <th scope="col" class="px-4 py-3 text-red-700">Alpha</th>
                                     <th scope="col" class="px-4 py-3 text-purple-700">Pulang</th>
-                                    <th scope="col" class="px-4 py-3 text-indigo-700">Telat</th>
-                                    <th scope="col" class="px-4 py-3">Total Absen (S/I/A/P/T)</th>
+                                    <th scope="col" class="px-4 py-3">Total Absen (S/I/A/P)</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -194,19 +193,18 @@
                                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white text-left">
                                         {{ $student->nama }}
                                     </th>
-                                    <td class="px-4 py-4 font-bold text-blue-600">{{ $student->total['H'] }}</td>
+                                    <td class="px-4 py-4 font-bold text-blue-600">{{ ($student->total['H'] ?? 0) + ($student->total['T'] ?? 0) }}</td>
                                     <td class="px-4 py-4 font-bold text-orange-600">{{ $student->total['S'] }}</td>
                                     <td class="px-4 py-4 font-bold text-yellow-600">{{ $student->total['I'] }}</td>
                                     <td class="px-4 py-4 font-bold text-red-600">{{ $student->total['A'] ?? 0 }}</td>
                                     <td class="px-4 py-4 font-bold text-purple-600">{{ $student->total['P'] ?? 0 }}</td>
-                                    <td class="px-4 py-4 font-bold text-indigo-600">{{ $student->total['T'] ?? 0 }}</td>
                                     <td class="px-4 py-4 font-bold text-gray-800 dark:text-gray-200">
-                                        {{ ($student->total['S'] ?? 0) + ($student->total['I'] ?? 0) + ($student->total['A'] ?? 0) + ($student->total['P'] ?? 0) + ($student->total['T'] ?? 0) }}
+                                        {{ ($student->total['S'] ?? 0) + ($student->total['I'] ?? 0) + ($student->total['A'] ?? 0) + ($student->total['P'] ?? 0) }}
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="px-6 py-4 text-center">Data tidak ditemukan</td>
+                                    <td colspan="7" class="px-6 py-4 text-center">Data tidak ditemukan</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -230,7 +228,6 @@
                                     <th scope="col" class="px-4 py-3 text-yellow-700">Hari Izin</th>
                                     <th scope="col" class="px-4 py-3 text-red-700">Hari Alpha</th>
                                     <th scope="col" class="px-4 py-3 text-purple-700">Hari Pulang</th>
-                                    <th scope="col" class="px-4 py-3 text-indigo-700">Hari Telat</th>
                                     <th scope="col" class="px-4 py-3">Total Hari Absen</th>
                                 </tr>
                             </thead>
@@ -240,19 +237,18 @@
                                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white text-left">
                                         {{ $student->nama }}
                                     </th>
-                                    <td class="px-4 py-4 font-bold text-blue-600">{{ $student->daily_total['H'] }}</td>
+                                    <td class="px-4 py-4 font-bold text-blue-600">{{ ($student->daily_total['H'] ?? 0) + ($student->daily_total['T'] ?? 0) }}</td>
                                     <td class="px-4 py-4 font-bold text-orange-600">{{ $student->daily_total['S'] }}</td>
                                     <td class="px-4 py-4 font-bold text-yellow-600">{{ $student->daily_total['I'] }}</td>
                                     <td class="px-4 py-4 font-bold text-red-600">{{ $student->daily_total['A'] ?? 0 }}</td>
                                     <td class="px-4 py-4 font-bold text-purple-600">{{ $student->daily_total['P'] ?? 0 }}</td>
-                                    <td class="px-4 py-4 font-bold text-indigo-600">{{ $student->daily_total['T'] ?? 0 }}</td>
                                     <td class="px-4 py-4 font-bold text-gray-800 dark:text-gray-200">
-                                        {{ ($student->daily_total['S'] ?? 0) + ($student->daily_total['I'] ?? 0) + ($student->daily_total['A'] ?? 0) + ($student->daily_total['P'] ?? 0) + ($student->daily_total['T'] ?? 0) }}
+                                        {{ ($student->daily_total['S'] ?? 0) + ($student->daily_total['I'] ?? 0) + ($student->daily_total['A'] ?? 0) + ($student->daily_total['P'] ?? 0) }}
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="px-6 py-4 text-center">Data tidak ditemukan</td>
+                                    <td colspan="7" class="px-6 py-4 text-center">Data tidak ditemukan</td>
                                 </tr>
                                 @endforelse
                             </tbody>
