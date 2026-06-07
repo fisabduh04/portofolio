@@ -189,7 +189,7 @@ class AbsensiController extends Controller
 
             return redirect()->back()
                 ->with('type', 'error')
-                ->with('message', 'Gagal menyimpan presensi: '.$e->getMessage())
+                ->with('message', 'Terjadi kesalahan sistem saat menyimpan data presensi. Silakan periksa kembali input Anda atau hubungi admin.')
                 ->withInput();
         }
     }
@@ -346,8 +346,9 @@ class AbsensiController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Gagal simpan presensi harian: '.$e->getMessage());
 
-            return back()->with('type', 'error')->with('message', 'Gagal: '.$e->getMessage());
+            return back()->with('type', 'error')->with('message', 'Terjadi kesalahan sistem saat menyimpan data presensi harian. Silakan hubungi admin.');
         }
     }
 
@@ -429,7 +430,9 @@ class AbsensiController extends Controller
 
             return redirect()->back()->with('type', 'success')->with('message', 'Berhasil Check-in Piket.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('type', 'error')->with('message', 'Gagal Check-in: '.$e->getMessage());
+            Log::error('Gagal piket check-in: '.$e->getMessage());
+
+            return redirect()->back()->with('type', 'error')->with('message', 'Gagal melakukan Check-in Piket. Terjadi kesalahan pada sistem.');
         }
     }
 
@@ -459,7 +462,9 @@ class AbsensiController extends Controller
 
             return redirect()->back()->with('type', 'success')->with('message', 'Berhasil Check-out Piket.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('type', 'error')->with('message', 'Gagal Check-out: '.$e->getMessage());
+            Log::error('Gagal piket check-out: '.$e->getMessage());
+
+            return redirect()->back()->with('type', 'error')->with('message', 'Gagal melakukan Check-out Piket. Terjadi kesalahan pada sistem.');
         }
     }
 }
