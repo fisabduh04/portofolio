@@ -46,7 +46,7 @@
                 <th rowspan="2" class="w-8">No</th>
                 <th rowspan="2" class="text-left" style="min-width: 150px;">Nama Siswa</th>
                 <th colspan="12">Bulan</th>
-                <th colspan="4" class="bg-gray-300">Total Akhir</th>
+                <th colspan="6" class="bg-gray-300">Total Akhir</th>
             </tr>
             <tr class="bg-gray-100">
                 @for($m=1; $m<=12; $m++)
@@ -56,6 +56,8 @@
                 <th class="bg-yellow-100 w-8">S</th>
                 <th class="bg-blue-100 w-8">I</th>
                 <th class="bg-red-100 w-8">A</th>
+                <th class="bg-purple-100 w-8">P</th>
+                <th class="bg-indigo-100 w-8">T</th>
             </tr>
         </thead>
         <tbody>
@@ -66,15 +68,17 @@
                 @for($m=1; $m<=12; $m++)
                     @php
                         $stats = $student->months[$m];
-                        $hasData = ($stats['H'] + $stats['S'] + $stats['I'] + $stats['A']) > 0;
+                        $hasData = (($stats['H'] ?? 0) + ($stats['S'] ?? 0) + ($stats['I'] ?? 0) + ($stats['A'] ?? 0) + ($stats['P'] ?? 0) + ($stats['T'] ?? 0)) > 0;
                     @endphp
                     <td>
                         @if($hasData)
                             <div class="flex flex-col text-[9px] gap-0.5">
-                                @if($stats['H']) <span class="text-green-700">{{ $stats['H'] }}H</span> @endif
-                                @if($stats['S']) <span class="text-yellow-700">{{ $stats['S'] }}S</span> @endif
-                                @if($stats['I']) <span class="text-blue-700">{{ $stats['I'] }}I</span> @endif
-                                @if($stats['A']) <span class="text-red-700 font-bold">{{ $stats['A'] }}A</span> @endif
+                                @if($stats['H'] ?? 0) <span class="text-green-700">{{ $stats['H'] }}H</span> @endif
+                                @if($stats['S'] ?? 0) <span class="text-yellow-700">{{ $stats['S'] }}S</span> @endif
+                                @if($stats['I'] ?? 0) <span class="text-blue-700">{{ $stats['I'] }}I</span> @endif
+                                @if($stats['A'] ?? 0) <span class="text-red-700 font-bold">{{ $stats['A'] }}A</span> @endif
+                                @if($stats['P'] ?? 0) <span class="text-purple-700 font-bold">{{ $stats['P'] }}P</span> @endif
+                                @if($stats['T'] ?? 0) <span class="text-indigo-700 font-bold">{{ $stats['T'] }}T</span> @endif
                             </div>
                         @else
                             -
@@ -84,7 +88,9 @@
                 <td class="font-bold">{{ $student->total['H'] }}</td>
                 <td class="font-bold">{{ $student->total['S'] }}</td>
                 <td class="font-bold">{{ $student->total['I'] }}</td>
-                <td class="font-bold">{{ $student->total['A'] }}</td>
+                <td class="font-bold">{{ $student->total['A'] ?? 0 }}</td>
+                <td class="font-bold">{{ $student->total['P'] ?? 0 }}</td>
+                <td class="font-bold">{{ $student->total['T'] ?? 0 }}</td>
             </tr>
             @endforeach
         </tbody>

@@ -50,6 +50,8 @@
                     <th class="px-2 py-2 border border-gray-300 text-center w-12">S</th>
                     <th class="px-2 py-2 border border-gray-300 text-center w-12">I</th>
                     <th class="px-2 py-2 border border-gray-300 text-center w-12 bg-red-50 text-red-700">A</th>
+                    <th class="px-2 py-2 border border-gray-300 text-center w-12 bg-purple-50 text-purple-700">P</th>
+                    <th class="px-2 py-2 border border-gray-300 text-center w-12 bg-indigo-50 text-indigo-700">T</th>
                     <th class="px-3 py-2 border border-gray-300">Keterangan</th>
                 </tr>
             </thead>
@@ -70,13 +72,19 @@
                     <td class="px-2 py-2 border border-gray-300 text-center {{ $data->stats['Alpha'] > 0 ? 'bg-red-50 text-red-600 font-bold' : 'text-gray-300' }}">
                         {{ $data->stats['Alpha'] > 0 ? $data->stats['Alpha'] : '-' }}
                     </td>
+                    <td class="px-2 py-2 border border-gray-300 text-center {{ ($data->stats['Pulang'] ?? 0) > 0 ? 'bg-purple-50 text-purple-600 font-bold' : 'text-gray-300' }}">
+                        {{ ($data->stats['Pulang'] ?? 0) > 0 ? $data->stats['Pulang'] : '-' }}
+                    </td>
+                    <td class="px-2 py-2 border border-gray-300 text-center {{ ($data->stats['Telat'] ?? 0) > 0 ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-gray-300' }}">
+                        {{ ($data->stats['Telat'] ?? 0) > 0 ? $data->stats['Telat'] : '-' }}
+                    </td>
                     <td class="px-3 py-2 border border-gray-300 text-xs text-gray-600">
                         @if($data->details->count() > 0)
                             <div class="flex flex-col gap-0.5">
                                 @foreach($data->details as $log)
                                    @if ($log->status !== 'Hadir')
                                     <span>
-                                        <b class="{{ $log->status == 'Alpha' ? 'text-red-700' : ($log->status == 'Sakit' ? 'text-yellow-700' : 'text-blue-700') }}">[{{ strtoupper(substr($log->status, 0, 1)) }}]</b> 
+                                        <b class="{{ match($log->status) { 'Alpha' => 'text-red-700', 'Sakit' => 'text-yellow-700', 'Izin' => 'text-blue-700', 'Pulang' => 'text-purple-700', 'Telat' => 'text-indigo-700', default => 'text-gray-700' } }}">[{{ strtoupper(substr($log->status, 0, 1)) }}]</b> 
                                         {{ $log->mapel }} ({{ $log->guru }})
                                     </span>
                                    @endif

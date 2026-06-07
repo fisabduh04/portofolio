@@ -13,6 +13,21 @@
         <input type="hidden" name="kategori" value="{{ $kategori }}">
         <input type="hidden" name="tanggal" value="{{ $date }}">
 
+        <!-- Validation Errors -->
+        @if ($errors->any())
+        <div class="mb-6 p-4 text-sm text-red-800 border border-red-300 rounded-2xl bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800" role="alert">
+            <div class="flex items-center gap-2 font-bold mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Terdapat kesalahan pada input Anda:
+            </div>
+            <ul class="list-disc list-inside space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
         <!-- Session Header Card -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 md:p-6 mb-8">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -75,6 +90,9 @@
                         <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-md border border-purple-200">
                             P: <span id="stat-pulang">0</span>
                         </span>
+                        <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-md border border-indigo-200">
+                            T: <span id="stat-telat">0</span>
+                        </span>
                     </div>
                     <button type="button" onclick="setAll('Hadir')" class="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800 transition-colors whitespace-nowrap">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -130,7 +148,7 @@
                                     <td class="block md:table-cell px-2 md:px-6 md:py-4 border-none dark:border-gray-700 mt-0">
                                         <div class="flex items-center justify-start md:justify-center">
                                             <div class="flex flex-wrap md:flex-nowrap gap-2">
-                                                @foreach(['Hadir' => 'H', 'Sakit' => 'S', 'Izin' => 'I', 'Alpha' => 'A', 'Pulang' => 'P'] as $label => $short)
+                                                @foreach(['Hadir' => 'H', 'Sakit' => 'S', 'Izin' => 'I', 'Alpha' => 'A', 'Pulang' => 'P', 'Telat' => 'T'] as $label => $short)
                                                 <label class="cursor-pointer group">
                                                     <input type="radio" 
                                                            name="attendance[{{ $siswa->id }}][status]" 
@@ -144,6 +162,7 @@
                                                         @elseif($label == 'Izin') peer-checked:bg-blue-500 peer-checked:border-blue-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-blue-200
                                                         @elseif($label == 'Alpha') peer-checked:bg-rose-500 peer-checked:border-rose-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-rose-200
                                                         @elseif($label == 'Pulang') peer-checked:bg-purple-500 peer-checked:border-purple-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-purple-200
+                                                        @elseif($label == 'Telat') peer-checked:bg-indigo-500 peer-checked:border-indigo-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-indigo-200
                                                         @endif">
                                                         <span class="text-xs font-bold">{{ $short }}</span>
                                                     </div>
@@ -330,7 +349,8 @@
                 'Sakit': 0,
                 'Izin': 0,
                 'Alpha': 0,
-                'Pulang': 0
+                'Pulang': 0,
+                'Telat': 0
             };
 
             // Count checked radios
@@ -347,6 +367,7 @@
             document.getElementById('stat-izin').innerText = counts['Izin'];
             document.getElementById('stat-alpha').innerText = counts['Alpha'];
             document.getElementById('stat-pulang').innerText = counts['Pulang'];
+            document.getElementById('stat-telat').innerText = counts['Telat'];
         }
 
         // Expose setAll to window

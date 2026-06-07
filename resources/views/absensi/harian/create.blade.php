@@ -11,6 +11,21 @@
         <input type="hidden" name="kelas_id" value="{{ $kelas->id }}">
         <input type="hidden" name="kategori" value="{{ $kategori }}">
 
+        <!-- Validation Errors -->
+        @if ($errors->any())
+        <div class="mb-6 p-4 text-sm text-red-800 border border-red-300 rounded-2xl bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800" role="alert">
+            <div class="flex items-center gap-2 font-bold mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Terdapat kesalahan pada input Anda:
+            </div>
+            <ul class="list-disc list-inside space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
         <!-- Session Header Card -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 md:p-6 mb-8">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -47,6 +62,12 @@
                         </span>
                         <span class="px-2 py-1 bg-rose-100 text-rose-700 rounded-md border border-rose-200">
                             A: <span id="stat-alpha">0</span>
+                        </span>
+                        <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-md border border-purple-200">
+                            P: <span id="stat-pulang">0</span>
+                        </span>
+                        <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-md border border-indigo-200">
+                            T: <span id="stat-telat">0</span>
                         </span>
                     </div>
                     <button type="button" onclick="setAll('Hadir')" class="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800 transition-colors whitespace-nowrap">
@@ -117,7 +138,7 @@
                                         <div class="flex items-center justify-between md:justify-center gap-2">
                                             <span class="text-xs font-semibold text-gray-400 md:hidden">Status:</span>
                                             <div class="flex gap-2">
-                                                @foreach(['Hadir' => 'H', 'Sakit' => 'S', 'Izin' => 'I', 'Alpha' => 'A'] as $label => $short)
+                                                @foreach(['Hadir' => 'H', 'Sakit' => 'S', 'Izin' => 'I', 'Alpha' => 'A', 'Pulang' => 'P', 'Telat' => 'T'] as $label => $short)
                                                 <label class="cursor-pointer group">
                                                     <input type="radio" 
                                                            name="attendance[{{ $siswa->id }}][status]" 
@@ -130,6 +151,8 @@
                                                         @elseif($label == 'Sakit') peer-checked:bg-amber-500 peer-checked:border-amber-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-amber-200
                                                         @elseif($label == 'Izin') peer-checked:bg-blue-500 peer-checked:border-blue-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-blue-200
                                                         @elseif($label == 'Alpha') peer-checked:bg-rose-500 peer-checked:border-rose-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-rose-200
+                                                        @elseif($label == 'Pulang') peer-checked:bg-purple-500 peer-checked:border-purple-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-purple-200
+                                                        @elseif($label == 'Telat') peer-checked:bg-indigo-500 peer-checked:border-indigo-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-indigo-200
                                                         @endif">
                                                         <span class="text-xs font-bold">{{ $short }}</span>
                                                     </div>
@@ -292,7 +315,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         function updateStats() {
-            const counts = { 'Hadir': 0, 'Sakit': 0, 'Izin': 0, 'Alpha': 0 };
+            const counts = { 'Hadir': 0, 'Sakit': 0, 'Izin': 0, 'Alpha': 0, 'Pulang': 0, 'Telat': 0 };
             document.querySelectorAll('input[name^="attendance"][name$="[status]"]:checked').forEach(radio => {
                 if (counts.hasOwnProperty(radio.value)) { counts[radio.value]++; }
             });
@@ -300,6 +323,8 @@
             document.getElementById('stat-sakit').innerText = counts['Sakit'];
             document.getElementById('stat-izin').innerText = counts['Izin'];
             document.getElementById('stat-alpha').innerText = counts['Alpha'];
+            document.getElementById('stat-pulang').innerText = counts['Pulang'];
+            document.getElementById('stat-telat').innerText = counts['Telat'];
         }
 
         window.setAll = function(status) {

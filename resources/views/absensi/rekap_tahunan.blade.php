@@ -109,7 +109,7 @@
 
         @if($selectedKelas)
             {{-- Stats Cards --}}
-             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
                  {{-- Total --}}
                 <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
                     <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-gray-600 bg-gray-100 rounded-lg dark:bg-gray-700 dark:text-gray-300">
@@ -160,6 +160,26 @@
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Alpha'] }}</h3>
                     </div>
                 </div>
+                 {{-- Pulang --}}
+                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-purple-600 bg-purple-100 rounded-lg dark:bg-purple-900/30 dark:text-purple-300">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </div>
+                     <div class="ml-3">
+                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">Pulang</p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Pulang'] ?? 0 }}</h3>
+                    </div>
+                </div>
+                 {{-- Telat --}}
+                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-indigo-600 bg-indigo-100 rounded-lg dark:bg-indigo-900/30 dark:text-indigo-300">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                     <div class="ml-3">
+                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">Telat</p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Telat'] ?? 0 }}</h3>
+                    </div>
+                </div>
             </div>
 
             @if($viewMode == 'detail')
@@ -176,6 +196,8 @@
                                     <th scope="col" class="px-4 py-4 w-24">Total Sakit</th>
                                     <th scope="col" class="px-4 py-4 w-24">Total Izin</th>
                                     <th scope="col" class="px-4 py-4 w-24">Total Alpha</th>
+                                    <th scope="col" class="px-4 py-4 w-24">Total Pulang</th>
+                                    <th scope="col" class="px-4 py-4 w-24">Total Telat</th>
                                     <th scope="col" class="px-6 py-4 text-left">Log Ketidakhadiran (Bulan & Tanggal)</th>
                                 </tr>
                             </thead>
@@ -186,8 +208,10 @@
                                             {{ $student->nama }}
                                         </th>
                                         <td class="px-4 py-4 font-bold text-orange-600">{{ $student->total['S'] ?: '-' }}</td>
-                                        <td class="px-4 py-4 font-bold text-yellow-600">{{ $student->total['I'] ?: '-' }}</td>
-                                        <td class="px-4 py-4 font-bold text-red-600">{{ $student->total['A'] ?: '-' }}</td>
+                                        <td class="px-4 py-4 font-bold text-yellow-600">{{ ($student->total['I'] ?? 0) ?: '-' }}</td>
+                                        <td class="px-4 py-4 font-bold text-red-600">{{ ($student->total['A'] ?? 0) ?: '-' }}</td>
+                                        <td class="px-4 py-4 font-bold text-purple-600">{{ ($student->total['P'] ?? 0) ?: '-' }}</td>
+                                        <td class="px-4 py-4 font-bold text-indigo-600">{{ ($student->total['T'] ?? 0) ?: '-' }}</td>
                                         <td class="px-6 py-4 text-left text-xs">
                                             @if(count($student->details) > 0)
                                                 <div class="flex flex-wrap gap-2">
@@ -197,6 +221,8 @@
                                                                 'Alpha' => 'bg-red-100 text-red-800 border-red-200',
                                                                 'Sakit' => 'bg-orange-100 text-orange-800 border-orange-200',
                                                                 'Izin' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                                                'Pulang' => 'bg-purple-100 text-purple-800 border-purple-200',
+                                                                'Telat' => 'bg-indigo-100 text-indigo-800 border-indigo-200',
                                                                 default => 'bg-gray-100'
                                                             };
                                                             $date = \Carbon\Carbon::parse($log['date']);
@@ -212,7 +238,7 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="5" class="px-6 py-4 text-center">Data tidak ditemukan</td></tr>
+                                    <tr><td colspan="7" class="px-6 py-4 text-center">Data tidak ditemukan</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -242,15 +268,17 @@
                                     @foreach($months as $m)
                                         @php
                                             $stats = $student->months[$m];
-                                            $hasData = ($stats['H'] + $stats['S'] + $stats['I'] + $stats['A']) > 0;
+                                            $hasData = (($stats['H'] ?? 0) + ($stats['S'] ?? 0) + ($stats['I'] ?? 0) + ($stats['A'] ?? 0) + ($stats['P'] ?? 0) + ($stats['T'] ?? 0)) > 0;
                                         @endphp
                                         <td class="px-2 py-2 text-xs border-r border-gray-50 dark:border-gray-800">
                                             @if($hasData)
                                                 <div class="flex flex-col gap-1 items-center">
-                                                    @if($stats['H']) <span class="text-blue-600 font-bold">{{ $stats['H'] }}H</span> @endif
-                                                    @if($stats['S']) <span class="text-orange-600 font-bold">{{ $stats['S'] }}S</span> @endif
-                                                    @if($stats['I']) <span class="text-yellow-600 font-bold">{{ $stats['I'] }}I</span> @endif
-                                                    @if($stats['A']) <span class="text-red-600 font-bold">{{ $stats['A'] }}A</span> @endif
+                                                    @if($stats['H'] ?? 0) <span class="text-blue-600 font-bold">{{ $stats['H'] }}H</span> @endif
+                                                    @if($stats['S'] ?? 0) <span class="text-orange-600 font-bold">{{ $stats['S'] }}S</span> @endif
+                                                    @if($stats['I'] ?? 0) <span class="text-yellow-600 font-bold">{{ $stats['I'] }}I</span> @endif
+                                                    @if($stats['A'] ?? 0) <span class="text-red-600 font-bold">{{ $stats['A'] }}A</span> @endif
+                                                    @if($stats['P'] ?? 0) <span class="text-purple-600 font-bold">{{ $stats['P'] }}P</span> @endif
+                                                    @if($stats['T'] ?? 0) <span class="text-indigo-600 font-bold">{{ $stats['T'] }}T</span> @endif
                                                 </div>
                                             @else
                                                 <span class="text-gray-300">-</span>
@@ -259,8 +287,10 @@
                                     @endforeach
                                     <td class="px-2 py-2 bg-gray-50 text-center border-l-2 border-gray-200">
                                         <div class="flex flex-col gap-1 text-xs">
-                                             <span class="text-green-700 font-bold">{{ $student->total['H'] }} H</span>
-                                             <span class="text-red-700 font-bold">{{ $student->total['A'] }} A</span>
+                                             <span class="text-green-700 font-bold">{{ $student->total['H'] ?? 0 }} H</span>
+                                             <span class="text-red-700 font-bold">{{ $student->total['A'] ?? 0 }} A</span>
+                                             @if(($student->total['P'] ?? 0)) <span class="text-purple-700 font-bold">{{ $student->total['P'] }} P</span> @endif
+                                             @if(($student->total['T'] ?? 0)) <span class="text-indigo-700 font-bold">{{ $student->total['T'] }} T</span> @endif
                                         </div>
                                     </td>
                                 </tr>

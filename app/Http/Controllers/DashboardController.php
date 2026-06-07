@@ -20,7 +20,7 @@ class DashboardController extends Controller
         // 2. Statistik Presensi Hari Ini
         $today = now()->toDateString();
         $todayStats = [
-            'Hadir' => 0, 'Pulang' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0,
+            'Hadir' => 0, 'Pulang' => 0, 'Telat' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0,
         ];
 
         // Ambil data absensi hari ini lewat Logbook
@@ -34,7 +34,7 @@ class DashboardController extends Controller
             }
         }
 
-        $totalHadirToday = $todayStats['Hadir'] + $todayStats['Pulang'];
+        $totalHadirToday = $todayStats['Hadir'] + $todayStats['Pulang'] + $todayStats['Telat'];
         $attendanceRate = $totalSiswa > 0 ? round(($totalHadirToday / $totalSiswa) * 100, 1) : 0;
 
         // 3. Tren Kehadiran 7 Hari Terakhir
@@ -50,7 +50,7 @@ class DashboardController extends Controller
             // Hitung hadir/pulang pada tanggal tersebut
             $countHadir = \App\Models\Absensi::whereHas('logbook', function ($q) use ($currentDate) {
                 $q->where('tanggal', $currentDate);
-            })->whereIn('status', ['Hadir', 'Pulang'])->count();
+            })->whereIn('status', ['Hadir', 'Pulang', 'Telat'])->count();
 
             $trendData[] = $countHadir;
         }

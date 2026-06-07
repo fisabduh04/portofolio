@@ -17,7 +17,7 @@ trait AbsensiRekapTrait
     protected function getPrivateRekapData($date, $kelasId, $pegawaiId, $typeGuru)
     {
         $rekapData = collect([]);
-        $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Pulang' => 0, 'Libur' => 0, 'Total' => 0];
+        $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Pulang' => 0, 'Telat' => 0, 'Libur' => 0, 'Total' => 0];
 
         if ($kelasId) {
             $tahunAktif = Tahun::aktif()->first();
@@ -65,6 +65,7 @@ trait AbsensiRekapTrait
                     'Izin' => $studentLogs->where('status', 'Izin')->count(),
                     'Alpha' => $studentLogs->where('status', 'Alpha')->count(),
                     'Pulang' => $studentLogs->where('status', 'Pulang')->count(),
+                    'Telat' => $studentLogs->where('status', 'Telat')->count(),
                 ];
 
                 $details = $studentLogs->map(function ($log) {
@@ -106,6 +107,8 @@ trait AbsensiRekapTrait
                     $dailyStatus = 'Izin';
                 } elseif ($stats['Pulang'] > 0) {
                     $dailyStatus = 'Pulang';
+                } elseif ($stats['Telat'] > 0) {
+                    $dailyStatus = 'Telat';
                 } elseif ($studentLogs->count() == 0) {
                     $dailyStatus = $isLibur ? 'Libur' : '-';
                 }
@@ -116,6 +119,7 @@ trait AbsensiRekapTrait
                     'Sakit' => $details->where('status', 'Sakit')->pluck('mapel')->unique()->values()->toArray(),
                     'Izin' => $details->where('status', 'Izin')->pluck('mapel')->unique()->values()->toArray(),
                     'Pulang' => $details->where('status', 'Pulang')->pluck('mapel')->unique()->values()->toArray(),
+                    'Telat' => $details->where('status', 'Telat')->pluck('mapel')->unique()->values()->toArray(),
                 ];
 
                 return (object) [
@@ -140,7 +144,7 @@ trait AbsensiRekapTrait
         $tahunAktif = Tahun::aktif()->first();
         $daysInMonth = Carbon::createFromDate($year, $month, 1)->daysInMonth;
         $dates = range(1, $daysInMonth);
-        $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Pulang' => 0];
+        $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Pulang' => 0, 'Telat' => 0];
 
         $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
             $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
@@ -168,7 +172,7 @@ trait AbsensiRekapTrait
         $rekapData = $students->map(function ($student) use ($absensis, $dates, $year, $month, &$summaryStats, $tahunAktif) {
             $studentLogs = $absensis->get($student->id, collect([]));
             $dailyStatuses = [];
-            $studentStats = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0, 'P' => 0];
+            $studentStats = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0, 'P' => 0, 'T' => 0];
 
             foreach ($dates as $day) {
                 $dateStr = Carbon::createFromDate($year, $month, $day)->toDateString();
@@ -180,7 +184,7 @@ trait AbsensiRekapTrait
 
                 $status = '-';
                 $isLibur = HariLibur::isLibur($dateStr, $tahunAktif->id);
-                $counts = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0, 'P' => 0];
+                $counts = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0, 'P' => 0, 'T' => 0];
 
                 if ($logsForDay->isNotEmpty()) {
                     // Determine Dominant Status for Simple View
@@ -192,6 +196,8 @@ trait AbsensiRekapTrait
                         $status = 'Izin';
                     } elseif ($logsForDay->contains('status', 'Pulang')) {
                         $status = 'Pulang';
+                    } elseif ($logsForDay->contains('status', 'Telat')) {
+                        $status = 'Telat';
                     } elseif ($logsForDay->contains('status', 'Hadir')) {
                         $status = 'Hadir';
                     }
@@ -208,6 +214,8 @@ trait AbsensiRekapTrait
                             $counts['A']++;
                         } elseif ($log->status == 'Pulang') {
                             $counts['P']++;
+                        } elseif ($log->status == 'Telat') {
+                            $counts['T']++;
                         }
                     }
                 } else {
@@ -237,6 +245,10 @@ trait AbsensiRekapTrait
                     $code = 'P';
                     $studentStats['P']++;
                     $summaryStats['Pulang']++;
+                } elseif ($status == 'Telat') {
+                    $code = 'T';
+                    $studentStats['T']++;
+                    $summaryStats['Telat']++;
                 } elseif ($status == 'Libur') {
                     $code = 'L';
                 }
@@ -264,7 +276,7 @@ trait AbsensiRekapTrait
     {
         $tahunAktif = Tahun::aktif()->first();
         $months = range(1, 12);
-        $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Pulang' => 0];
+        $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Pulang' => 0, 'Telat' => 0];
 
         $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
             $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
@@ -292,7 +304,7 @@ trait AbsensiRekapTrait
         $rekapData = $students->map(function ($student) use ($absensis, $months, &$summaryStats) {
             $studentLogs = $absensis->get($student->id, collect([]));
             $monthlyStats = [];
-            $totalStats = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0, 'P' => 0];
+            $totalStats = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0, 'P' => 0, 'T' => 0];
 
             foreach ($months as $m) {
                 // Corrected Filter: Check Logbook Month
@@ -305,6 +317,7 @@ trait AbsensiRekapTrait
                     'I' => $logsMonth->where('status', 'Izin')->count(),
                     'A' => $logsMonth->where('status', 'Alpha')->count(),
                     'P' => $logsMonth->where('status', 'Pulang')->count(),
+                    'T' => $logsMonth->where('status', 'Telat')->count(),
                 ];
                 $monthlyStats[$m] = $stats;
                 $totalStats['H'] += $stats['H'];
@@ -317,11 +330,13 @@ trait AbsensiRekapTrait
                 $summaryStats['Alpha'] += $stats['A'];
                 $totalStats['P'] += $stats['P'];
                 $summaryStats['Pulang'] += $stats['P'];
+                $totalStats['T'] += $stats['T'];
+                $summaryStats['Telat'] += $stats['T'];
             }
 
             // Get detailed absent logs list for the whole year
             $details = $studentLogs->filter(function ($log) {
-                return in_array($log->status, ['Sakit', 'Izin', 'Alpha', 'Pulang']);
+                return in_array($log->status, ['Sakit', 'Izin', 'Alpha', 'Pulang', 'Telat']);
             })->map(function ($log) {
                 return [
                     'date' => $log->logbook->tanggal,
@@ -345,7 +360,7 @@ trait AbsensiRekapTrait
     protected function getPrivateRekapPeriodeData($startDate, $endDate, $kelasId, $typeGuru = 'mapel')
     {
         $tahunAktif = Tahun::aktif()->first();
-        $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Pulang' => 0];
+        $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Pulang' => 0, 'Telat' => 0];
 
         $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
             $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
@@ -382,10 +397,11 @@ trait AbsensiRekapTrait
                 'I' => $studentLogs->where('status', 'Izin')->count(),
                 'A' => $studentLogs->where('status', 'Alpha')->count(),
                 'P' => $studentLogs->where('status', 'Pulang')->count(),
+                'T' => $studentLogs->where('status', 'Telat')->count(),
             ];
 
             // 2. Statistik Per Hari (New)
-            $dailyTotal = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0, 'P' => 0];
+            $dailyTotal = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0, 'P' => 0, 'T' => 0];
 
             // Map data for daily views and calculate daily totals
             foreach ($dates as $dateStr) {
@@ -395,7 +411,7 @@ trait AbsensiRekapTrait
 
                 $status = '-';
                 $isLibur = HariLibur::isLibur($dateStr, $tahunAktif->id);
-                $counts = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0, 'P' => 0];
+                $counts = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0, 'P' => 0, 'T' => 0];
 
                 if ($logsForDay->isNotEmpty()) {
                     // Determine Dominant Status (Strict Logic)
@@ -411,6 +427,9 @@ trait AbsensiRekapTrait
                     } elseif ($logsForDay->contains('status', 'Pulang')) {
                         $status = 'Pulang';
                         $dailyTotal['P']++;
+                    } elseif ($logsForDay->contains('status', 'Telat')) {
+                        $status = 'Telat';
+                        $dailyTotal['T']++;
                     } elseif ($logsForDay->where('status', 'Hadir')->count() == $logsForDay->count()) {
                         // Hanya H jika SEMUA sesi Hadir
                         $status = 'Hadir';
@@ -432,6 +451,8 @@ trait AbsensiRekapTrait
                             $counts['A']++;
                         } elseif ($log->status == 'Pulang') {
                             $counts['P']++;
+                        } elseif ($log->status == 'Telat') {
+                            $counts['T']++;
                         }
                     }
                 } else {
@@ -451,6 +472,8 @@ trait AbsensiRekapTrait
                     $code = 'A';
                 } elseif ($status == 'Pulang') {
                     $code = 'P';
+                } elseif ($status == 'Telat') {
+                    $code = 'T';
                 } elseif ($status == 'Libur') {
                     $code = 'L';
                 }
@@ -468,10 +491,11 @@ trait AbsensiRekapTrait
             $summaryStats['Izin'] += $sessionStats['I'];
             $summaryStats['Alpha'] += $sessionStats['A'];
             $summaryStats['Pulang'] += $sessionStats['P'];
+            $summaryStats['Telat'] += $sessionStats['T'];
 
             // Get detailed absent logs list (for 'detail' view)
             $details = $studentLogs->filter(function ($log) {
-                return in_array($log->status, ['Sakit', 'Izin', 'Alpha', 'Pulang']);
+                return in_array($log->status, ['Sakit', 'Izin', 'Alpha', 'Pulang', 'Telat']);
             })->map(function ($log) {
                 // Determine Mapel Name
                 $kategori = $log->logbook->kategori;

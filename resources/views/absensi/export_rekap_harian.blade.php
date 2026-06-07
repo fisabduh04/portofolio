@@ -1,7 +1,7 @@
 <table>
     <thead>
         <tr>
-            <td colspan="6" style="text-align: center; font-weight: bold; font-size: 16px;">
+            <td colspan="8" style="text-align: center; font-weight: bold; font-size: 16px;">
                 REKAPITULASI PRESENSI HARIAN 
                 @if(isset($typeGuru) && $typeGuru)
                     ({{ $typeGuru == 'piket' ? 'GURU PIKET' : 'GURU MAPEL' }})
@@ -10,7 +10,7 @@
             </td>
         </tr>
         <tr>
-            <td colspan="6" style="text-align: center;">Tanggal: {{ \Carbon\Carbon::parse($date)->translatedFormat('l, d F Y') }}</td>
+            <td colspan="8" style="text-align: center;">Tanggal: {{ \Carbon\Carbon::parse($date)->translatedFormat('l, d F Y') }}</td>
         </tr>
         <tr></tr>
         <tr style="background-color: #cccccc; font-weight: bold;">
@@ -20,6 +20,8 @@
             <th style="border: 1px solid #000000; text-align: center;">S</th>
             <th style="border: 1px solid #000000; text-align: center;">I</th>
             <th style="border: 1px solid #000000; text-align: center;">A</th>
+            <th style="border: 1px solid #000000; text-align: center;">P</th>
+            <th style="border: 1px solid #000000; text-align: center;">T</th>
             <th style="border: 1px solid #000000; text-align: left;">KETERANGAN</th>
         </tr>
     </thead>
@@ -32,6 +34,8 @@
             <td style="border: 1px solid #000000; text-align: center;">{{ $data->stats['Sakit'] > 0 ? $data->stats['Sakit'] : '-' }}</td>
             <td style="border: 1px solid #000000; text-align: center;">{{ $data->stats['Izin'] > 0 ? $data->stats['Izin'] : '-' }}</td>
             <td style="border: 1px solid #000000; text-align: center; color: red;">{{ $data->stats['Alpha'] > 0 ? $data->stats['Alpha'] : '-' }}</td>
+            <td style="border: 1px solid #000000; text-align: center;">{{ ($data->stats['Pulang'] ?? 0) > 0 ? $data->stats['Pulang'] : '-' }}</td>
+            <td style="border: 1px solid #000000; text-align: center;">{{ ($data->stats['Telat'] ?? 0) > 0 ? $data->stats['Telat'] : '-' }}</td>
             <td style="border: 1px solid #000000;">
                 @php
                     $details = [];

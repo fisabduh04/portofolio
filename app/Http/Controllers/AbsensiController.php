@@ -76,11 +76,20 @@ class AbsensiController extends Controller
             'materi' => 'required|string',
             'catatan' => 'nullable|string',
             'attendance' => 'required|array',
-            'attendance.*.status' => 'required|in:Hadir,Sakit,Izin,Alpha,Pulang',
+            'attendance.*.status' => 'required|in:Hadir,Sakit,Izin,Alpha,Pulang,Telat',
             'attendance.*.keterangan' => 'nullable|string',
             'foto.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'kategori' => 'required|in:mapel,piket_sub', // Validasi kategori
             'tanggal' => 'required|date',
+        ], [
+            'materi.required' => 'Materi/Pembahasan wajib diisi.',
+            'attendance.required' => 'Data presensi siswa wajib diisi.',
+            'attendance.*.status.required' => 'Status presensi siswa wajib dipilih.',
+            'attendance.*.status.in' => 'Status presensi tidak valid.',
+            'foto.*.image' => 'File yang diunggah harus berupa gambar.',
+            'foto.*.mimes' => 'Format gambar harus jpeg, png, jpg, atau gif.',
+            'foto.*.max' => 'Ukuran gambar maksimal 2MB per file.',
+            'tanggal.required' => 'Tanggal wajib diisi.',
         ]);
 
         $user = auth()->user();
@@ -252,8 +261,16 @@ class AbsensiController extends Controller
             'kelas_id' => 'required|exists:kelas,id',
             'kategori' => 'required|in:piket_masuk,piket_pulang',
             'attendance' => 'required|array',
-            'attendance.*.status' => 'required|in:Hadir,Sakit,Izin,Alpha,Pulang',
+            'attendance.*.status' => 'required|in:Hadir,Sakit,Izin,Alpha,Pulang,Telat',
             'catatan' => 'nullable|string',
+            'foto.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ], [
+            'attendance.required' => 'Data presensi siswa wajib diisi.',
+            'attendance.*.status.required' => 'Status presensi siswa wajib dipilih.',
+            'attendance.*.status.in' => 'Status presensi tidak valid.',
+            'foto.*.image' => 'File yang diunggah harus berupa gambar.',
+            'foto.*.mimes' => 'Format gambar harus jpeg, png, jpg, atau gif.',
+            'foto.*.max' => 'Ukuran gambar maksimal 2MB per file.',
         ]);
 
         $user = auth()->user();
@@ -412,6 +429,10 @@ class AbsensiController extends Controller
 
         $request->validate([
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ], [
+            'foto.image' => 'File harus berupa gambar.',
+            'foto.mimes' => 'Format gambar harus jpeg, png, jpg, atau gif.',
+            'foto.max' => 'Ukuran gambar maksimal 2MB.',
         ]);
 
         try {
@@ -444,6 +465,10 @@ class AbsensiController extends Controller
 
         $request->validate([
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ], [
+            'foto.image' => 'File harus berupa gambar.',
+            'foto.mimes' => 'Format gambar harus jpeg, png, jpg, atau gif.',
+            'foto.max' => 'Ukuran gambar maksimal 2MB.',
         ]);
 
         try {
