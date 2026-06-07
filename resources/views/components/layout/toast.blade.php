@@ -140,6 +140,16 @@
                 );
             @endif
         @endforeach
+
+        // 3. Handle validation errors ($errors)
+        @if($errors->any())
+            @foreach($errors->all() as $error)
+                window.notif(
+                    {!! json_encode($error) !!}, 
+                    'error'
+                );
+            @endforeach
+        @endif
     });
 </script>
 

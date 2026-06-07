@@ -11,6 +11,21 @@
         <input type="hidden" name="kelas_id" value="{{ $kelas->id }}">
         <input type="hidden" name="kategori" value="{{ $kategori }}">
 
+        <!-- Validation Errors -->
+        @if ($errors->any())
+        <div class="mb-6 p-4 text-sm text-red-800 border border-red-300 rounded-2xl bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800" role="alert">
+            <div class="flex items-center gap-2 font-bold mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Terdapat kesalahan pada input Anda:
+            </div>
+            <ul class="list-disc list-inside space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
         <!-- Session Header Card -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 md:p-6 mb-8">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -47,6 +62,12 @@
                         </span>
                         <span class="px-2 py-1 bg-rose-100 text-rose-700 rounded-md border border-rose-200">
                             A: <span id="stat-alpha">0</span>
+                        </span>
+                        <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-md border border-purple-200">
+                            P: <span id="stat-pulang">0</span>
+                        </span>
+                        <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-md border border-indigo-200">
+                            T: <span id="stat-telat">0</span>
                         </span>
                     </div>
                     <button type="button" onclick="setAll('Hadir')" class="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800 transition-colors whitespace-nowrap">
@@ -117,7 +138,7 @@
                                         <div class="flex items-center justify-between md:justify-center gap-2">
                                             <span class="text-xs font-semibold text-gray-400 md:hidden">Status:</span>
                                             <div class="flex gap-2">
-                                                @foreach(['Hadir' => 'H', 'Sakit' => 'S', 'Izin' => 'I', 'Alpha' => 'A'] as $label => $short)
+                                                @foreach(['Hadir' => 'H', 'Sakit' => 'S', 'Izin' => 'I', 'Alpha' => 'A', 'Pulang' => 'P', 'Telat' => 'T'] as $label => $short)
                                                 <label class="cursor-pointer group">
                                                     <input type="radio" 
                                                            name="attendance[{{ $siswa->id }}][status]" 
@@ -130,6 +151,8 @@
                                                         @elseif($label == 'Sakit') peer-checked:bg-amber-500 peer-checked:border-amber-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-amber-200
                                                         @elseif($label == 'Izin') peer-checked:bg-blue-500 peer-checked:border-blue-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-blue-200
                                                         @elseif($label == 'Alpha') peer-checked:bg-rose-500 peer-checked:border-rose-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-rose-200
+                                                        @elseif($label == 'Pulang') peer-checked:bg-purple-500 peer-checked:border-purple-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-purple-200
+                                                        @elseif($label == 'Telat') peer-checked:bg-indigo-500 peer-checked:border-indigo-500 peer-checked:text-white border-gray-100 dark:border-gray-700 text-gray-400 group-hover:border-indigo-200
                                                         @endif">
                                                         <span class="text-xs font-bold">{{ $short }}</span>
                                                     </div>
@@ -180,16 +203,22 @@
                     @if(isset($existingLogbook) && $existingLogbook->foto)
                     <div class="mb-4">
                         <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Foto Tersimpan:</p>
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="flex flex-wrap gap-2">
                             @foreach(json_decode($existingLogbook->foto) as $foto)
-                            <div class="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group">
-                                <img src="{{ asset('storage/' . $foto) }}" class="w-full h-full object-cover">
-                                <a href="{{ asset('storage/' . $foto) }}" target="_blank" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">
-                                    Lihat Full
-                                </a>
+                            <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group shadow-sm hover:scale-105 transition-transform" id="saved-photo-{{ md5($foto) }}">
+                                <img src="{{ asset('storage/' . $foto) }}" class="w-full h-full object-cover cursor-pointer" onclick="openGlobalLightbox('{{ asset('storage/' . $foto) }}')">
+                                <button type="button" onclick="deleteSavedPhoto('{{ $foto }}', 'saved-photo-{{ md5($foto) }}')" class="absolute top-1 right-1 bg-red-600/80 hover:bg-red-700 text-white rounded-full p-1 shadow transition-colors z-10 cursor-pointer" title="Hapus foto dari database">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path></svg>
+                                </div>
                             </div>
                             @endforeach
                         </div>
+                        <div id="deleted-photos-container"></div>
                     </div>
                     @endif
 
@@ -217,34 +246,76 @@
     </form>
 
 <script>
+    // Selected files array to handle files before uploading
+    let selectedFiles = [];
+
     window.handleFiles = function(files) {
         const previewContainer = document.getElementById('image-preview-container');
         if (!previewContainer) return;
-        previewContainer.innerHTML = ''; 
+
         if (files && files.length > 0) {
             Array.from(files).forEach(file => {
                 if (file.type.match('image.*')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const div = document.createElement('div');
-                        div.className = 'relative aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm group';
-                        div.innerHTML = `
-                            <img src="${e.target.result}" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <span class="text-white text-[10px] font-medium">${(file.size/1024).toFixed(1)} KB</span>
-                            </div>
-                        `;
-                        previewContainer.appendChild(div);
+                    // Check duplicate
+                    const isDuplicate = selectedFiles.some(f => f.name === file.name && f.size === file.size);
+                    if (!isDuplicate) {
+                        selectedFiles.push(file);
                     }
-                    reader.readAsDataURL(file);
                 }
             });
         }
+
+        renderPreviews();
+        updateFileInput();
+    }
+
+    function renderPreviews() {
+        const previewContainer = document.getElementById('image-preview-container');
+        if (!previewContainer) return;
+
+        previewContainer.innerHTML = ''; // Clear previous previews
+
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.className = 'relative aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm group';
+                
+                div.innerHTML = `
+                    <img src="${e.target.result}" class="w-full h-full object-cover cursor-pointer" onclick="openGlobalLightbox('${e.target.result}')">
+                    <button type="button" onclick="removeSelectedFile(${index})" class="absolute top-1.5 right-1.5 bg-red-600/80 hover:bg-red-700 text-white rounded-full p-1 shadow transition-colors z-10 cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1.5 pointer-events-none">
+                        <span class="text-white text-[10px] font-medium truncate w-full">${(file.size/1024).toFixed(1)} KB</span>
+                    </div>
+                `;
+                previewContainer.appendChild(div);
+            }
+            reader.readAsDataURL(file);
+        });
+    }
+
+    window.removeSelectedFile = function(index) {
+        selectedFiles.splice(index, 1);
+        renderPreviews();
+        updateFileInput();
+    }
+
+    function updateFileInput() {
+        const fileInput = document.getElementById('dropzone-file');
+        if (!fileInput) return;
+        
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         function updateStats() {
-            const counts = { 'Hadir': 0, 'Sakit': 0, 'Izin': 0, 'Alpha': 0 };
+            const counts = { 'Hadir': 0, 'Sakit': 0, 'Izin': 0, 'Alpha': 0, 'Pulang': 0, 'Telat': 0 };
             document.querySelectorAll('input[name^="attendance"][name$="[status]"]:checked').forEach(radio => {
                 if (counts.hasOwnProperty(radio.value)) { counts[radio.value]++; }
             });
@@ -252,6 +323,8 @@
             document.getElementById('stat-sakit').innerText = counts['Sakit'];
             document.getElementById('stat-izin').innerText = counts['Izin'];
             document.getElementById('stat-alpha').innerText = counts['Alpha'];
+            document.getElementById('stat-pulang').innerText = counts['Pulang'];
+            document.getElementById('stat-telat').innerText = counts['Telat'];
         }
 
         window.setAll = function(status) {
@@ -267,6 +340,58 @@
 
         updateStats();
     });
+
+    // Lightbox modal functions
+    function openGlobalLightbox(src) {
+        const lightbox = document.getElementById('globalLightbox');
+        const img = document.getElementById('lightboxImage');
+        if (lightbox && img) {
+            img.src = src;
+            lightbox.classList.remove('hidden');
+            lightbox.classList.add('flex');
+            setTimeout(() => {
+                lightbox.classList.remove('opacity-0');
+                lightbox.classList.add('opacity-100');
+            }, 10);
+        }
+    }
+
+    function closeGlobalLightbox() {
+        const lightbox = document.getElementById('globalLightbox');
+        if (lightbox) {
+            lightbox.classList.remove('opacity-100');
+            lightbox.classList.add('opacity-0');
+            setTimeout(() => {
+                lightbox.classList.remove('flex');
+                lightbox.classList.add('hidden');
+            }, 300);
+        }
+    }
+
+    // Delete saved photo handler
+    window.deleteSavedPhoto = function(path, elementId) {
+        showConfirmModal('Apakah Anda yakin ingin menghapus foto ini dari server?', function() {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.remove();
+            }
+            
+            const container = document.getElementById('deleted-photos-container');
+            if (container) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'deleted_photos[]';
+                input.value = path;
+                container.appendChild(input);
+            }
+        });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeGlobalLightbox();
+        }
+    });
 </script>
 
 <style>
@@ -276,5 +401,17 @@
         box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     }
 </style>
+
+<!-- Global Lightbox Modal -->
+<div id="globalLightbox" class="fixed inset-0 z-[9999] hidden flex-col items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300 opacity-0" onclick="closeGlobalLightbox()">
+    <div class="absolute top-4 right-4 flex items-center gap-3">
+        <button onclick="closeGlobalLightbox()" class="text-white hover:text-gray-300 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors focus:outline-none cursor-pointer" aria-label="Close Lightbox">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+    <div class="max-w-[90%] max-h-[85vh] relative" onclick="event.stopPropagation()">
+        <img id="lightboxImage" src="" class="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain border border-white/10">
+    </div>
+</div>
 </x-layout.layout>
 

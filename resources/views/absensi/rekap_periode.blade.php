@@ -95,7 +95,7 @@
             </div>
         @else
             {{-- Stats Cards --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-6">
                 <!-- Total Siswa -->
                 <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800">
                     <div class="flex items-center justify-between mb-2">
@@ -146,6 +146,26 @@
                     </div>
                     <span class="text-2xl font-bold leading-none text-gray-900 sm:text-3xl dark:text-white">{{ $summaryStats['Alpha'] }}</span>
                 </div>
+                <!-- Pulang -->
+                <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-base font-normal text-gray-500 dark:text-gray-400">Total Pulang</h3>
+                        <span class="p-2 text-purple-500 rounded-lg bg-purple-50 dark:bg-purple-900/20">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        </span>
+                    </div>
+                    <span class="text-2xl font-bold leading-none text-gray-900 sm:text-3xl dark:text-white">{{ $summaryStats['Pulang'] ?? 0 }}</span>
+                </div>
+                <!-- Telat -->
+                <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-base font-normal text-gray-500 dark:text-gray-400">Total Telat</h3>
+                        <span class="p-2 text-indigo-500 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </span>
+                    </div>
+                    <span class="text-2xl font-bold leading-none text-gray-900 sm:text-3xl dark:text-white">{{ $summaryStats['Telat'] ?? 0 }}</span>
+                </div>
             </div>
 
             @if($viewMode == 'ringkasan' || $viewMode == 'sederhana')
@@ -163,7 +183,8 @@
                                     <th scope="col" class="px-4 py-3 text-orange-700">Sakit</th>
                                     <th scope="col" class="px-4 py-3 text-yellow-700">Izin</th>
                                     <th scope="col" class="px-4 py-3 text-red-700">Alpha</th>
-                                    <th scope="col" class="px-4 py-3">Total Absen (S/I/A)</th>
+                                    <th scope="col" class="px-4 py-3 text-purple-700">Pulang</th>
+                                    <th scope="col" class="px-4 py-3">Total Absen (S/I/A/P)</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -172,17 +193,18 @@
                                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white text-left">
                                         {{ $student->nama }}
                                     </th>
-                                    <td class="px-4 py-4 font-bold text-blue-600">{{ $student->total['H'] }}</td>
+                                    <td class="px-4 py-4 font-bold text-blue-600">{{ ($student->total['H'] ?? 0) + ($student->total['T'] ?? 0) }}</td>
                                     <td class="px-4 py-4 font-bold text-orange-600">{{ $student->total['S'] }}</td>
                                     <td class="px-4 py-4 font-bold text-yellow-600">{{ $student->total['I'] }}</td>
-                                    <td class="px-4 py-4 font-bold text-red-600">{{ $student->total['A'] }}</td>
+                                    <td class="px-4 py-4 font-bold text-red-600">{{ $student->total['A'] ?? 0 }}</td>
+                                    <td class="px-4 py-4 font-bold text-purple-600">{{ $student->total['P'] ?? 0 }}</td>
                                     <td class="px-4 py-4 font-bold text-gray-800 dark:text-gray-200">
-                                        {{ $student->total['S'] + $student->total['I'] + $student->total['A'] }}
+                                        {{ ($student->total['S'] ?? 0) + ($student->total['I'] ?? 0) + ($student->total['A'] ?? 0) + ($student->total['P'] ?? 0) }}
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-4 text-center">Data tidak ditemukan</td>
+                                    <td colspan="7" class="px-6 py-4 text-center">Data tidak ditemukan</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -205,6 +227,7 @@
                                     <th scope="col" class="px-4 py-3 text-orange-700">Hari Sakit</th>
                                     <th scope="col" class="px-4 py-3 text-yellow-700">Hari Izin</th>
                                     <th scope="col" class="px-4 py-3 text-red-700">Hari Alpha</th>
+                                    <th scope="col" class="px-4 py-3 text-purple-700">Hari Pulang</th>
                                     <th scope="col" class="px-4 py-3">Total Hari Absen</th>
                                 </tr>
                             </thead>
@@ -214,17 +237,18 @@
                                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white text-left">
                                         {{ $student->nama }}
                                     </th>
-                                    <td class="px-4 py-4 font-bold text-blue-600">{{ $student->daily_total['H'] }}</td>
+                                    <td class="px-4 py-4 font-bold text-blue-600">{{ ($student->daily_total['H'] ?? 0) + ($student->daily_total['T'] ?? 0) }}</td>
                                     <td class="px-4 py-4 font-bold text-orange-600">{{ $student->daily_total['S'] }}</td>
                                     <td class="px-4 py-4 font-bold text-yellow-600">{{ $student->daily_total['I'] }}</td>
-                                    <td class="px-4 py-4 font-bold text-red-600">{{ $student->daily_total['A'] }}</td>
+                                    <td class="px-4 py-4 font-bold text-red-600">{{ $student->daily_total['A'] ?? 0 }}</td>
+                                    <td class="px-4 py-4 font-bold text-purple-600">{{ $student->daily_total['P'] ?? 0 }}</td>
                                     <td class="px-4 py-4 font-bold text-gray-800 dark:text-gray-200">
-                                        {{ $student->daily_total['S'] + $student->daily_total['I'] + $student->daily_total['A'] }}
+                                        {{ ($student->daily_total['S'] ?? 0) + ($student->daily_total['I'] ?? 0) + ($student->daily_total['A'] ?? 0) + ($student->daily_total['P'] ?? 0) }}
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-4 text-center">Data tidak ditemukan</td>
+                                    <td colspan="7" class="px-6 py-4 text-center">Data tidak ditemukan</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -254,6 +278,8 @@
                                     <th scope="col" class="px-2 py-3 w-16 bg-orange-50 dark:bg-orange-900/10 text-orange-700 dark:text-orange-400">S</th>
                                     <th scope="col" class="px-2 py-3 w-16 bg-yellow-50 dark:bg-yellow-900/10 text-yellow-700 dark:text-yellow-400">I</th>
                                     <th scope="col" class="px-2 py-3 w-16 bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-400">A</th>
+                                    <th scope="col" class="px-2 py-3 w-16 bg-purple-50 dark:bg-purple-900/10 text-purple-700 dark:text-purple-400">P</th>
+                                    <th scope="col" class="px-2 py-3 w-16 bg-indigo-50 dark:bg-indigo-900/10 text-indigo-700 dark:text-indigo-400">T</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -277,6 +303,8 @@
                                                 elseif ($code == 'S') { $cellClass = 'bg-orange-50 dark:bg-orange-900/20'; $textClass = 'text-orange-600 font-bold'; }
                                                 elseif ($code == 'I') { $cellClass = 'bg-yellow-50 dark:bg-yellow-900/20'; $textClass = 'text-yellow-600 font-bold'; }
                                                 elseif ($code == 'A') { $cellClass = 'bg-red-50 dark:bg-red-900/20'; $textClass = 'text-red-600 font-bold'; }
+                                                elseif ($code == 'P') { $cellClass = 'bg-purple-50 dark:bg-purple-900/20'; $textClass = 'text-purple-600 font-bold'; }
+                                                elseif ($code == 'T') { $cellClass = 'bg-indigo-50 dark:bg-indigo-900/20'; $textClass = 'text-indigo-600 font-bold'; }
                                                 elseif ($code == 'L' || $isLibur) { $cellClass = 'bg-gray-200 dark:bg-gray-600'; $textClass = 'text-gray-500'; $code = ''; }
                                                 
                                                 // Prepare Content
@@ -284,10 +312,12 @@
                                                 if ($viewMode == 'detail_harian_sesi' && isset($log['counts'])) {
                                                      $counts = $log['counts'];
                                                      $summary = [];
-                                                     if ($counts['H'] > 0) $summary[] = $counts['H'] . 'H';
-                                                     if ($counts['S'] > 0) $summary[] = $counts['S'] . 'S';
-                                                     if ($counts['I'] > 0) $summary[] = $counts['I'] . 'I';
-                                                     if ($counts['A'] > 0) $summary[] = $counts['A'] . 'A';
+                                                     if (($counts['H'] ?? 0) > 0) $summary[] = $counts['H'] . 'H';
+                                                     if (($counts['S'] ?? 0) > 0) $summary[] = $counts['S'] . 'S';
+                                                     if (($counts['I'] ?? 0) > 0) $summary[] = $counts['I'] . 'I';
+                                                     if (($counts['A'] ?? 0) > 0) $summary[] = $counts['A'] . 'A';
+                                                     if (($counts['P'] ?? 0) > 0) $summary[] = $counts['P'] . 'P';
+                                                     if (($counts['T'] ?? 0) > 0) $summary[] = $counts['T'] . 'T';
                                                      
                                                      if (!empty($summary)) {
                                                          $content = implode(' ', $summary);
@@ -301,13 +331,15 @@
                                         @endforeach
 
                                         {{-- Totals --}}
-                                        <td class="px-2 py-2 font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/10 border-l dark:border-gray-600">{{ $student->total['H'] }}</td>
-                                        <td class="px-2 py-2 font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/10">{{ $student->total['S'] }}</td>
-                                        <td class="px-2 py-2 font-bold text-yellow-600 bg-yellow-50 dark:bg-yellow-900/10">{{ $student->total['I'] }}</td>
-                                        <td class="px-2 py-2 font-bold text-red-600 bg-red-50 dark:bg-red-900/10">{{ $student->total['A'] }}</td>
+                                        <td class="px-2 py-2 font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/10 border-l dark:border-gray-600">{{ $student->total['H'] ?? 0 }}</td>
+                                        <td class="px-2 py-2 font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/10">{{ $student->total['S'] ?? 0 }}</td>
+                                        <td class="px-2 py-2 font-bold text-yellow-600 bg-yellow-50 dark:bg-yellow-900/10">{{ $student->total['I'] ?? 0 }}</td>
+                                        <td class="px-2 py-2 font-bold text-red-600 bg-red-50 dark:bg-red-900/10">{{ $student->total['A'] ?? 0 }}</td>
+                                        <td class="px-2 py-2 font-bold text-purple-600 bg-purple-50 dark:bg-purple-900/10">{{ $student->total['P'] ?? 0 }}</td>
+                                        <td class="px-2 py-2 font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/10">{{ $student->total['T'] ?? 0 }}</td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="{{ count($dates) + 5 }}" class="px-6 py-4 text-center">Data tidak ditemukan</td></tr>
+                                    <tr><td colspan="{{ count($dates) + 7 }}" class="px-6 py-4 text-center">Data tidak ditemukan</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -355,6 +387,8 @@
                                                                              'Alpha' => 'bg-red-100 text-red-800 border-red-200',
                                                                              'Sakit' => 'bg-orange-100 text-orange-800 border-orange-200',
                                                                              'Izin' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                                                             'Pulang' => 'bg-purple-100 text-purple-800 border-purple-200',
+                                                                             'Telat' => 'bg-indigo-100 text-indigo-800 border-indigo-200',
                                                                              default => 'bg-gray-100'
                                                                          };
                                                                      @endphp

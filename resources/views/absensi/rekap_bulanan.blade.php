@@ -121,7 +121,7 @@
 
         @if($selectedKelas)
             {{-- Stats Cards --}}
-             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
                  {{-- Total --}}
                 <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
                     <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-gray-600 bg-gray-100 rounded-lg dark:bg-gray-700 dark:text-gray-300">
@@ -172,6 +172,26 @@
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Alpha'] }}</h3>
                     </div>
                 </div>
+                 {{-- Pulang --}}
+                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-purple-600 bg-purple-100 rounded-lg dark:bg-purple-900/30 dark:text-purple-300">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </div>
+                     <div class="ml-3">
+                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">Pulang</p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Pulang'] ?? 0 }}</h3>
+                    </div>
+                </div>
+                 {{-- Telat --}}
+                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-indigo-600 bg-indigo-100 rounded-lg dark:bg-indigo-900/30 dark:text-indigo-300">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                     <div class="ml-3">
+                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">Telat</p>
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Telat'] ?? 0 }}</h3>
+                    </div>
+                </div>
             </div>
 
             @if($viewMode == 'sederhana')
@@ -181,6 +201,7 @@
                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-orange-400"></span> Sakit</div>
                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span> Izin</div>
                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Alpha</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Pulang</div>
                     <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gray-200 border border-gray-300"></span> Libur/Kosong</div>
                 </div>
 
@@ -202,6 +223,7 @@
                                     <th scope="col" class="px-2 py-3 bg-gray-100 dark:bg-gray-800 font-bold w-10 text-orange-700">S</th>
                                     <th scope="col" class="px-2 py-3 bg-gray-100 dark:bg-gray-800 font-bold w-10 text-yellow-700">I</th>
                                     <th scope="col" class="px-2 py-3 bg-gray-100 dark:bg-gray-800 font-bold w-10 text-red-700">A</th>
+                                    <th scope="col" class="px-2 py-3 bg-gray-100 dark:bg-gray-800 font-bold w-10 text-purple-700">P</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -238,6 +260,14 @@
                                                 $dotClass = 'bg-red-500 border-red-500 shadow-sm shadow-red-200 animate-pulse'; 
                                                 $tooltipText = "Tgl $d: Alpha";
                                             }
+                                            elseif($status == 'P') {
+                                                $dotClass = 'bg-purple-500 border-purple-500 shadow-sm shadow-purple-200'; 
+                                                $tooltipText = "Tgl $d: Pulang";
+                                            }
+                                            elseif($status == 'T') {
+                                                $dotClass = 'bg-blue-500 border-blue-500 shadow-sm shadow-blue-200'; 
+                                                $tooltipText = "Tgl $d: Telat (Terhitung Hadir)";
+                                            }
                                         @endphp
                                         <td class="px-0.5 py-2 text-center relative group/cell border-r border-gray-50 dark:border-gray-800 {{ $dayData['is_libur'] ? 'bg-gray-50 dark:bg-gray-800/50' : '' }}">
                                             <div class="flex items-center justify-center">
@@ -245,14 +275,15 @@
                                             </div>
                                         </td>
                                     @endforeach
-                                    <td class="px-2 py-2 text-center font-bold text-blue-700 dark:text-blue-400 bg-gray-50 dark:bg-gray-800 border-l-2 border-gray-200 dark:border-gray-700">{{ $student->stats['H'] }}</td>
+                                    <td class="px-2 py-2 text-center font-bold text-blue-700 dark:text-blue-400 bg-gray-50 dark:bg-gray-800 border-l-2 border-gray-200 dark:border-gray-700">{{ ($student->stats['H'] ?? 0) + ($student->stats['T'] ?? 0) }}</td>
                                     <td class="px-2 py-2 text-center font-bold text-orange-700 dark:text-orange-400 bg-gray-50 dark:bg-gray-800">{{ $student->stats['S'] }}</td>
-                                    <td class="px-2 py-2 text-center font-bold text-yellow-700 dark:text-yellow-400 bg-gray-50 dark:bg-gray-800">{{ $student->stats['I'] }}</td>
-                                    <td class="px-2 py-2 text-center font-bold text-red-700 dark:text-red-400 bg-gray-50 dark:bg-gray-800">{{ $student->stats['A'] }}</td>
+                                    <td class="px-2 py-2 text-center font-bold text-yellow-700 dark:text-yellow-400 bg-gray-50 dark:bg-gray-800">{{ $student->stats['I'] ?? 0 }}</td>
+                                    <td class="px-2 py-2 text-center font-bold text-red-700 dark:text-red-400 bg-gray-50 dark:bg-gray-800">{{ $student->stats['A'] ?? 0 }}</td>
+                                    <td class="px-2 py-2 text-center font-bold text-purple-700 dark:text-purple-400 bg-gray-50 dark:bg-gray-800">{{ $student->stats['P'] ?? 0 }}</td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="{{ count($dates) + 5 }}" class="px-6 py-8 text-center text-gray-500">
+                                    <td colspan="{{ count($dates) + 6 }}" class="px-6 py-8 text-center text-gray-500">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg class="w-10 h-10 mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                             <p>Data presensi tidak ditemukan.</p>
@@ -282,7 +313,9 @@
                                     @endforeach
                                     <th scope="col" class="px-2 py-3 bg-blue-50 dark:bg-blue-900/20 border-l-2 border-gray-300 dark:border-gray-600 font-bold w-12 text-blue-700">H</th>
                                     <th scope="col" class="px-2 py-3 bg-red-50 dark:bg-red-900/20 font-bold w-12 text-red-700">A</th>
-                                    <th scope="col" class="px-2 py-3 bg-gray-100 dark:bg-gray-800 font-bold w-12 text-gray-700">T</th>
+                                    <th scope="col" class="px-2 py-3 bg-purple-50 dark:bg-purple-900/20 font-bold w-12 text-purple-700">P</th>
+                                    <th scope="col" class="px-2 py-3 bg-indigo-50 dark:bg-indigo-900/20 font-bold w-12 text-indigo-700">T</th>
+                                    <th scope="col" class="px-2 py-3 bg-gray-100 dark:bg-gray-800 font-bold w-12 text-gray-700">Tot</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -305,8 +338,10 @@
                                                 <div class="flex flex-col items-center gap-0.5 leading-none">
                                                     @if($counts['H'] > 0) <span class="text-blue-600 font-bold whitespace-nowrap">{{ $counts['H'] }}H</span> @endif
                                                     @if($counts['A'] > 0) <span class="text-red-600 font-bold whitespace-nowrap">{{ $counts['A'] }}A</span> @endif
-                                                    @if($counts['S'] > 0) <span class="text-orange-600 font-bold whitespace-nowrap">{{ $counts['S'] }}S</span> @endif
-                                                    @if($counts['I'] > 0) <span class="text-yellow-600 font-bold whitespace-nowrap">{{ $counts['I'] }}I</span> @endif
+                                                    @if(($counts['S'] ?? 0) > 0) <span class="text-orange-600 font-bold whitespace-nowrap">{{ $counts['S'] }}S</span> @endif
+                                                    @if(($counts['I'] ?? 0) > 0) <span class="text-yellow-600 font-bold whitespace-nowrap">{{ $counts['I'] }}I</span> @endif
+                                                    @if(($counts['P'] ?? 0) > 0) <span class="text-purple-600 font-bold whitespace-nowrap">{{ $counts['P'] }}P</span> @endif
+                                                    @if(($counts['T'] ?? 0) > 0) <span class="text-indigo-600 font-bold whitespace-nowrap">{{ $counts['T'] }}T</span> @endif
                                                 </div>
                                             @else
                                                 <span class="text-gray-300">-</span>
@@ -314,8 +349,10 @@
                                         </td>
                                     @endforeach
                                     {{-- Total Columns --}}
-                                    <td class="px-2 py-2 text-center font-bold text-blue-700 bg-blue-50 dark:bg-blue-900/20 border-l-2 border-gray-200">{{ $student->stats['H'] }}</td>
-                                    <td class="px-2 py-2 text-center font-bold text-red-700 bg-red-50 dark:bg-red-900/20">{{ $student->stats['A'] }}</td>
+                                    <td class="px-2 py-2 text-center font-bold text-blue-700 bg-blue-50 dark:bg-blue-900/20 border-l-2 border-gray-200">{{ $student->stats['H'] ?? 0 }}</td>
+                                    <td class="px-2 py-2 text-center font-bold text-red-700 bg-red-50 dark:bg-red-900/20">{{ $student->stats['A'] ?? 0 }}</td>
+                                    <td class="px-2 py-2 text-center font-bold text-purple-700 bg-purple-50 dark:bg-purple-900/20">{{ $student->stats['P'] ?? 0 }}</td>
+                                    <td class="px-2 py-2 text-center font-bold text-indigo-700 bg-indigo-50 dark:bg-indigo-900/20">{{ $student->stats['T'] ?? 0 }}</td>
                                     <td class="px-2 py-2 text-center font-bold text-gray-700 bg-gray-100 dark:bg-gray-800">{{ array_sum($student->stats) }}</td>
                                 </tr>
                                 @empty
@@ -348,6 +385,8 @@
                                     <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20 text-orange-700">Sakit</th>
                                     <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20 text-yellow-700">Izin</th>
                                     <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20 text-red-700">Alpha</th>
+                                    <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20 text-purple-700">Pulang</th>
+                                    <th scope="col" class="px-4 py-4 font-semibold tracking-wider w-20 text-indigo-700">Telat</th>
                                     <th scope="col" class="px-6 py-4 text-left font-semibold tracking-wider">Detail Ketidakhadiran (Tanggal)</th>
                                 </tr>
                             </thead>
@@ -359,14 +398,16 @@
                                         </th>
                                         <td class="px-4 py-4 text-center font-bold text-blue-700">{{ $student->stats['H'] > 0 ? $student->stats['H'] : '-' }}</td>
                                         <td class="px-4 py-4 text-center font-bold text-orange-700">{{ $student->stats['S'] > 0 ? $student->stats['S'] : '-' }}</td>
-                                        <td class="px-4 py-4 text-center font-bold text-yellow-700">{{ $student->stats['I'] > 0 ? $student->stats['I'] : '-' }}</td>
-                                        <td class="px-4 py-4 text-center font-bold text-red-700">{{ $student->stats['A'] > 0 ? $student->stats['A'] : '-' }}</td>
+                                        <td class="px-4 py-4 text-center font-bold text-yellow-700">{{ ($student->stats['I'] ?? 0) > 0 ? $student->stats['I'] : '-' }}</td>
+                                        <td class="px-4 py-4 text-center font-bold text-red-700">{{ ($student->stats['A'] ?? 0) > 0 ? $student->stats['A'] : '-' }}</td>
+                                        <td class="px-4 py-4 text-center font-bold text-purple-700">{{ ($student->stats['P'] ?? 0) > 0 ? $student->stats['P'] : '-' }}</td>
+                                        <td class="px-4 py-4 text-center font-bold text-indigo-700">{{ ($student->stats['T'] ?? 0) > 0 ? $student->stats['T'] : '-' }}</td>
                                         <td class="px-6 py-4 text-left text-xs">
                                             @php
                                                 $absentDates = [];
                                                 foreach($student->statuses as $date => $data) {
                                                     $status = $data['code']; // Access code from array
-                                                    if(in_array($status, ['S', 'I', 'A'])) {
+                                                    if(in_array($status, ['S', 'I', 'A', 'P', 'T'])) {
                                                         $absentDates[] = ['date' => $date, 'status' => $status];
                                                     }
                                                 }
@@ -380,6 +421,8 @@
                                                             if($log['status'] == 'S') $badgeColor = 'bg-orange-100 text-orange-800 border-orange-200';
                                                             elseif($log['status'] == 'I') $badgeColor = 'bg-yellow-100 text-yellow-800 border-yellow-200';
                                                             elseif($log['status'] == 'A') $badgeColor = 'bg-red-100 text-red-800 border-red-200';
+                                                            elseif($log['status'] == 'P') $badgeColor = 'bg-purple-100 text-purple-800 border-purple-200';
+                                                            elseif($log['status'] == 'T') $badgeColor = 'bg-indigo-100 text-indigo-800 border-indigo-200';
                                                         @endphp
                                                         <span class="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-full border {{ $badgeColor }}">
                                                             <span class="font-bold">{{ $log['date'] }} {{ $months[$month] }}</span>: {{ $log['status'] }}

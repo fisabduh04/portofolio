@@ -83,7 +83,7 @@
                 </div>
                 <div class="text-3xl font-bold text-gray-900 dark:text-white">{{ $attendanceRate }}%</div>
                 <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    {{ $todayStats['Hadir'] }} Hadir dari {{ $totalSiswa }} Siswa
+                    {{ $todayStats['Hadir'] + $todayStats['Pulang'] + $todayStats['Telat'] }} Hadir dari {{ $totalSiswa }} Siswa
                 </div>
             </div>
         </div>
@@ -111,10 +111,18 @@
                 <div class="py-4" id="today-composition-chart"></div>
 
                 {{-- Legend Custom --}}
-                <div class="grid grid-cols-4 gap-2 text-center mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="grid grid-cols-6 gap-2 text-center mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                     <div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">Hadir</div>
                         <div class="text-lg font-bold text-blue-600">{{ $todayStats['Hadir'] }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Pulang</div>
+                        <div class="text-lg font-bold text-purple-600">{{ $todayStats['Pulang'] }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Telat</div>
+                        <div class="text-lg font-bold text-indigo-600">{{ $todayStats['Telat'] }}</div>
                     </div>
                     <div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">Sakit</div>
@@ -459,11 +467,13 @@
             const compositionOptions = {
                 series: [
                     {{ $todayStats['Hadir'] }},
+                    {{ $todayStats['Pulang'] }},
+                    {{ $todayStats['Telat'] }},
                     {{ $todayStats['Sakit'] }},
                     {{ $todayStats['Izin'] }},
                     {{ $todayStats['Alpha'] }}
                 ],
-                colors: ["#1C64F2", "#fdba74", "#fde047", "#F05252"], // Blue, Orange (S), Yellow (I), Red (A)
+                colors: ["#1C64F2", "#A855F7", "#6366f1", "#fdba74", "#fde047", "#F05252"], // Blue (H), Purple (P), Indigo (T), Orange (S), Yellow (I), Red (A)
                 chart: {
                     height: 320,
                     width: "100%",
@@ -513,7 +523,7 @@
                         top: -2
                     },
                 },
-                labels: ["Hadir", "Sakit", "Izin", "Alpha"],
+                labels: ["Hadir", "Pulang", "Telat", "Sakit", "Izin", "Alpha"],
                 dataLabels: {
                     enabled: false
                 },
