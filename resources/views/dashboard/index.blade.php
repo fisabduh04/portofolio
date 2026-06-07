@@ -118,7 +118,7 @@
                     </div>
                     <div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">Pulang</div>
-                        <div class="text-lg font-bold text-green-600">{{ $todayStats['Pulang'] }}</div>
+                        <div class="text-lg font-bold text-purple-600">{{ $todayStats['Pulang'] }}</div>
                     </div>
                     <div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">Sakit</div>
@@ -468,7 +468,7 @@
                     {{ $todayStats['Izin'] }},
                     {{ $todayStats['Alpha'] }}
                 ],
-                colors: ["#1C64F2", "#10B981", "#fdba74", "#fde047", "#F05252"], // Blue (H), Green (P), Orange (S), Yellow (I), Red (A)
+                colors: ["#1C64F2", "#A855F7", "#fdba74", "#fde047", "#F05252"], // Blue (H), Purple (P), Orange (S), Yellow (I), Red (A)
                 chart: {
                     height: 320,
                     width: "100%",
