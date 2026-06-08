@@ -185,193 +185,6 @@
                     <div class="ml-3">
                         <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
                             Alpha
-<x-layout.layout>
-    <div class="space-y-6">
-        {{-- Header --}}
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <x-breadcrumb :title="'Rekapitulasi Presensi Harian'" :breadcrumbs="[
-                    ['name' => 'Home', 'href' => route('dashboard.index')],
-                    ['name' => 'Rekapitulasi', 'href' => '#'],
-                    ['name' => 'Presensi Harian', 'href' => route('absensi.rekap-harian')],
-                ]" />
-                <p class="text-gray-500 dark:text-gray-400">
-                    Monitoring kehadiran siswa dengan tampilan timeline visual.
-                </p>
-            </div>
-        </div>
-
-        {{-- Filter Section --}}
-        <div class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
-            <div class="mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                    Filter & Pencarian
-                </h3>
-            </div>
-            <form action="{{ route('absensi.rekap-harian') }}" method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
-                {{-- Tanggal --}}
-                <div class="lg:col-span-1">
-                    <label for="date" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Tanggal</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
-                            </svg>
-                        </div>
-                        <input type="date" name="date" id="date" value="{{ $date }}" required
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                    </div>
-                </div>
-
-                {{-- Kelas --}}
-                <div class="lg:col-span-1">
-                    <label for="kelas_id" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Kelas</label>
-                    <select id="kelas_id" name="kelas_id" required
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="">-- Pilih Kelas --</option>
-                        @foreach($listKelas as $lk)
-                            <option value="{{ $lk->id }}" @selected($kelasId == $lk->id)>{{ $lk->kelas }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                {{-- Tipe Guru --}}
-                <div class="lg:col-span-1">
-                    <label for="type_guru" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Tipe Guru</label>
-                    <select id="type_guru" name="type_guru"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="">Semua Tipe</option>
-                        <option value="mapel" @selected($typeGuru == 'mapel')>Guru Mata Pelajaran</option>
-                        <option value="piket" @selected($typeGuru == 'piket')>Guru Piket Harian</option>
-                    </select>
-                </div>
-
-                {{-- Guru (Opsional) --}}
-                <div class="lg:col-span-1">
-                    <label for="pegawai_id" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Nama Guru</label>
-                    <select id="pegawai_id" name="pegawai_id"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="">-- Semua Guru --</option>
-                        @foreach($listPegawai as $lp)
-                            <option value="{{ $lp->id }}" @selected($pegawaiId == $lp->id)>{{ $lp->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                 {{-- Tampilan (View Mode) --}}
-                 <div class="lg:col-span-1">
-                    <label for="view_mode" class="block mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Mode Tampilan</label>
-                    <select id="view_mode" name="view_mode"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="sederhana" @selected($viewMode == 'sederhana')>Sederhana (Visual)</option>
-                        <option value="detail" @selected($viewMode == 'detail')>Detail (Statistik Siswa)</option>
-                    </select>
-                </div>
-
-                {{-- Buttons Group --}}
-                <div class="lg:col-span-1 flex gap-2">
-                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 w-full dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-shadow">
-                        <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-                        </svg>
-                        Tampilkan
-                    </button>
-
-                    @if($selectedKelas)
-                    <button id="dropdownExportButton" data-dropdown-toggle="dropdownExport" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-3 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800 flex items-center justify-center shadow-sm" type="button" title="Export Menu">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    </button>
-                    
-                    <!-- Dropdown menu -->
-                    <div id="dropdownExport" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
-                        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownExportButton">
-                            <li>
-                            <a href="{{ route('absensi.rekap-harian.export', ['format' => 'excel', 'type_guru' => $typeGuru] + request()->except(['format', 'type_guru'])) }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
-                                    Export Excel
-                                </span>
-                            </a>
-                            </li>
-                            <li>
-                            <a href="{{ route('absensi.rekap-harian.export', ['format' => 'pdf', 'type_guru' => $typeGuru] + request()->except(['format', 'type_guru'])) }}" target="_blank" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                                    <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                                    Cetak PDF
-                                </span>
-                            </a>
-                            </li>
-                        </ul>
-                    </div>
-                    @endif
-                </div>
-            </form>
-        </div>
-
-        @if($selectedKelas)
-            {{-- Statistik Cards (Modern Design) --}}
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {{-- Total Siswa --}}
-                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-gray-600 bg-gray-100 rounded-lg dark:bg-gray-700 dark:text-gray-300">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
-                            Total Siswa
-                        </p>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Total'] }}</h3>
-                    </div>
-                </div>
-                
-                {{-- Hadir --}}
-                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-green-600 bg-green-100 rounded-lg dark:bg-green-900/30 dark:text-green-300">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
-                            Hadir
-                        </p>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Hadir'] }}</h3>
-                    </div>
-                </div>
-
-                {{-- Sakit --}}
-                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-yellow-600 bg-yellow-100 rounded-lg dark:bg-yellow-900/30 dark:text-yellow-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
-                            Sakit
-                        </p>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Sakit'] }}</h3>
-                    </div>
-                </div>
-
-                {{-- Izin --}}
-                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-blue-600 bg-blue-100 rounded-lg dark:bg-blue-900/30 dark:text-blue-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
-                            Izin
-                        </p>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Izin'] }}</h3>
-                    </div>
-                </div>
-
-                {{-- Alpha --}}
-                <div class="flex items-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <div class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-red-600 bg-red-100 rounded-lg dark:bg-red-900/30 dark:text-red-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="mb-0.5 text-sm font-medium text-gray-500 truncate dark:text-gray-400">
-                            Alpha
                         </p>
                         <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ $summaryStats['Alpha'] }}</h3>
                     </div>
@@ -732,6 +545,19 @@
                      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-orange-400 rounded-sm"></span> Sakit</div>
                      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-yellow-400 rounded-sm"></span> Izin</div>
                      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-purple-500 rounded-sm"></span> Pulang</div>
+                </div>
+            @endif
+            </div>
+        @endif
+    </div>
+
+    <script>
+        function openSessionDetailModal(encodedFoto) {
+             const gallery = document.getElementById('modalFotoGallery');
+             const noPhotos = document.getElementById('modalNoFoto');
+             
+             if (gallery) gallery.innerHTML = '';
+             
              if (encodedFoto) {
                  try {
                      const fotoStr = decodeURIComponent(encodedFoto);
