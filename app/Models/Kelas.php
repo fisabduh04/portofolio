@@ -9,28 +9,41 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Kelas extends Model
 {
     use HasFactory;
-    protected $fillable = ['id','kelas', 'jurusan_id','ket'];
+
+    public function waliKelas(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(WaliKelas::class);
+    }
+
+    public function pegawaiWali(): BelongsToMany
+    {
+        return $this->belongsToMany(Pegawai::class, 'wali_kelas', 'kelas_id', 'pegawai_id')
+            ->withPivot(['id', 'tahun_id', 'is_active', 'keterangan'])->withTimestamps();
+    }
+
+    protected $fillable = ['id', 'kelas', 'jurusan_id', 'ket'];
 
     public function jurusan()
     {
         return $this->belongsTo(Jurusan::class, 'jurusan_id');
     }
 
-    public function KelasSiswa(){
+    public function KelasSiswa()
+    {
         return $this->hasMany(KelasSiswa::class);
     }
 
     public function siswa(): BelongsToMany
     {
         return $this->belongsToMany(Siswa::class, 'kelas_siswas', 'siswa_id', 'tahun_id')
-        ->withPivot('siswa_id')
-        ->withTimestamps();
+            ->withPivot('siswa_id')
+            ->withTimestamps();
     }
 
-public function tahun(): BelongsToMany
+    public function tahun(): BelongsToMany
     {
         return $this->belongsToMany(Tahun::class, 'kelas_siswas', 'tahun_id', 'siswa_id')
-        ->withPivot('tahun_id')
-        ->withTimestamps();
+            ->withPivot('tahun_id')
+            ->withTimestamps();
     }
 }

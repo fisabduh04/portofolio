@@ -1,34 +1,31 @@
 <?php
 
 use App\Http\Controllers\AbsensiController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\KelasController;
-use App\Http\Controllers\TahunController;
-use App\Http\Controllers\JurusanController;
-use App\Http\Controllers\MapelController;
-use App\Http\Controllers\PegawaiController;
-use App\Http\Controllers\SiswaController;
-use App\Http\Controllers\CobaController;
+use App\Http\Controllers\AbsensiExportController;
+use App\Http\Controllers\AbsensiPegawaiReportController;
+use App\Http\Controllers\AbsensiReportController;
+use App\Http\Controllers\AttendanceRuleController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FingerprintMachineController;
+use App\Http\Controllers\HariLiburController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\JadwalPiketController;
+use App\Http\Controllers\JurusanController;
+use App\Http\Controllers\KelasController;
 use App\Http\Controllers\KelasSiswaController;
+use App\Http\Controllers\MapelController;
 use App\Http\Controllers\Operator\UserProvisioningController;
-use App\Http\Controllers\HariLiburController;
-use App\Http\Controllers\AttendanceRuleController;
-use App\Http\Controllers\AbsensiExportController;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\PegawaiAttendanceController;
 use App\Http\Controllers\PayrollController;
-use App\Http\Controllers\AbsensiReportController;
-use App\Http\Controllers\FingerprintMachineController;
-use App\Http\Controllers\SekolahController;
-use App\Http\Controllers\PegawaiWajibHadirController;
-use App\Http\Controllers\SpecialEventController;
+use App\Http\Controllers\PegawaiAttendanceController;
+use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PegawaiIzinController;
-use App\Http\Controllers\AbsensiPegawaiReportController;
-
-
+use App\Http\Controllers\PegawaiWajibHadirController;
+use App\Http\Controllers\SekolahController;
+use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\SpecialEventController;
+use App\Http\Controllers\TahunController;
+use Illuminate\Support\Facades\Route;
 
 // Override Fortify Password Reset to Block Inactive Users
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
@@ -64,11 +61,11 @@ Route::middleware(['auth', 'active'])->group(function () {
     // Event & Override Routes
     Route::resource('attendance/events', \App\Http\Controllers\SpecialEventController::class, ['as' => 'attendance']);
     Route::resource('attendance/overrides', \App\Http\Controllers\ScheduleOverrideController::class, ['as' => 'attendance']);
-    
+
     // NEW: Mandatory Days (Jadwal Wajib)
     Route::get('attendance/mandatory', [\App\Http\Controllers\MandatoryScheduleController::class, 'index'])->name('attendance.mandatory.index');
     Route::post('attendance/mandatory', [\App\Http\Controllers\MandatoryScheduleController::class, 'store'])->name('attendance.mandatory.store');
-    
+
     // Existing Routes
     Route::resource('pegawai', PegawaiController::class);
     Route::post('importpegawai', [PegawaiController::class, 'import'])->name('importpegawai');
@@ -104,13 +101,12 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/absensi/rekap-periode', [AbsensiReportController::class, 'rekapPeriode'])->name('absensi.rekap-periode');
         Route::get('/absensi/export-periode', [AbsensiExportController::class, 'exportRekapPeriode'])->name('absensi.export-periode');
         Route::get('/absensi/export-bulanan', [AbsensiExportController::class, 'exportBulanan'])->name('absensi.export-bulanan');
-        Route::get('/absensi/export-tahunan', [AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.export-tahunan'); 
+        Route::get('/absensi/export-tahunan', [AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.export-tahunan');
         Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
-        
 
         // PEGAWAI ATTENDANCE SYSTEM
         Route::prefix('attendance')->name('attendance.')->group(function () {
-            
+
             // ADMIN Only Routes
             Route::middleware(['role:kepala,admin,operator'])->group(function () {
                 Route::resource('rules', AttendanceRuleController::class)->parameters(['rules' => 'attendanceRule']);
@@ -131,7 +127,7 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('report/employee/export', [AbsensiPegawaiReportController::class, 'export'])->name('report.employee.export');
             Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
             Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
-            
+
             // Wajib Hadir Routes
             Route::get('wajib-hadir', [PegawaiWajibHadirController::class, 'index'])->name('wajib-hadir.index');
             Route::post('wajib-hadir', [PegawaiWajibHadirController::class, 'store'])->name('wajib-hadir.store');
@@ -146,7 +142,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             // Special Events
             Route::resource('events', SpecialEventController::class);
-            
+
             // Perizinan (Izin/Sakit/Cuti)
             Route::resource('izin', PegawaiIzinController::class);
         });
@@ -157,7 +153,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::middleware(['role:guru,admin,operator,kepala'])->group(function () {
         Route::get('/jadwal', [JadwalController::class, 'index'])->name('jadwal.index');
         Route::get('/jadwal/presensi-harian', [JadwalController::class, 'presensiHarianGuru'])->name('jadwal.presensiHarian');
-        
+
         // Piket Routes (Akses khusus hari piket)
         Route::get('/absensi/piket', [AbsensiController::class, 'piket'])->name('absensi.piket');
         Route::post('/absensi/piket/check-in', [AbsensiController::class, 'piketCheckIn'])->name('absensi.piket.check-in');
@@ -173,6 +169,9 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     // 4. AKSES KHUSUS ADMIN & OPERATOR (Manajemen Data Master)
     Route::middleware(['role:admin,operator'])->group(function () {
+        Route::resource('walikelas', \App\Http\Controllers\WaliKelasController::class)
+            ->parameters(['walikelas' => 'walikelas'])
+            ->only(['index', 'store', 'update', 'destroy']);
         Route::resource('tahun', TahunController::class);
         Route::resource('jurusan', JurusanController::class);
         Route::resource('pegawai', PegawaiController::class);
@@ -190,21 +189,20 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/jadwal/update-all', [JadwalController::class, 'updateAll'])->name('jadwal.updateAll');
         Route::get('/jadwal/export', [JadwalController::class, 'export'])->name('jadwal.export');
         Route::post('/jadwal/import', [JadwalController::class, 'import'])->name('jadwal.import');
-        
+
         // Resource constrained to IDs only (numbers) to prevent conflict with /jadwal/presensi-harian
         Route::resource('jadwal', JadwalController::class)
             ->except(['index'])
-            ->whereNumber('jadwal'); 
-            
+            ->whereNumber('jadwal');
+
         Route::resource('jadwal-piket', JadwalPiketController::class);
-        
+
         // Hari Libur Routes
         Route::get('/hari-libur', [HariLiburController::class, 'index'])->name('hari-libur.index');
         Route::post('/hari-libur/weekly', [HariLiburController::class, 'updateWeekly'])->name('hari-libur.updateWeekly');
         Route::post('/hari-libur', [HariLiburController::class, 'store'])->name('hari-libur.store');
         Route::put('/hari-libur/{id}', [HariLiburController::class, 'update'])->name('hari-libur.update');
         Route::delete('/hari-libur/{id}', [HariLiburController::class, 'destroy'])->name('hari-libur.destroy');
-
 
         // Specific routes for resources that are not full resource controllers
         // Kelas
@@ -219,17 +217,17 @@ Route::middleware(['auth', 'active'])->group(function () {
         // Kelas Siswa
         Route::get('/kelas-siswa-export', [KelasSiswaController::class, 'export'])->name('kelas-siswa-export');
         Route::post('kelas-siswa-import', [KelasSiswaController::class, 'import'])->name('kelas-siswa-import');
-        
+
         // Sekolah (Data Induk)
         Route::resource('sekolah', SekolahController::class)->only(['index', 'store']);
-        
+
         // MANAJEMEN USER (Operator/Admin)
         Route::prefix('users')->name('operator.users.')->group(function () {
-             Route::get('/', [UserProvisioningController::class, 'index'])->name('index'); // operator.users.index
-             Route::post('/', [UserProvisioningController::class, 'store'])->name('store');
-             Route::patch('/{user}/active', [UserProvisioningController::class, 'toggleActive'])->name('toggle-active');
-             Route::patch('/{user}/role', [UserProvisioningController::class, 'updateRole'])->name('update-role');
-             Route::post('/resend-reset', [UserProvisioningController::class, 'resendReset'])->name('resend-reset');
+            Route::get('/', [UserProvisioningController::class, 'index'])->name('index'); // operator.users.index
+            Route::post('/', [UserProvisioningController::class, 'store'])->name('store');
+            Route::patch('/{user}/active', [UserProvisioningController::class, 'toggleActive'])->name('toggle-active');
+            Route::patch('/{user}/role', [UserProvisioningController::class, 'updateRole'])->name('update-role');
+            Route::post('/resend-reset', [UserProvisioningController::class, 'resendReset'])->name('resend-reset');
         });
 
         // Jadwal specific routes
@@ -237,7 +235,3 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
 
 });
-
-
-
-

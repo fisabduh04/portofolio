@@ -39,10 +39,10 @@
             @can('manage-data-master')
             <li>
                 <button type="button"
-                    class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base group {{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}"
+                    class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base group {{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*', 'walikelas.*') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}"
                     aria-controls="dropdown-akademik" data-collapse-toggle="dropdown-akademik"
-                    aria-expanded="{{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*') ? 'true' : 'false' }}">
-                    <svg class="w-5 h-5 transition duration-75 {{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
+                    aria-expanded="{{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*', 'walikelas.*') ? 'true' : 'false' }}">
+                    <svg class="w-5 h-5 transition duration-75 {{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*', 'walikelas.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -50,13 +50,13 @@
                         <path d="M6 12v5c3.333 3 8.667 3 12 0v-5" />
                     </svg>
                     <span class="flex-1 text-left ms-3 rtl:text-right whitespace-nowrap">Data Master</span>
-                    <svg class="w-3 h-3 {{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                    <svg class="w-3 h-3 {{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*', 'walikelas.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                         fill="none" viewBox="0 0 10 6">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m1 1 4 4 4-4" />
                     </svg>
                 </button>
-                    <ul id="dropdown-akademik" class="{{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*') ? '' : 'hidden' }} py-2 space-y-2">
+                    <ul id="dropdown-akademik" class="{{ request()->routeIs('sekolah.*', 'operator.users.*', 'tahun.*', 'jurusan.*', 'pegawai.*', 'kelas.*', 'mapel.*', 'siswa.*', 'kelassiswa.*', 'walikelas.*') ? '' : 'hidden' }} py-2 space-y-2">
                         <li>
                             <a href="{{ route('sekolah.index') }}"
                                 class="flex items-center w-full pl-11 px-2 py-1.5 text-body rounded-base hover:bg-neutral-tertiary hover:text-fg-brand group">Data
@@ -103,6 +103,10 @@
                                 Belajar</a>
                         </li>
 
+                        <li>
+                            <a href="{{ route('walikelas.index') }}"
+                                class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base pl-11 group {{ request()->routeIs('walikelas.*') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}">Wali Kelas</a>
+                        </li>
                     </ul>
             </li>
             @endcan

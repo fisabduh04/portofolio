@@ -9,11 +9,22 @@ class Pegawai extends Model
 {
     use HasFactory;
 
+    public function waliKelas(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(WaliKelas::class);
+    }
+
+    public function kelasWali(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Kelas::class, 'wali_kelas', 'pegawai_id', 'kelas_id')
+            ->withPivot(['id', 'tahun_id', 'is_active', 'keterangan'])->withTimestamps();
+    }
+
     protected $fillable = [
-        'name', 'status', 'aktif', 'email', 'nuptk', 'jk', 'kotalahir', 'tanggallahir', 'jenisptk', 
-        'agama', 'alamat', 'rt', 'rw', 'hp', 'skpengangkatan', 'lembagapengangkatan', 'PangkatGolongan', 
-        'sumbergaji', 'ibukandung', 'kawin', 'suamiistri', 'pekerjaansuamiIstri', 'npwp', 'nonik', 
-        'nokk', 'foto', 'deskripsi'
+        'name', 'status', 'aktif', 'email', 'nuptk', 'jk', 'kotalahir', 'tanggallahir', 'jenisptk',
+        'agama', 'alamat', 'rt', 'rw', 'hp', 'skpengangkatan', 'lembagapengangkatan', 'PangkatGolongan',
+        'sumbergaji', 'ibukandung', 'kawin', 'suamiistri', 'pekerjaansuamiIstri', 'npwp', 'nonik',
+        'nokk', 'foto', 'deskripsi',
     ];
 
     protected $appends = ['fingerprint_id'];
@@ -70,4 +81,3 @@ class Pegawai extends Model
         return $this->hasMany(PegawaiScheduleOverride::class);
     }
 }
-
