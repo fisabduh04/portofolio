@@ -41,6 +41,9 @@ it('renders only the active period by default and escapes assignment notes', fun
 
     $response->assertSee('2026/2027 — Ganjil')->assertSee('<script>alert(1)</script>')
         ->assertDontSee('<script>alert(1)</script>', false)
+        ->assertSee('data-edit-assignment', false)
+        ->assertSee('data-status-form', false)
+        ->assertSee('Tambah Wali Kelas Lain')
         ->assertViewHas('penugasans', fn ($rows) => $rows->total() === 1 && $rows->first()->id === $assignment->id);
 });
 
@@ -252,4 +255,29 @@ it('renders the form again after a malformed batch is rejected', function () {
 
     $this->get(route('walikelas.index'))->assertSee('Data belum disimpan:');
     $this->assertDatabaseCount('wali_kelas', 0);
+});
+
+it('updates status from the table without clearing existing notes', function () {
+    $assignment = WaliKelas::factory()->create(['keterangan' => 'Catatan tetap tersimpan']);
+
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => 1]))
+        ->putJson(route('walikelas.update', $assignment), ['is_active' => 0])
+        ->assertRedirect(route('walikelas.index', ['tahun_id' => $assignment->tahun_id]));
+
+    $this->assertDatabaseHas('wali_kelas', [
+        'id' => $assignment->id, 'is_active' => false, 'keterangan' => 'Catatan tetap tersimpan',
+    ]);
+});
+
+it('restores the edit panel and entered notes after validation fails', function () {
+    $assignment = WaliKelas::factory()->create();
+    $url = route('walikelas.index', ['tahun_id' => $assignment->tahun_id, 'edit' => $assignment->id]);
+
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => 1]))
+        ->from($url)->put(route('walikelas.update', $assignment), [
+            'is_active' => 'invalid', 'keterangan' => 'Catatan belum disimpan',
+        ])->assertSessionHasErrors('is_active')->assertRedirect($url);
+
+    $this->get($url)->assertSee('Edit Penugasan')->assertSee('Catatan belum disimpan');
+    $this->assertDatabaseHas('wali_kelas', ['id' => $assignment->id, 'is_active' => true]);
 });
