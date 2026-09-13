@@ -169,6 +169,9 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     // 4. AKSES KHUSUS ADMIN & OPERATOR (Manajemen Data Master)
     Route::middleware(['role:admin,operator'])->group(function () {
+        Route::get('/walikelas/export', [\App\Http\Controllers\WaliKelasController::class, 'export'])->name('walikelas.export');
+        Route::post('/walikelas/import', [\App\Http\Controllers\WaliKelasController::class, 'import'])->name('walikelas.import');
+        Route::delete('/walikelas/bulk-delete', [\App\Http\Controllers\WaliKelasController::class, 'destroy'])->name('walikelas.bulkDelete');
         Route::resource('walikelas', \App\Http\Controllers\WaliKelasController::class)
             ->parameters(['walikelas' => 'walikelas'])
             ->only(['index', 'store', 'update', 'destroy']);

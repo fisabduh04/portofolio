@@ -17,9 +17,9 @@ class UpdateWaliKelasRequest extends FormRequest
         return [
             'is_active' => ['required', 'boolean'],
             'keterangan' => ['nullable', 'string', 'max:2000'],
-            'tahun_id' => ['prohibited'],
-            'kelas_id' => ['prohibited'],
-            'pegawai_id' => ['prohibited'],
+            'tahun_id' => ['sometimes', 'required', 'integer', 'exists:tahuns,id'],
+            'kelas_id' => ['sometimes', 'required', 'integer', 'exists:kelas,id'],
+            'pegawai_id' => ['sometimes', 'required', 'integer', 'exists:pegawais,id'],
         ];
     }
 }
