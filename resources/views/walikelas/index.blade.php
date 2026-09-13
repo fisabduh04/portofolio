@@ -120,17 +120,19 @@
             <div class="p-4 text-sm text-gray-600 dark:text-gray-300">Belum ada periode. <a href="{{ route('tahun.index') }}" class="font-medium text-blue-600 underline dark:text-blue-400">Tambahkan tahun dan semester</a> terlebih dahulu.</div>
         @endif
 
-        <form method="GET" action="{{ route('walikelas.index') }}" class="flex flex-wrap items-center justify-end gap-3 p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700" id="assignment-filters">
-            <div class="relative w-full md:w-96">
-                <label for="search-wali" class="sr-only">Pencarian</label>
+        <form method="GET" action="{{ route('walikelas.index') }}" class="grid grid-cols-1 gap-4 p-4 md:grid-cols-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700" id="assignment-filters">
+            <div class="min-w-0 md:col-span-3">
+                <label for="search-wali" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Pencarian</label>
+                <div class="relative">
                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                     <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" fill="none" viewBox="0 0 20 20"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" /></svg>
                 </div>
-                <input id="search-wali" name="search" type="search" value="{{ request('search') }}" placeholder="Cari nama wali atau kelas..." maxlength="100" class="pl-10 block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                <input id="search-wali" name="search" type="search" value="{{ request('search') }}" placeholder="Cari nama wali atau kelas..." maxlength="100" class="h-11 pl-10 block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                </div>
             </div>
-            <div class="w-full md:w-auto">
-                <label for="filter-tahun" class="sr-only">Tahun / Semester</label>
-                <select id="filter-tahun" name="tahun_id" class="block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" @disabled(! $selectedTahun)>
+            <div class="min-w-0 md:col-span-3">
+                <label for="filter-tahun" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Tahun / Semester</label>
+                <select id="filter-tahun" name="tahun_id" class="h-11 min-w-0 pr-10 block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" @disabled(! $selectedTahun)>
                     @forelse ($tahun as $item)
                         <option value="{{ $item->id }}" @selected($selectedTahun?->id == $item->id)>{{ $item->tahun }} — {{ $item->semester }}</option>
                     @empty
@@ -138,26 +140,26 @@
                     @endforelse
                 </select>
             </div>
-            <div class="w-full md:w-32">
-                <label for="filter-kelas" class="sr-only">Kelas</label>
-                <select id="filter-kelas" name="kelas_id" class="block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+            <div class="min-w-0 md:col-span-2">
+                <label for="filter-kelas" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Kelas</label>
+                <select id="filter-kelas" name="kelas_id" class="h-11 min-w-0 pr-10 block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
                     <option value="">Semua Kelas</option>
                     @foreach ($kelas as $item)
                         <option value="{{ $item->id }}" @selected(request('kelas_id') == $item->id)>{{ $item->kelas }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="w-full md:w-32">
-                <label for="filter-status" class="sr-only">Status</label>
-                <select id="filter-status" name="status" class="block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+            <div class="min-w-0 md:col-span-2">
+                <label for="filter-status" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                <select id="filter-status" name="status" class="h-11 min-w-0 pr-10 block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
                     <option value="">Semua Status</option>
                     <option value="aktif" @selected(request('status') === 'aktif')>Aktif</option>
                     <option value="nonaktif" @selected(request('status') === 'nonaktif')>Nonaktif</option>
                 </select>
             </div>
-            <div class="w-full md:w-28">
-                <label for="per-page" class="sr-only">Tampilkan</label>
-                <select id="per-page" name="per_page" class="block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+            <div class="min-w-0 md:col-span-2">
+                <label for="per-page" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Tampilkan</label>
+                <select id="per-page" name="per_page" class="h-11 min-w-0 pr-10 block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
                     @foreach ([10, 25, 50, 100] as $size)
                         <option value="{{ $size }}" @selected(request('per_page', 10) == $size)>{{ $size }} Data</option>
                     @endforeach
