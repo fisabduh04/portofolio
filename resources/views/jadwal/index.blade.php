@@ -120,15 +120,22 @@
                     </select>
 
                     {{-- Filter Kelas --}}
-                    <select id="kelas" name="filter_kelas" onchange="this.form.submit()"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-32 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <option value="" {{ request('filter_kelas') == '' ? 'selected' : '' }}>Semua Kelas</option>
-                        @foreach ($kelas as $k)
-                            <option value="{{ $k->id }}" {{ request('filter_kelas') == $k->id ? 'selected' : '' }}>
-                                {{ $k->kelas }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <div class="w-full md:w-40">
+                        <x-form.searchable-select
+                            id="kelas"
+                            name="filter_kelas"
+                            size="sm"
+                            aria-label="Filter kelas"
+                            placeholder="Semua Kelas"
+                            search-placeholder="Cari kelas..."
+                            :selected="request('filter_kelas')"
+                            onchange="this.form.submit()"
+                        >
+                            @foreach ($kelas as $k)
+                                <option value="{{ $k->id }}" @selected(request('filter_kelas') == $k->id)>{{ $k->kelas }}</option>
+                            @endforeach
+                        </x-form.searchable-select>
+                    </div>
 
                     {{-- Filter Hari --}}
                     <select id="hari" name="filter_hari" onchange="this.form.submit()"
@@ -191,10 +198,7 @@
 
         {{-- Data Caching --}}
         @php
-            $optKelas = ''; foreach($kelas as $k) $optKelas .= "<option value='{$k->id}'>{$k->kelas}</option>";
             $optHari = ''; foreach($hari as $h) $optHari .= "<option value='{$h}'>{$h}</option>";
-            $optMapel = ''; foreach($mapel as $m) $optMapel .= "<option value='{$m->id}'>{$m->mapel}</option>";
-            $optPegawai = ''; foreach($pegawai as $p) $optPegawai .= "<option value='{$p->id}'>{$p->name}</option>";
         @endphp
 
         {{-- Table --}}
@@ -202,14 +206,14 @@
             <table id="data" class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-heading uppercase bg-neutral-secondary-soft border-b border-default">
                     <tr>
-                         <th scope="col" class="p-4">
-                            <div class="flex items-center">
+                         <th scope="col" class="w-10 px-2 py-3">
+                            <div class="flex items-center justify-center">
                                 <input id="checkAll" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                 <label for="checkAll" class="sr-only">checkbox</label>
                             </div>
                         </th>
-                        <th scope="col" class="px-4 py-3 text-center">NO</th>
-                        <th scope="col" class="px-4 py-3 text-center">AKSI</th>
+                        <th scope="col" class="w-12 px-2 py-3 text-center">NO</th>
+                        <th scope="col" class="w-px whitespace-nowrap px-2 py-3 text-center">AKSI</th>
                         <th scope="col" class="px-4 py-3">
                             <a href="{{ route('jadwal.index', array_merge(request()->query(), ['sort' => 'kelas', 'direction' => request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center gap-1 hover:text-blue-600 group">
                                 KELAS
@@ -270,7 +274,7 @@
                                 </span>
                             </a>
                         </th>
-                        <th scope="col" class="px-4 py-3 text-center">WAKTU</th>
+                        <th scope="col" class="px-3 py-3 text-center whitespace-nowrap">WAKTU</th>
                         <th scope="col" class="px-4 py-3 text-center">STATUS</th>
                     </tr>
                 </thead>
@@ -279,37 +283,76 @@
                     {{-- Template Row Baru --}}
                     <template id="tplNewJadwalRow">
                         <tr class="bg-blue-50 hover:bg-blue-100 new-row border-b border-default dark:bg-blue-900/20 dark:border-gray-700">
-                            <td class="p-4 w-4"></td>
-                            <td class="px-4 py-3 text-blue-600 font-bold text-center">BARU</td>
-                            <td class="px-4 py-3 text-center">
-                                <button type="button" onclick="removeNewRow(this)" class="text-red-500 hover:text-red-700">
+                            <td class="w-10 px-2 py-3"></td>
+                            <td class="w-12 px-2 py-3 text-blue-600 font-bold text-center">BARU</td>
+                            <td class="w-px whitespace-nowrap px-2 py-3 text-left">
+                                <button type="button" onclick="removeNewRow(this)" aria-label="Hapus baris jadwal" class="inline-flex size-9 items-center justify-center rounded-lg text-red-500 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 pointer-coarse:size-11">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                             </td>
-                            <td class="px-2 py-3">
+                            <td class="min-w-40 px-2 py-3">
                                  <input type="hidden" name="id[]" value="" form="bulkFormJadwal">
-                                 <select name="kelas_id[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5"><option value="">Pilih...</option>{!! $optKelas !!}</select>
+                                 <x-form.searchable-select
+                                     id="jadwal-kelas-new-__ROW__"
+                                     size="sm"
+                                     name="kelas_id[]"
+                                     form="bulkFormJadwal"
+                                     aria-label="Kelas"
+                                     placeholder="Pilih Kelas"
+                                     search-placeholder="Cari kelas..."
+                                     :portal="true"
+                                 >
+                                     @foreach ($kelas as $k)
+                                         <option value="{{ $k->id }}">{{ $k->kelas }}</option>
+                                     @endforeach
+                                 </x-form.searchable-select>
                             </td>
                             <td class="px-2 py-3">
-                                <select name="hari[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5"><option value="">Pilih...</option>{!! $optHari !!}</select>
+                                <select name="hari[]" form="bulkFormJadwal" class="table-form-control"><option value="">Pilih...</option>{!! $optHari !!}</select>
                             </td>
-                            <td class="px-2 py-3">
-                                <select name="mapel_id[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5"><option value="">Pilih...</option>{!! $optMapel !!}</select>
+                            <td class="min-w-48 px-2 py-3">
+                                <x-form.searchable-select
+                                    id="jadwal-mapel-new-__ROW__"
+                                    size="sm"
+                                    name="mapel_id[]"
+                                    form="bulkFormJadwal"
+                                    aria-label="Mata pelajaran"
+                                    placeholder="Pilih Mapel"
+                                    search-placeholder="Cari mata pelajaran..."
+                                    :portal="true"
+                                >
+                                    @foreach ($mapel as $m)
+                                        <option value="{{ $m->id }}">{{ $m->mapel }}</option>
+                                    @endforeach
+                                </x-form.searchable-select>
                             </td>
-                             <td class="px-2 py-3">
-                                <select name="pegawai_id[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5"><option value="">Pilih...</option>{!! $optPegawai !!}</select>
+                             <td class="min-w-48 px-2 py-3">
+                                <x-form.searchable-select
+                                    id="jadwal-guru-new-__ROW__"
+                                    size="sm"
+                                    name="pegawai_id[]"
+                                    form="bulkFormJadwal"
+                                    aria-label="Guru"
+                                    placeholder="Pilih Guru"
+                                    search-placeholder="Cari nama guru..."
+                                    :portal="true"
+                                >
+                                    @foreach ($pegawai as $p)
+                                        <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                    @endforeach
+                                </x-form.searchable-select>
                             </td>
-                             <td class="px-2 py-3 w-16">
-                                <input type="number" name="jam[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5" placeholder="Ke">
+                             <td class="w-20 px-2 py-3">
+                                <input type="number" name="jam[]" form="bulkFormJadwal" class="table-form-control" placeholder="Ke">
                             </td>
-                             <td class="px-2 py-3 w-32">
-                                <div class="flex gap-1">
-                                    <input type="time" name="mulai[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5">
-                                    <input type="time" name="akhir[]" form="bulkFormJadwal" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5">
+                             <td class="w-px whitespace-nowrap px-2 py-3">
+                                <div class="inline-flex items-center gap-2">
+                                    <input type="time" name="mulai[]" form="bulkFormJadwal" class="table-form-control w-24 shrink-0 px-2">
+                                    <input type="time" name="akhir[]" form="bulkFormJadwal" class="table-form-control w-24 shrink-0 px-2">
                                 </div>
                             </td>
                              <td class="px-2 py-3">
-                                <input type="text" name="ket" form="bulkFormJadwal" placeholder="Status..." class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5">
+                                <input type="text" name="ket" form="bulkFormJadwal" placeholder="Status..." class="table-form-control">
                             </td>
                         </tr>
                     </template>
@@ -321,17 +364,17 @@
                         @endphp
                         
                         <tr class="{{ $rowClass }}" id="row-{{ $j->id }}">
-                             <td class="p-4 w-4">
-                                <div class="flex items-center">
+                             <td class="w-10 px-2 py-3">
+                                <div class="flex items-center justify-center">
                                     <input id="checkbox-{{ $j->id }}" type="checkbox" value="{{ $j->id }}" name="ids[]" form="bulkDeleteForm" class="item-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                     <label for="checkbox-{{ $j->id }}" class="sr-only">checkbox</label>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
+                            <td class="w-12 px-2 py-3 text-center text-gray-500 dark:text-gray-400">
                                 {{ $loop->iteration + ($jadwals->currentPage() - 1) * $jadwals->perPage() }}
                             </td>
-                            <td class="px-4 py-3 text-center">
-                                <div class="flex items-center justify-center gap-2">
+                            <td class="w-px whitespace-nowrap px-2 py-3 text-left">
+                                <div class="inline-flex items-center gap-1">
                                     {{-- Absen Button --}}
                                     <a href="{{ route('absensi.create', ['jadwal_id' => $j->id, 'mode' => request('mode')]) }}" 
                                        class="p-2 inline-flex items-center justify-center text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -356,8 +399,8 @@
                             <td class="px-4 py-3 text-center">
                                 <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-base dark:bg-blue-200 dark:text-blue-800">{{ $j->jam }}</span>
                             </td>
-                             <td class="px-4 py-3 text-center text-xs">
-                                {{ \Carbon\Carbon::parse($j->mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($j->akhir)->format('H:i') }}
+                             <td class="px-3 py-3 text-center text-xs whitespace-nowrap tabular-nums">
+                                {{ \Carbon\Carbon::parse($j->mulai)->format('H:i') }} &ndash; {{ \Carbon\Carbon::parse($j->akhir)->format('H:i') }}
                             </td>
                             <td class="px-4 py-3 text-center">
                                 @if(strtolower($j->ket) == 'aktif')
@@ -370,49 +413,88 @@
 
                         {{-- Inline Edit Row (Hidden by default) --}}
                          <tr id="edit-form-{{ $j->id }}" class="hidden bg-blue-50 border-b border-default dark:bg-blue-900/10 dark:border-gray-700">
-                            <td class="p-4 w-4">
+                            <td class="w-10 px-2 py-3">
                                 <form action="{{ route('jadwal.update', $j->id) }}?{{ request()->getQueryString() }}" method="POST" id="form-edit-{{ $j->id }}">
     @csrf @method('PUT')
     <input type="hidden" name="tahun_id" value="{{ $j->tahun_id }}">
 </form>
                             </td>
-                            <td colspan="2" class="px-4 py-3 text-center">
-                                <div class="flex gap-2 justify-center">
-                                     <x-btn type="submit" form="form-edit-{{ $j->id }}" icon="check" color="green" size="sm" class="!p-2" />
-                                     <x-btn onclick="cancelEditRow({{ $j->id }})" icon="x" color="light" size="sm" class="!p-2" />
+                            <td class="w-12 px-2 py-3 text-center text-gray-500 dark:text-gray-400">
+                                {{ $loop->iteration + ($jadwals->currentPage() - 1) * $jadwals->perPage() }}
+                            </td>
+                            <td class="w-px whitespace-nowrap px-2 py-3 text-left">
+                                <div class="inline-flex items-center gap-1">
+                                     <x-btn type="submit" form="form-edit-{{ $j->id }}" icon="check" color="green" size="sm" aria-label="Simpan perubahan jadwal" class="size-9 p-0! pointer-coarse:size-11" />
+                                     <x-btn onclick="cancelEditRow({{ $j->id }})" icon="x" color="light" size="sm" aria-label="Batalkan perubahan jadwal" class="size-9 p-0! pointer-coarse:size-11" />
                                 </div>
                             </td>
-                             <td class="px-2 py-3">
-                                 <select name="kelas_id" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base block w-full p-1">
-                                    @foreach ($kelas as $k) <option value="{{ $k->id }}" @selected($j->kelas_id == $k->id)>{{ $k->kelas }}</option> @endforeach
-                                </select>
+                             <td class="min-w-40 px-2 py-3">
+                                 <x-form.searchable-select
+                                     id="jadwal-kelas-edit-{{ $j->id }}"
+                                     size="sm"
+                                     name="kelas_id"
+                                     form="form-edit-{{ $j->id }}"
+                                     aria-label="Kelas"
+                                     placeholder="Pilih Kelas"
+                                     search-placeholder="Cari kelas..."
+                                     :selected="$j->kelas_id"
+                                     :portal="true"
+                                 >
+                                     @foreach ($kelas as $k)
+                                         <option value="{{ $k->id }}" @selected($j->kelas_id == $k->id)>{{ $k->kelas }}</option>
+                                     @endforeach
+                                 </x-form.searchable-select>
                              </td>
                              <td class="px-2 py-3">
-                                <select name="hari" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base block w-full p-1">
+                                <select name="hari" form="form-edit-{{ $j->id }}" class="table-form-control">
                                     @foreach ($hari as $h) <option value="{{ $h }}" @selected($j->hari == $h)>{{ $h }}</option> @endforeach
                                 </select>
                              </td>
-                             <td class="px-2 py-3">
-                                 <select name="mapel_id" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base block w-full p-1">
-                                     @foreach ($mapel as $m) <option value="{{ $m->id }}" @selected($j->mapel_id == $m->id)>{{ $m->mapel }}</option> @endforeach
-                                </select>
+                             <td class="min-w-48 px-2 py-3">
+                                <x-form.searchable-select
+                                    id="jadwal-mapel-edit-{{ $j->id }}"
+                                    size="sm"
+                                    name="mapel_id"
+                                    form="form-edit-{{ $j->id }}"
+                                    aria-label="Mata pelajaran"
+                                    placeholder="Pilih Mapel"
+                                    search-placeholder="Cari mata pelajaran..."
+                                    :selected="$j->mapel_id"
+                                    :portal="true"
+                                >
+                                    @foreach ($mapel as $m)
+                                        <option value="{{ $m->id }}" @selected($j->mapel_id == $m->id)>{{ $m->mapel }}</option>
+                                    @endforeach
+                                </x-form.searchable-select>
                              </td>
-                              <td class="px-2 py-3">
-                                 <select name="pegawai_id" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base block w-full p-1">
-                                     @foreach ($pegawai as $p) <option value="{{ $p->id }}" @selected($j->pegawai_id == $p->id)>{{ $p->name }}</option> @endforeach
-                                </select>
+                              <td class="min-w-48 px-2 py-3">
+                                <x-form.searchable-select
+                                    id="jadwal-guru-edit-{{ $j->id }}"
+                                    size="sm"
+                                    name="pegawai_id"
+                                    form="form-edit-{{ $j->id }}"
+                                    aria-label="Guru"
+                                    placeholder="Pilih Guru"
+                                    search-placeholder="Cari nama guru..."
+                                    :selected="$j->pegawai_id"
+                                    :portal="true"
+                                >
+                                    @foreach ($pegawai as $p)
+                                        <option value="{{ $p->id }}" @selected($j->pegawai_id == $p->id)>{{ $p->name }}</option>
+                                    @endforeach
+                                </x-form.searchable-select>
                              </td>
                              <td class="px-2 py-3">
-                                <input type="number" name="jam" value="{{ $j->jam }}" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base block w-full p-1">
+                                <input type="number" name="jam" value="{{ $j->jam }}" form="form-edit-{{ $j->id }}" class="table-form-control">
                             </td>
-                             <td class="px-2 py-3">
-                                <div class="flex gap-1">
-                                     <input type="time" name="mulai" value="{{ \Carbon\Carbon::parse($j->mulai)->format('H:i') }}" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base block w-full p-1">
-                                     <input type="time" name="akhir" value="{{ \Carbon\Carbon::parse($j->akhir)->format('H:i') }}" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base block w-full p-1">
+                             <td class="w-px whitespace-nowrap px-2 py-3">
+                                <div class="inline-flex items-center gap-2">
+                                     <input type="time" name="mulai" value="{{ \Carbon\Carbon::parse($j->mulai)->format('H:i') }}" form="form-edit-{{ $j->id }}" class="table-form-control w-24 shrink-0 px-2">
+                                     <input type="time" name="akhir" value="{{ \Carbon\Carbon::parse($j->akhir)->format('H:i') }}" form="form-edit-{{ $j->id }}" class="table-form-control w-24 shrink-0 px-2">
                                 </div>
                             </td>
                              <td class="px-2 py-3">
-                                <input type="text" name="ket" value="{{ $j->ket }}" form="form-edit-{{ $j->id }}" class="bg-white border border-gray-300 text-gray-900 text-xs rounded-base block w-full p-1">
+                                <input type="text" name="ket" value="{{ $j->ket }}" form="form-edit-{{ $j->id }}" class="table-form-control">
                             </td>
                         </tr>
 
@@ -519,6 +601,7 @@
     function editRow(id) {
          // Close other edits
         document.querySelectorAll('tr[id^="edit-form-"]').forEach(row => {
+            row.querySelectorAll('[data-select-native]').forEach(select => select.searchableSelect?.close());
             row.classList.add('hidden');
             let otherId = row.id.replace('edit-form-', '');
             let display = document.getElementById('row-' + otherId);
@@ -531,6 +614,7 @@
     }
 
     function cancelEditRow(id) {
+        document.getElementById('edit-form-' + id).querySelectorAll('[data-select-native]').forEach(select => select.searchableSelect?.close());
         document.getElementById('row-' + id).classList.remove('hidden');
         document.getElementById('edit-form-' + id).classList.add('hidden');
     }
@@ -557,17 +641,31 @@
     });
 
     // 4. Tambah Row Logic
+    let jadwalRowSequence = 0;
+
     function tambah() {
         document.getElementById('btnSimpanWrapper')?.classList.remove('hidden');
         document.getElementById('btnSimpanWrapper')?.classList.add('flex');
         const tpl = document.getElementById('tplNewJadwalRow');
         const tbody = document.getElementById('jadwalTable');
         const clone = tpl.content.cloneNode(true);
+        const row = clone.querySelector('tr');
+        const rowKey = String(++jadwalRowSequence);
+        row.querySelectorAll('[id], [for], [aria-controls], [aria-labelledby], [aria-describedby]').forEach(element => {
+            ['id', 'for', 'aria-controls', 'aria-labelledby', 'aria-describedby'].forEach(attribute => {
+                if (element.hasAttribute(attribute)) {
+                    element.setAttribute(attribute, element.getAttribute(attribute).replaceAll('__ROW__', rowKey));
+                }
+            });
+        });
         tbody.insertBefore(clone, tbody.firstChild);
+        row.dispatchEvent(new CustomEvent('searchable-select:init', { bubbles: true }));
     }
 
     function removeNewRow(btn) {
-        btn.closest('tr').remove();
+        const row = btn.closest('tr');
+        row.querySelectorAll('[data-select-native]').forEach(select => select.searchableSelect?.destroy());
+        row.remove();
         if(!document.querySelector('tr.new-row')) {
             document.getElementById('btnSimpanWrapper')?.classList.add('hidden');
             document.getElementById('btnSimpanWrapper')?.classList.remove('flex');

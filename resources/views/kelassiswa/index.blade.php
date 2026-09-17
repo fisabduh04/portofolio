@@ -6,7 +6,7 @@
     ]" />
 
     {{-- Main Content Container (Style Jadwal) --}}
-    <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-base overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-base border border-gray-200 dark:border-gray-700">
         
         {{-- Header Section --}}
         <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4 border-b border-gray-200 dark:border-gray-700">
@@ -91,25 +91,35 @@
                         <!-- Siswa -->
                         <div class="md:col-span-5">
                             <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Siswa</label>
-                            <select name="siswa_id[]" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                                <option value="">Pilih Siswa</option>
+                            <x-form.searchable-select
+                                id="siswa-initial"
+                                name="siswa_id[]"
+                                aria-label="Nama siswa"
+                                placeholder="Pilih Siswa"
+                                search-placeholder="Cari nama atau NIPD siswa..."
+                                required
+                            >
                                 @foreach ($siswa as $s)
                                     <option value="{{ $s->id }}">{{ $s->nama }} - {{ $s->nipd }}</option>
                                 @endforeach
-                            </select>
+                            </x-form.searchable-select>
                         </div>
                         
                         <!-- Kelas -->
                         <div class="md:col-span-4">
                             <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Kelas</label>
-                            <select name="kelas_id[]" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                                <option value="">Pilih Kelas</option>
+                            <x-form.searchable-select
+                                id="kelas-initial"
+                                name="kelas_id[]"
+                                aria-label="Kelas"
+                                placeholder="Pilih Kelas"
+                                search-placeholder="Cari kelas..."
+                                required
+                            >
                                 @foreach ($kelas as $k)
                                     <option value="{{ $k->id }}">{{ $k->kelas }}</option>
                                 @endforeach
-                            </select>
+                            </x-form.searchable-select>
                         </div>
 
                         <!-- Keterangan -->
@@ -146,21 +156,33 @@
                     <div class="repeater-row grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all hover:border-blue-300 dark:hover:border-blue-700 group animate-fade-in-down">
                         <div class="md:col-span-5">
                             <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Siswa</label>
-                            <select name="siswa_id[]" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                                <option value="">Pilih Siswa</option>
+                            <x-form.searchable-select
+                                id="siswa-row-__ROW__"
+                                name="siswa_id[]"
+                                aria-label="Nama siswa"
+                                placeholder="Pilih Siswa"
+                                search-placeholder="Cari nama atau NIPD siswa..."
+                                required
+                            >
                                 @foreach ($siswa as $s)
                                     <option value="{{ $s->id }}">{{ $s->nama }} - {{ $s->nipd }}</option>
                                 @endforeach
-                            </select>
+                            </x-form.searchable-select>
                         </div>
                         <div class="md:col-span-4">
                             <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Kelas</label>
-                            <select name="kelas_id[]" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                                <option value="">Pilih Kelas</option>
+                            <x-form.searchable-select
+                                id="kelas-row-__ROW__"
+                                name="kelas_id[]"
+                                aria-label="Kelas"
+                                placeholder="Pilih Kelas"
+                                search-placeholder="Cari kelas..."
+                                required
+                            >
                                 @foreach ($kelas as $k)
                                     <option value="{{ $k->id }}">{{ $k->kelas }}</option>
                                 @endforeach
-                            </select>
+                            </x-form.searchable-select>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Status</label>
@@ -495,18 +517,47 @@
             const container = document.getElementById('repeater-container');
             const template = document.getElementById('row-template');
             const panelTitle = document.getElementById('panelTitle');
+            let studentRowSequence = 0;
 
             // --- Repeater Logic ---
 
             function addRow() {
-                if(!template || !container) return;
+                if (!template || !container) {
+                    return;
+                }
                 const clone = template.content.cloneNode(true);
+                const row = clone.querySelector('.repeater-row');
+                const rowKey = String(++studentRowSequence);
+
+                row.querySelectorAll('[id], [for], [aria-controls], [aria-labelledby], [aria-describedby]').forEach(element => {
+                    ['id', 'for', 'aria-controls', 'aria-labelledby', 'aria-describedby'].forEach(attribute => {
+                        if (element.hasAttribute(attribute)) {
+                            element.setAttribute(attribute, element.getAttribute(attribute).replaceAll('__ROW__', rowKey));
+                        }
+                    });
+                });
+
                 container.appendChild(clone);
+                row.dispatchEvent(new CustomEvent('searchable-select:init', { bubbles: true }));
+                return row;
+            }
+
+            function destroyRowSelects(root) {
+                root.querySelectorAll('[data-select-native]').forEach(select => {
+                    select.searchableSelect?.destroy();
+                });
+            }
+
+            function clearRows() {
+                destroyRowSelects(container);
+                container.replaceChildren();
             }
 
             function removeRow(button) {
                 if (container.querySelectorAll('.repeater-row').length > 1) {
-                    button.closest('.repeater-row').remove();
+                    const row = button.closest('.repeater-row');
+                    destroyRowSelects(row);
+                    row.remove();
                 } else {
                     alert("Minimal satu baris data harus ada.");
                 }
@@ -522,6 +573,11 @@
                     
                     const methodInput = form.querySelector('input[name="_method"]');
                     if (methodInput) methodInput.remove();
+
+                    const inputTahun = document.getElementById('tahun');
+                    if (inputTahun) {
+                        inputTahun.name = 'tahun_id';
+                    }
                 }
 
                 if(panelTitle) panelTitle.innerText = "Tambah Data (Bulk Input)";
@@ -533,7 +589,7 @@
 
                 // 2. Reset Repeater
                 if(container) {
-                    container.innerHTML = ''; 
+                    clearRows();
                     addRow(); 
                 }
 
@@ -579,7 +635,7 @@
 
                 // 2. Prepare Repeater (Single Row)
                 if(container) {
-                    container.innerHTML = '';
+                    clearRows();
                     addRow(); 
                     
                     const row = container.querySelector('.repeater-row');
@@ -596,12 +652,14 @@
                         if(inputSiswa) {
                             inputSiswa.name = 'siswa'; 
                             inputSiswa.value = siswa_id;
+                            inputSiswa.dispatchEvent(new Event('change', { bubbles: true }));
                         }
 
                         const inputKelas = row.querySelector('select[name="kelas_id[]"]');
                         if(inputKelas) {
                             inputKelas.name = 'kelas'; 
                             inputKelas.value = kelas_id;
+                            inputKelas.dispatchEvent(new Event('change', { bubbles: true }));
                         }
 
                         const inputKet = row.querySelector('select[name="ket[]"]');
@@ -625,6 +683,9 @@
             }
 
             function tutup() {
+                container.querySelectorAll('[data-select-native]').forEach(select => {
+                    select.searchableSelect?.close();
+                });
                 if(panel) panel.classList.add('hidden');
                 
                 // Reset to default name for bulk input

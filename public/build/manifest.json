@@ -1,13 +1,22 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-nSZdYb4j.css",
+    "file": "assets/app-7zuh8uGs.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-DNxiirP_.js",
+    "file": "assets/app-BJ5mtEh3.js",
     "name": "app",
     "src": "resources/js/app.js",
-    "isEntry": true
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/searchable-select.js"
+    ]
+  },
+  "resources/js/searchable-select.js": {
+    "file": "assets/searchable-select-BIZYHISr.js",
+    "name": "searchable-select",
+    "src": "resources/js/searchable-select.js",
+    "isDynamicEntry": true
   }
 }

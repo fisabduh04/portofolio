@@ -1,5 +1,45 @@
-@import "tailwindcss";
-@import "flowbite/src/themes/default";
+@import 'tailwindcss';
+@import 'flowbite/src/themes/default';
 
 @plugin "flowbite/plugin";
 @source "../../node_modules/flowbite";
+
+@layer components {
+    .searchable-select-control,
+    .table-form-control {
+        @apply block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white;
+    }
+
+    .table-form-control {
+        @apply box-border h-9 min-w-0 bg-white px-2.5 py-1.5 leading-5 pointer-coarse:h-11 dark:bg-gray-700;
+    }
+
+    select.table-form-control {
+        @apply pr-8;
+    }
+
+    .searchable-select-control[aria-invalid='true'],
+    .table-form-control[aria-invalid='true'] {
+        @apply border-red-500 text-red-900 focus:border-red-500 focus:ring-red-500 dark:text-red-400;
+    }
+
+    .searchable-select-option {
+        @apply cursor-pointer rounded-md px-3 py-2 text-sm text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700;
+    }
+
+    .searchable-select-option[aria-selected='true'] {
+        @apply font-semibold;
+    }
+
+    .searchable-select-option[data-active='true'] {
+        @apply bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100;
+    }
+
+    .searchable-select-option[aria-disabled='true'] {
+        @apply cursor-not-allowed opacity-50;
+    }
+
+    [data-searchable-select] [hidden] {
+        display: none !important;
+    }
+}

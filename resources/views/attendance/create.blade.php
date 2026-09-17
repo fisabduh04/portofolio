@@ -14,7 +14,7 @@
                     @php
                         $pegawaiOptions = $pegawais->pluck('name', 'id')->toArray();
                     @endphp
-                    <x-form.select name="pegawai_id" label="Pilih Pegawai" :options="$pegawaiOptions" placeholder="-- Pilih Pegawai --" required />
+                    <x-form.searchable-select id="pegawai_id" name="pegawai_id" label="Pilih Pegawai" :options="$pegawaiOptions" placeholder="-- Pilih Pegawai --" required />
                 </div>
                 
                 <div>
