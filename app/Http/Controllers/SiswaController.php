@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Siswa;
-use App\Models\Tahun;
-use App\Models\Jurusan;
 use App\Exports\SiswaExport;
 use App\Imports\SiswaImport;
+use App\Models\Siswa;
+use App\Models\Tahun;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
-
 
 class SiswaController extends Controller
 {
@@ -28,15 +29,15 @@ class SiswaController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nipd', 'like', "%{$search}%")
-                  ->orWhere('nisn', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('nipd', 'like', "%{$search}%")
+                    ->orWhere('nisn', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
         $sort = $request->input('sort', 'created_at');
         $direction = $request->input('direction', 'desc');
-        
+
         // Whitelist safe sort columns
         $allowedSorts = ['nama', 'nipd', 'nisn', 'status', 'created_at', 'kelas'];
         if (in_array($sort, $allowedSorts)) {
@@ -59,36 +60,52 @@ class SiswaController extends Controller
         if ($ids) {
             $ids = explode(',', $ids); // If IDs are passed as comma specific string
         }
+
         return Excel::download(new SiswaExport($ids), 'siswa.xlsx');
     }
 
-    public function bulkDelete(Request $request)
+    public function bulkDelete(Request $request): RedirectResponse
     {
-        $ids = $request->input('ids');
-        \Log::info('Bulk Delete Request IDs:', ['ids' => $ids]);
-        
-        if ($ids) {
-            $siswa = Siswa::whereIn('id', $ids)->get();
-            
-            foreach ($siswa as $s) {
-                if ($s->foto) {
-                    Storage::disk('public')->delete($s->foto);
-                }
-                $s->delete();
-            }
-            
-            return redirect()->back()->with('message', count($ids) . ' data siswa berhasil dihapus')->with('type', 'success');
+        $data = $request->validate([
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['required', 'integer', 'distinct', 'exists:siswas,id'],
+        ]);
+        $ids = $data['ids'] ?? [];
+
+        if ($ids === []) {
+            return back()->with('message', 'Tidak ada data yang dipilih')->with('type', 'warning');
         }
-        
-        return redirect()->back()->with('message', 'Tidak ada data yang dipilih')->with('type', 'warning');
+
+        try {
+            $students = DB::transaction(function () use ($ids) {
+                $students = Siswa::whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get();
+                foreach ($students as $student) {
+                    $student->delete();
+                }
+
+                return $students;
+            });
+        } catch (QueryException $exception) {
+            return $this->deletionFailed($exception);
+        }
+
+        foreach ($students as $student) {
+            if ($student->foto) {
+                Storage::disk('public')->delete($student->foto);
+            }
+        }
+
+        return back()->with('message', $students->count().' data siswa berhasil dihapus')->with('type', 'success');
     }
 
     public function import()
     {
         Excel::import(new SiswaImport, request()->file('file'));
+
         return redirect()->route('siswa.index')->with('message', 'Data siswa berhasil diimport')->with('type', 'success');
     }
-     public function create()
+
+    public function create()
     {
         return view('siswa.input-siswa');
     }
@@ -100,17 +117,18 @@ class SiswaController extends Controller
     {
         // @dd($request->all());
         $request->validate([
-            'nama'=>'required',
-            'nipd'=>'required',
+            'nama' => 'required',
+            'nipd' => 'required',
             'foto' => 'nullable|image|mimes:jpg,jpeg,png,gif,png|max:2048',
         ]);
-        $data=$request->all();
+        $data = $request->all();
 
-        if($request->hasFile('foto')){
-            $data['foto']=$request->file('foto')->store('uploads/foto','public');
+        if ($request->hasFile('foto')) {
+            $data['foto'] = $request->file('foto')->store('uploads/foto', 'public');
         }
         Siswa::create($data);
-        return redirect('siswa')->with('message','Data telah disimpan')->with('type','success');
+
+        return redirect('siswa')->with('message', 'Data telah disimpan')->with('type', 'success');
     }
 
     /**
@@ -124,11 +142,11 @@ class SiswaController extends Controller
 
         // 2. Statistik Tahunan (Summary - Tahun Aktif)
         $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Total' => 0];
-        
+
         // Query Absensi Filter Tahun Ini
         $logs = \App\Models\Absensi::with(['logbook.jadwal.mapel', 'logbook.pegawai'])
             ->where('siswa_id', $siswa->id)
-            ->whereHas('logbook', function($q) use ($year) {
+            ->whereHas('logbook', function ($q) use ($year) {
                 $q->whereYear('tanggal', $year);
             })
             ->get();
@@ -144,11 +162,11 @@ class SiswaController extends Controller
         // 3. Data Grafik Bulanan (Monthly Trend - Tahun Aktif)
         $months = range(1, 12);
         $chartData = [
-            'Hadir' => [], 'Sakit' => [], 'Izin' => [], 'Alpha' => []
+            'Hadir' => [], 'Sakit' => [], 'Izin' => [], 'Alpha' => [],
         ];
 
         foreach ($months as $m) {
-            $monthLogs = $logs->filter(function($log) use ($m) {
+            $monthLogs = $logs->filter(function ($log) use ($m) {
                 return \Carbon\Carbon::parse($log->logbook->tanggal)->month == $m;
             });
 
@@ -159,8 +177,8 @@ class SiswaController extends Controller
         }
 
         // 4. Riwayat Terbaru (Top 10)
-        $recentLogs = $logs->sortByDesc(function($log) {
-            return $log->logbook->tanggal . ' ' . ($log->logbook->jadwal->mulai ?? '00:00');
+        $recentLogs = $logs->sortByDesc(function ($log) {
+            return $log->logbook->tanggal.' '.($log->logbook->jadwal->mulai ?? '00:00');
         })->take(10);
 
         // 5. Data Kelas Aktif
@@ -168,26 +186,26 @@ class SiswaController extends Controller
             ->where('tahun_id', $tahunAktif->id ?? 0)
             ->with('kelas')
             ->first();
-            
+
         $kelasAktif = $kelasSiswa && $kelasSiswa->kelas ? $kelasSiswa->kelas->kelas : '-';
 
         // 6. Riwayat Akademik (History Kelas per Tahun/Semester)
         $history = $siswa->KelasSiswa()
             ->with(['kelas', 'tahun'])
-            ->orderByDesc('id') 
+            ->orderByDesc('id')
             ->get()
             ->map(function ($h) use ($siswa) {
                 // Hitung Absensi per Periode Tahun Ajaran tersebut
                 if ($h->tahun) {
                     $stats = \App\Models\Absensi::where('siswa_id', $siswa->id)
-                        ->whereHas('logbook', function($q) use ($h) {
+                        ->whereHas('logbook', function ($q) use ($h) {
                             $q->whereBetween('tanggal', [$h->tahun->tanggalmulai, $h->tahun->tanggalakhir]);
                         })
                         ->selectRaw('status, count(*) as count')
                         ->groupBy('status')
                         ->pluck('count', 'status')
                         ->toArray();
-                    
+
                     $total = array_sum($stats);
                     $h->stats = [
                         'H' => $stats['Hadir'] ?? 0,
@@ -195,11 +213,12 @@ class SiswaController extends Controller
                         'I' => $stats['Izin'] ?? 0,
                         'A' => $stats['Alpha'] ?? 0,
                         'Total' => $total,
-                        'HadirPercent' => $total > 0 ? round((($stats['Hadir'] ?? 0) / $total) * 100, 1) : 0
+                        'HadirPercent' => $total > 0 ? round((($stats['Hadir'] ?? 0) / $total) * 100, 1) : 0,
                     ];
                 } else {
-                     $h->stats = ['H'=>0, 'S'=>0, 'I'=>0, 'A'=>0, 'Total'=>0, 'HadirPercent'=>0];
+                    $h->stats = ['H' => 0, 'S' => 0, 'I' => 0, 'A' => 0, 'Total' => 0, 'HadirPercent' => 0];
                 }
+
                 return $h;
             });
 
@@ -209,13 +228,13 @@ class SiswaController extends Controller
             'color' => 'green',
             'message' => 'Tingkat kehadiran siswa sangat baik. Pertahankan!',
             'trend' => 'stabil', // naik, turun, stabil
-            'predicted_score' => 100
+            'predicted_score' => 100,
         ];
 
         if ($summaryStats['Total'] > 0) {
             $attendanceRate = ($summaryStats['Hadir'] / $summaryStats['Total']) * 100;
             $alphaRate = ($summaryStats['Alpha'] / $summaryStats['Total']) * 100;
-            
+
             $prediction['predicted_score'] = round($attendanceRate, 1);
 
             // Risk Logic
@@ -230,11 +249,11 @@ class SiswaController extends Controller
             }
 
             // Trend Logic (Compare last 2 active months)
-            $activeMonths = array_keys(array_filter($chartData['Hadir'], fn($val) => $val > 0));
+            $activeMonths = array_keys(array_filter($chartData['Hadir'], fn ($val) => $val > 0));
             if (count($activeMonths) >= 2) {
                 $lastMonthIdx = end($activeMonths);
                 $prevMonthIdx = prev($activeMonths);
-                
+
                 $lastMonthHadir = $chartData['Hadir'][$lastMonthIdx];
                 $prevMonthHadir = $chartData['Hadir'][$prevMonthIdx];
 
@@ -255,8 +274,9 @@ class SiswaController extends Controller
      */
     public function edit(Siswa $siswa)
     {
-        $siswa=Siswa::find($siswa->id);
-        return view('siswa.input-siswa',compact('siswa'));
+        $siswa = Siswa::find($siswa->id);
+
+        return view('siswa.input-siswa', compact('siswa'));
     }
 
     /**
@@ -268,14 +288,15 @@ class SiswaController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             if ($request->has('aktif')) {
                 $siswa->update(['aktif' => $request->aktif]);
+
                 return response()->json(['success' => true, 'message' => 'Status berhasil diubah']);
             }
         }
 
         // Standard Form Update
         $request->validate([
-            'nama'=>'required',
-            'nipd'=>'required',
+            'nama' => 'required',
+            'nipd' => 'required',
         ]);
 
         $data = $request->all();
@@ -293,19 +314,32 @@ class SiswaController extends Controller
         return redirect()->route('siswa.index')->with('message', 'Data berhasil diperbarui')->with('type', 'success');
     }
 
-
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Siswa $siswa)
+    public function destroy(Siswa $siswa): RedirectResponse
     {
-        // dd($siswa);
+        try {
+            DB::transaction(fn () => $siswa->delete());
+        } catch (QueryException $exception) {
+            return $this->deletionFailed($exception);
+        }
+
         if ($siswa->foto) {
             Storage::disk('public')->delete($siswa->foto);
         }
-        $siswa->delete();
-        return redirect('siswa')->with('message','Data Berhasil Dihapus')->with('type','error');
 
+        return redirect()->route('siswa.index')->with('message', 'Data siswa berhasil dihapus')->with('type', 'success');
     }
 
+    private function deletionFailed(QueryException $exception): RedirectResponse
+    {
+        if (($exception->errorInfo[1] ?? null) === 1451 || str_contains($exception->getMessage(), 'FOREIGN KEY constraint failed')) {
+            return back()->with('message', 'Penghapusan dibatalkan. Siswa masih memiliki data terkait. Gunakan status nonaktif untuk mempertahankan riwayat.')->with('type', 'warning');
+        }
+
+        report($exception);
+
+        return back()->with('message', 'Data siswa gagal dihapus. Silakan coba kembali.')->with('type', 'error');
+    }
 }

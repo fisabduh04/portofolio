@@ -23,3 +23,9 @@ yarn-error.log
 # Backup & copy folders (jangan di-commit)
 /backups
 /factories - Copy
+
+# File lokal: log, skrip debug, dan backup
+/temp_log.txt
+/test_rekap.php
+/php.bak
+/resources/views/login/login.backup.blade.php

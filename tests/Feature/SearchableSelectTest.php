@@ -8,6 +8,16 @@ use Tests\TestCase;
 
 uses(TestCase::class);
 
+test('allows repeated forms to supply their own scoped old input', function () {
+    $this->session(['_old_input' => ['kelas_id' => ['9', '10']]]);
+    $view = $this->blade(
+        '<x-form.searchable-select name="kelas_id" :selected="2" :restore-old-input="false" :options="$options" />',
+        ['options' => [2 => 'Kelas B', 9 => 'Kelas I']]
+    );
+    $html = searchableSelectXpath((string) $view);
+    expect($html->evaluate('string(//select/option[@selected]/@value)'))->toBe('2');
+});
+
 beforeEach(function () {
     $this->withViewErrors([]);
     $this->app['request']->setLaravelSession($this->app['session.store']);
@@ -186,6 +196,8 @@ test('renders searchable teachers and subjects with the correct forms and saved 
     ]);
 
     $view = $this->view('jadwal.index', [
+        'perpage' => 10,
+        'filter_tahun' => null,
         'jadwals' => new LengthAwarePaginator($schedules, 2, 10),
         'pegawai' => collect([$teacher]),
         'mapel' => collect([$subject]),

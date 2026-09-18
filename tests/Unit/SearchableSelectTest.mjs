@@ -169,7 +169,7 @@ test('a detached popup remains interactive and returns to its row when closed', 
     const select = Object.create(SearchableSelect.prototype);
     const search = { value: 'lama', setAttribute() {}, removeAttribute() {}, focus() {} };
     select.portal = true;
-    select.select = { matches: () => false };
+    select.select = { value: '7', matches: () => false };
     select.search = search;
     select.trigger = { setAttribute() {}, focus() {} };
     select.popup = { hidden: true, contains: (element) => element === search };
@@ -201,6 +201,7 @@ test('a detached popup remains interactive and returns to its row when closed', 
     document.dispatchEvent(new Event('pointerdown'));
 
     assert.equal(select.isOpen, false);
+    assert.equal(select.select.value, '7');
     assert.equal(select.popup.hidden, true);
     assert.equal(select.popup.parentElement, select.root);
 

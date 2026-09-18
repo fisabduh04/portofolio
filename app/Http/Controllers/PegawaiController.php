@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Exports\PegawaiExport;
 use App\Imports\PegawaiImport;
 use App\Models\Pegawai;
-use App\Models\AttendanceRule;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PegawaiController extends Controller
 {
@@ -25,14 +27,14 @@ class PegawaiController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('nuptk', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('nuptk', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
         $sort = $request->input('sort', 'created_at');
         $direction = $request->input('direction', 'desc');
-        
+
         // Whitelist kolom sorting untuk keamanan
         $allowedSorts = ['name', 'nuptk', 'email', 'status', 'created_at'];
         if (in_array($sort, $allowedSorts)) {
@@ -42,10 +44,9 @@ class PegawaiController extends Controller
         }
 
         $pegawai = $query->paginate($perPage)->withQueryString();
-        
+
         return view('pegawai.index', compact('pegawai'));
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -73,6 +74,7 @@ class PegawaiController extends Controller
         }
 
         pegawai::create($data);
+
         return redirect()->route('pegawai.index')->with('message', 'Data Pegawai berhasil disimpan')->with('type', 'success');
     }
 
@@ -88,7 +90,7 @@ class PegawaiController extends Controller
 
         // 1. Statistik Tahunan (Summary - Tahun Ini)
         $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Total' => 0];
-        
+
         // Query Absensi Filter Tahun Ini
         $logs = \App\Models\PegawaiAbsensi::where('pegawai_id', $pegawai->id)
             ->whereYear('tanggal', $year)
@@ -98,14 +100,14 @@ class PegawaiController extends Controller
             $status = $log->status;
             // Normalize status strings if necessary (e.g. "Hadir " -> "Hadir")
             $status = trim($status);
-            
+
             if ($status === 'Telat') {
                 $summaryStats['Hadir']++;
             } elseif (isset($summaryStats[$status])) {
                 $summaryStats[$status]++;
             } else {
-                 // Fallback for unexpected status, treat as Hadir or separate? 
-                 // For now, let's just log it or ignore
+                // Fallback for unexpected status, treat as Hadir or separate?
+                // For now, let's just log it or ignore
             }
             $summaryStats['Total']++;
         }
@@ -113,11 +115,11 @@ class PegawaiController extends Controller
         // 2. Data Grafik Bulanan (Monthly Trend - Tahun Ini)
         $months = range(1, 12);
         $chartData = [
-            'Hadir' => [], 'Sakit' => [], 'Izin' => [], 'Alpha' => []
+            'Hadir' => [], 'Sakit' => [], 'Izin' => [], 'Alpha' => [],
         ];
 
         foreach ($months as $m) {
-            $monthLogs = $logs->filter(function($log) use ($m) {
+            $monthLogs = $logs->filter(function ($log) use ($m) {
                 return $log->tanggal->month == $m;
             });
 
@@ -135,7 +137,7 @@ class PegawaiController extends Controller
             'status' => 'Aman',
             'color' => 'green',
             'message' => 'Tingkat kehadiran pegawai sangat baik.',
-            'predicted_score' => 100
+            'predicted_score' => 100,
         ];
 
         if ($summaryStats['Total'] > 0) {
@@ -162,6 +164,7 @@ class PegawaiController extends Controller
     public function edit($id)
     {
         $pegawai = pegawai::findOrFail($id);
+
         return view('pegawai.input-pegawai', compact('pegawai'));
     }
 
@@ -189,35 +192,53 @@ class PegawaiController extends Controller
         }
 
         $pegawai->update($data);
+
         return redirect()->route('pegawai.index')->with('message', 'Data Pegawai berhasil diperbarui')->with('type', 'success');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
-    {        
-        $peg=pegawai::findOrFail($id);
-        $peg->delete();
+    public function destroy(int $id): RedirectResponse
+    {
+        $pegawai = Pegawai::findOrFail($id);
 
-return redirect('pegawai')->with('message', 'Data Berhasil Dihapus')->with('type', 'error');
+        try {
+            DB::transaction(fn () => $pegawai->delete());
+        } catch (QueryException $exception) {
+            if (($exception->errorInfo[1] ?? null) === 1451 || str_contains($exception->getMessage(), 'FOREIGN KEY constraint failed')) {
+                return back()->with('message', 'Pegawai tidak dapat dihapus karena masih memiliki data terkait. Gunakan status nonaktif untuk mempertahankan riwayat.')->with('type', 'warning');
+            }
+
+            report($exception);
+
+            return back()->with('message', 'Data pegawai gagal dihapus. Silakan coba kembali.')->with('type', 'error');
+        }
+
+        return redirect()->route('pegawai.index')->with('message', 'Data pegawai berhasil dihapus')->with('type', 'success');
     }
+
     public function Addpegawai()
     {
         return view('pegawai.Addpegawai');
     }
-    public function import(Request $request){
+
+    public function import(Request $request)
+    {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:2048',
         ]);
-        $file=$request->file('file')->store('public/import');
+        $file = $request->file('file')->store('public/import');
         Excel::import(new PegawaiImport, $file);
+
         // return redirect('/pegawai')->with('success','Data berhasil di import');
-        return redirect('/pegawai')->with('message','Data berhasil di import')->with('type','success');
+        return redirect('/pegawai')->with('message', 'Data berhasil di import')->with('type', 'success');
 
     }
-     public function export(){
+
+    public function export()
+    {
         return Excel::download(new PegawaiExport, 'pegawai.xlsx');
 
-     }
+    }
 }

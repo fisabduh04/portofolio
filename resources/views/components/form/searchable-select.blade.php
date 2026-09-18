@@ -4,6 +4,7 @@
     'label' => null,
     'options' => [],
     'selected' => null,
+    'restoreOldInput' => true,
     'placeholder' => 'Pilih opsi',
     'searchPlaceholder' => 'Ketik untuk mencari…',
     'maxResults' => 50,
@@ -15,7 +16,7 @@
     $inputId = $id ?? 'searchable-select-'.Illuminate\Support\Str::uuid();
     $controlClass = $size === 'sm' ? 'table-form-control' : 'searchable-select-control';
     $errorKey = str_replace(['[', ']'], ['.', ''], $name);
-    $selectedValue = old($errorKey, $selected);
+    $selectedValue = $restoreOldInput ? old($errorKey, $selected) : $selected;
     $hasError = $errors->has($errorKey);
     $descriptionIds = trim(($attributes->get('aria-describedby') ?? '').' '.($hasError ? $inputId.'-error' : ''));
 @endphp

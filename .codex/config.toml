@@ -1,3 +1,5 @@
 [mcp_servers.laravel-boost]
-command = "php"
+command = "C:/laragon/bin/php/php-8.4.12-Win32-vs17-x64/php.exe"
 args = ["artisan", "boost:mcp"]
+cwd = "C:/laragon/www/portofolio"
+startup_timeout_sec = 30

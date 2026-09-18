@@ -2,11 +2,21 @@
 
 namespace App\Livewire\Tahun;
 
+use App\Models\HariLibur;
+use App\Models\Jadwal;
+use App\Models\JadwalPiket;
+use App\Models\KelasSiswa;
+use App\Models\PegawaiRuleAllocation;
+use App\Models\PegawaiWajibHadir;
 use App\Models\Tahun;
-use Livewire\Component;
-use Livewire\WithPagination;
+use App\Models\WaliKelas;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Livewire\Component;
+
 class Data extends Component
 {
     public $form = false;
@@ -27,13 +37,13 @@ class Data extends Component
 
     public $tahunlist;
 
-
     public function mount()
     {
         $this->loadTahunList();
     }
 
-    private function loadTahunList() {
+    private function loadTahunList()
+    {
         $this->tahunlist = Tahun::all();
     }
 
@@ -41,13 +51,12 @@ class Data extends Component
     {
         $tahun = Tahun::find($id);
         if ($tahun) {
-            $tahun->isActive = !$tahun->isActive;
+            $tahun->isActive = ! $tahun->isActive;
             $tahun->save();
         }
         session()->flash('warning', 'Status keaktifan berhasil diubah');
         $this->loadTahunList(); // Refresh the list
     }
-
 
     public function render()
     {
@@ -96,40 +105,99 @@ class Data extends Component
             'tanggalakhir.date' => 'Format tanggal akhir tidak valid.',
         ]);
 
-        try{
-        Tahun::updateOrCreate([
-            'id' => $this->tahunID,
-        ], [
-            'tahun' => $this->tahun,
-            'semester' => $this->semester,
-            'tanggalmulai' => $this->tanggalmulai,
-            'tanggalakhir' => $this->tanggalakhir,
-            'isActive' => $this->isActive,
-        ]);
-        session()->flash('success', 'Data berhasil diinput');
+        try {
+            Tahun::updateOrCreate([
+                'id' => $this->tahunID,
+            ], [
+                'tahun' => $this->tahun,
+                'semester' => $this->semester,
+                'tanggalmulai' => $this->tanggalmulai,
+                'tanggalakhir' => $this->tanggalakhir,
+                'isActive' => $this->isActive,
+            ]);
+            session()->flash('success', 'Data berhasil diinput');
 
-        $this->reset(['tanggalmulai', 'tanggalakhir', 'tahun', 'semester', 'isActive']);
-        $this->loadTahunList(); // Refresh the list
-    } catch(QueryException $e) {
-        if ($e->errorInfo[1] === 1062) { // Cek kode error MySQL untuk duplikasi
-            Session::flash('error', 'Data tahun dengan tahun dan semester tersebut sudah ada.');
-            // Opsi tambahan:
-            $this->addError('tahun', 'Data tahun dengan tahun dan semester tersebut sudah ada.'); // Menampilkan error di bawah input field
-        } else {
-            // Tangani error lain jika ada
-            Session::flash('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
+            $this->reset(['tanggalmulai', 'tanggalakhir', 'tahun', 'semester', 'isActive']);
+            $this->loadTahunList(); // Refresh the list
+        } catch (QueryException $e) {
+            if ($e->errorInfo[1] === 1062) { // Cek kode error MySQL untuk duplikasi
+                Session::flash('error', 'Data tahun dengan tahun dan semester tersebut sudah ada.');
+                // Opsi tambahan:
+                $this->addError('tahun', 'Data tahun dengan tahun dan semester tersebut sudah ada.'); // Menampilkan error di bawah input field
+            } else {
+                // Tangani error lain jika ada
+                Session::flash('error', 'Terjadi kesalahan saat menyimpan data: '.$e->getMessage());
+            }
         }
+        $this->form = false;
     }
-    $this->form=false;
-}
 
-
-    public function del($id)
+    public function del(int $id): void
     {
-        Tahun::destroy($id);
+        Gate::authorize('manage-data-master');
+        abort_unless(auth()->user()->is_active, 403);
 
-        session()->flash('error', 'Gateli Data Berhasil Dihapus');
-        $this->loadTahunList(); // Refresh the list
+        try {
+            $result = DB::transaction(function () use ($id): Tahun|string {
+                $tahun = Tahun::whereKey($id)->lockForUpdate()->first();
+
+                if (! $tahun) {
+                    return 'Tahun ajaran tidak ditemukan atau sudah dihapus.';
+                }
+
+                if ($tahun->isActive) {
+                    return 'Tahun ajaran aktif tidak dapat dihapus. Pindahkan tahun aktif terlebih dahulu.';
+                }
+
+                $dependencies = [
+                    'jadwal mengajar' => Jadwal::class,
+                    'penempatan siswa' => KelasSiswa::class,
+                    'jadwal piket' => JadwalPiket::class,
+                    'hari libur' => HariLibur::class,
+                    'pengaturan wajib hadir' => PegawaiWajibHadir::class,
+                    'penetapan aturan absensi' => PegawaiRuleAllocation::class,
+                    'penugasan wali kelas' => WaliKelas::class,
+                ];
+                $usage = [];
+
+                foreach ($dependencies as $label => $model) {
+                    $count = $model::where('tahun_id', $tahun->id)->count();
+
+                    if ($count > 0) {
+                        $usage[] = $count.' '.$label;
+                    }
+                }
+
+                if ($usage !== []) {
+                    return 'Tahun ajaran tidak dapat dihapus karena masih digunakan oleh '.implode(', ', $usage).'.';
+                }
+
+                $tahun->delete();
+
+                return $tahun;
+            });
+        } catch (QueryException $exception) {
+            report($exception);
+            $this->dispatch('showToast', message: 'Tahun ajaran gagal dihapus. Silakan muat ulang halaman; jika masih gagal, hubungi administrator.', type: 'error');
+
+            return;
+        }
+
+        if (is_string($result)) {
+            $this->dispatch('showToast', message: $result, type: 'warning');
+            $this->loadTahunList();
+
+            return;
+        }
+
+        Log::info('Tahun ajaran dihapus', [
+            'user_id' => auth()->id(),
+            'tahun_id' => $result->id,
+            'tahun' => $result->tahun,
+            'semester' => $result->semester,
+        ]);
+
+        $this->dispatch('showToast', message: 'Tahun ajaran berhasil dihapus.', type: 'success');
+        $this->loadTahunList();
     }
-
 }

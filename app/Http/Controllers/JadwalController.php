@@ -2,34 +2,66 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Jadwal;
-use App\Models\Kelas;
-use App\Models\Tahun;
-use App\Models\Mapel;
-use App\Models\Pegawai;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\JadwalExport;
 use App\Imports\JadwalImport;
+use App\Models\Jadwal;
+use App\Models\Kelas;
+use App\Models\Mapel;
+use App\Models\Pegawai;
+use App\Models\Tahun;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
 
 class JadwalController extends Controller
 {
-    private function validateJadwal(Request $request)
+    private const VALIDATION_MESSAGES = [
+        'tahun_id.required' => 'Pilih tahun ajaran terlebih dahulu.',
+        'tahun_id.exists' => 'Tahun ajaran yang dipilih tidak tersedia. Silakan pilih kembali.',
+        'kelas_id.required' => 'Pilih kelas terlebih dahulu.',
+        'kelas_id.exists' => 'Kelas yang dipilih tidak tersedia. Silakan pilih kembali.',
+        'mapel_id.required' => 'Pilih mata pelajaran terlebih dahulu.',
+        'mapel_id.exists' => 'Mata pelajaran yang dipilih tidak tersedia. Silakan pilih kembali.',
+        'pegawai_id.required' => 'Pilih guru terlebih dahulu.',
+        'pegawai_id.exists' => 'Guru yang dipilih tidak tersedia. Silakan pilih kembali.',
+        'hari.required' => 'Pilih hari terlebih dahulu.',
+        'hari.string' => 'Isian hari tidak valid. Silakan pilih kembali.',
+        'jam.required' => 'Isi jam pelajaran ke berapa.',
+        'jam.string' => 'Isian jam pelajaran tidak valid. Silakan isi kembali.',
+        'mulai.required' => 'Isi jam mulai terlebih dahulu.',
+        'mulai.date_format' => 'Format jam mulai tidak valid. Gunakan format 24 jam, misalnya 07:30.',
+        'akhir.required' => 'Isi jam selesai terlebih dahulu.',
+        'akhir.date_format' => 'Format jam selesai tidak valid. Gunakan format 24 jam, misalnya 08:30.',
+        'akhir.after' => 'Jam selesai harus lebih dari jam mulai.',
+        'ket.string' => 'Keterangan harus berupa teks.',
+        'id.required' => 'Tambahkan setidaknya satu baris jadwal sebelum menyimpan.',
+        'id.array' => 'Format baris jadwal tidak valid. Silakan buka kembali halaman jadwal.',
+        'id.min' => 'Tambahkan setidaknya satu baris jadwal sebelum menyimpan.',
+        'id.*.integer' => 'Identitas salah satu baris jadwal tidak valid. Silakan buka kembali halaman jadwal.',
+        'id.*.exists' => 'Salah satu jadwal sudah tidak tersedia. Silakan buka kembali halaman jadwal.',
+        'file.required' => 'Pilih berkas jadwal yang akan diimpor terlebih dahulu.',
+        'file.mimes' => 'Berkas impor harus berformat CSV, XLS, atau XLSX.',
+        'file.uploaded' => 'Berkas gagal diunggah. Periksa ukuran berkas dan koneksi Anda, lalu coba lagi.',
+    ];
+
+    /** @return array<string, string> */
+    private function jadwalRules(): array
     {
-        return $request->validate([
-            'tahun_id'   => 'required|exists:tahuns,id',
-            'kelas_id'   => 'required|exists:kelas,id',
-            'mapel_id'   => 'required|exists:mapels,id',
+        return [
+            'tahun_id' => 'required|exists:tahuns,id',
+            'kelas_id' => 'required|exists:kelas,id',
+            'mapel_id' => 'required|exists:mapels,id',
             'pegawai_id' => 'required|exists:pegawais,id',
-            'hari'       => 'required|string',
-            'jam'        => 'required|string',
-            'mulai'      => 'required|date_format:H:i',
-            'akhir'      => 'required|date_format:H:i|after:mulai',
-            'ket'        => 'nullable|string',
-        ]);
+            'hari' => 'required|string',
+            'jam' => 'required|string',
+            'mulai' => 'required|date_format:H:i',
+            'akhir' => 'required|date_format:H:i|after:mulai',
+            'ket' => 'nullable|string',
+        ];
     }
 
     public function index(Request $request)
@@ -40,7 +72,7 @@ class JadwalController extends Controller
                 $sort = 'hari';
             }
             $direction = $request->input('direction');
-            if (empty($direction) || !in_array(strtolower($direction), ['asc', 'desc'])) {
+            if (empty($direction) || ! in_array(strtolower($direction), ['asc', 'desc'])) {
                 $direction = 'asc'; // Default to asc for easier reading, or desc based on preference
             }
             $perpage = $request->input('per_page', 10);
@@ -49,9 +81,8 @@ class JadwalController extends Controller
             $filter_kelas = $request->input('filter_kelas', null);
             $filter_hari = $request->input('filter_hari', null);
 
-            $tahun = Cache::remember('dropdown_tahun', 3600, function () {
-                return Tahun::aktif()->select('id', 'tahun', 'semester')->get();
-            });
+            $tahun = Tahun::aktif()->select('id', 'tahun', 'semester')
+                ->orderByDesc('tanggalmulai')->orderByDesc('id')->get();
 
             $kelas = Cache::remember('dropdown_kelas', 3600, function () {
                 return Kelas::select('id', 'kelas')->get();
@@ -64,55 +95,47 @@ class JadwalController extends Controller
             $pegawai = Cache::remember('dropdown_pegawai', 3600, function () {
                 return Pegawai::select('id', 'name')->get();
             });
-            $hari    = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+            $hari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
             // --- 1. LOGIKA PENENTUAN TAHUN ID YANG BERLAKU ---
-            
-            $tahunIDUntukProses = $filter_tahun;
 
-            // Jika tidak ada filter_tahun dari request, gunakan tahun aktif yang pertama sebagai default.
-            if (empty($tahunIDUntukProses)) {
-                // Karena $tahun sudah hanya berisi tahun aktif, kita ambil yang pertama.
-                $tahunIDUntukProses = $tahun->first()->id ?? null;
-                
-                // Perbarui $filter_tahun untuk memastikan dropdown menampilkan default
-                $filter_tahun = $tahunIDUntukProses;
+            $tahunIdsUntukProses = $tahun->pluck('id');
+            if (! empty($filter_tahun) && $filter_tahun !== 'all') {
+                $tahunIdsUntukProses = $tahunIdsUntukProses->filter(
+                    fn ($id) => (string) $id === (string) $filter_tahun
+                );
             }
 
+            $query = Jadwal::with(['kelas', 'mapel', 'pegawai'])
+                ->whereIn('jadwals.tahun_id', $tahunIdsUntukProses);
 
-            $query = Jadwal::with(['kelas', 'mapel', 'pegawai']);
-
-            if (!empty($search)) {
-                $query->where(function($q) use ($search) {
-                    $q->whereHas('kelas', fn($sub) => $sub->where('kelas', 'like', "%{$search}%"))
-                      ->orWhereHas('mapel', fn($sub) => $sub->where('mapel', 'like', "%{$search}%"))
-                      ->orWhereHas('pegawai', fn($sub) => $sub->where('name', 'like', "%{$search}%"));
+            if (! empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('kelas', fn ($sub) => $sub->where('kelas', 'like', "%{$search}%"))
+                        ->orWhereHas('mapel', fn ($sub) => $sub->where('mapel', 'like', "%{$search}%"))
+                        ->orWhereHas('pegawai', fn ($sub) => $sub->where('name', 'like', "%{$search}%"));
                 });
             }
 
-            if (!empty($filter_tahun) && $filter_tahun !== 'all') {
-                $query->where('tahun_id', $filter_tahun);
-            }
-
-            if (!empty($filter_kelas) && $filter_kelas !== 'all') {
+            if (! empty($filter_kelas) && $filter_kelas !== 'all') {
                 $query->where('kelas_id', $filter_kelas);
             }
 
-            if (!empty($filter_hari) && $filter_hari !== 'all') {
+            if (! empty($filter_hari) && $filter_hari !== 'all') {
                 $query->where('hari', $filter_hari);
             }
 
             if ($sort === 'kelas') {
                 $query->join('kelas', 'kelas.id', '=', 'jadwals.kelas_id')
-                      ->orderBy('kelas.kelas', $direction)
-                      ->select('jadwals.*');
+                    ->orderBy('kelas.kelas', $direction)
+                    ->select('jadwals.*');
             } elseif ($sort === 'pegawai') {
                 $query->join('pegawais', 'pegawais.id', '=', 'jadwals.pegawai_id')
-                      ->orderBy('pegawais.name', $direction)
-                      ->select('jadwals.*');
+                    ->orderBy('pegawais.name', $direction)
+                    ->select('jadwals.*');
             } elseif ($sort === 'mapel') {
                 $query->join('mapels', 'mapels.id', '=', 'jadwals.mapel_id')
-                      ->orderBy('mapels.mapel', $direction)
-                      ->select('jadwals.*');
+                    ->orderBy('mapels.mapel', $direction)
+                    ->select('jadwals.*');
             } elseif ($sort === 'hari') {
                 // Custom sort for Days of Week (Chronological)
                 $query->orderByRaw("FIELD(hari, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu') $direction");
@@ -128,9 +151,10 @@ class JadwalController extends Controller
             $jadwalBentrokIds = [];
             $totalBentrok = 0;
 
-            if (!empty($tahunIDUntukProses)) {
+            if ($tahunIdsUntukProses->isNotEmpty()) {
                 // 1. Ambil SEMUA ID untuk highlight tabel (Query sangat ringan)
-                $jadwalBentrokIds = Jadwal::bentrokSaatIni($tahunIDUntukProses)->pluck('id')->toArray();
+                $jadwalBentrokIds = Jadwal::whereIn('tahun_id', $tahunIdsUntukProses)
+                    ->bentrokSaatIni()->pluck('id')->toArray();
                 $totalBentrok = count($jadwalBentrokIds);
 
                 // 2. Ambil Detail (Hanya untuk 10 data pertama agar Alert tidak berat)
@@ -143,65 +167,68 @@ class JadwalController extends Controller
                 }
             }
 
-        // --------------------------------------------------
+            // --------------------------------------------------
 
-        return view('jadwal.index', compact(
-            'tahun','kelas','filter_kelas','filter_tahun','filter_hari',
-            'mapel','hari','pegawai','jadwals',
-            'sort','direction','perpage','search',
-            'jadwalBentrokIds', 
-            'bentrokJadwalList',
-            'totalBentrok'
-        ));
+            return view('jadwal.index', compact(
+                'tahun', 'kelas', 'filter_kelas', 'filter_tahun', 'filter_hari',
+                'mapel', 'hari', 'pegawai', 'jadwals',
+                'sort', 'direction', 'perpage', 'search',
+                'jadwalBentrokIds',
+                'bentrokJadwalList',
+                'totalBentrok'
+            ));
         } catch (\Exception $e) {
-            Log::error('Error loading jadwal index: ' . $e->getMessage());
-            return redirect()->back()->with('type', 'error')->with('message', 'Gagal memuat jadwal: ' . $e->getMessage());
+            Log::error('Error loading jadwal index: '.$e->getMessage());
+
+            return redirect()->back()->with('type', 'error')->with('message', 'Jadwal belum dapat dimuat. Silakan coba lagi. Jika masalah berlanjut, hubungi operator.');
         }
     }
 
     public function store(Request $request)
     {
+        $validated = $request->validate($this->jadwalRules(), self::VALIDATION_MESSAGES);
         try {
-            $validated = $this->validateJadwal($request);
 
             if (Jadwal::conflict($validated)->exists()) {
-                return redirect()->back()
+                return redirect()->back()->withInput()
                     ->with('type', 'error')
                     ->with('message', 'Jadwal bentrok! Guru atau Kelas sudah memiliki jadwal lain pada waktu tersebut.');
             }
 
             Jadwal::create($validated);
 
-            return redirect()->route('jadwal.index')
+            return redirect()->back(fallback: route('jadwal.index'))
                 ->with('type', 'success')
                 ->with('message', 'Jadwal berhasil ditambahkan');
         } catch (\Exception $e) {
-            Log::error('Error storing jadwal: ' . $e->getMessage());
-            return redirect()->back()->with('type', 'error')->with('message', 'Gagal menambahkan jadwal: ' . $e->getMessage());
+            Log::error('Error storing jadwal: '.$e->getMessage());
+
+            return redirect()->back()->withInput()->with('type', 'error')->with('message', 'Jadwal belum dapat ditambahkan. Isian Anda tetap tersedia. Silakan coba lagi atau hubungi operator.');
         }
     }
 
     public function update(Request $request, $id)
     {
-        // dd($request->all());
+        $request->merge(['_jadwal_edit_id' => $id]);
+        $validated = $request->validate($this->jadwalRules(), self::VALIDATION_MESSAGES);
         try {
             $jadwal = Jadwal::findOrFail($id);
-            $validated = $this->validateJadwal($request);
 
             if (Jadwal::conflict($validated, $jadwal->id)->exists()) {
-                return redirect()->back()
-                ->with('type', 'error')
-                ->with('message', 'Jadwal bentrok! Guru atau Kelas sudah memiliki jadwal lain pada waktu tersebut.');
+                return redirect()->back()->withInput()
+                    ->with('type', 'error')
+                    ->with('message', 'Jadwal bentrok! Guru atau Kelas sudah memiliki jadwal lain pada waktu tersebut.');
             }
 
             $jadwal->update($validated);
 
-            return redirect()->route('jadwal.index', $request->query())
+            return redirect()->back(fallback: route('jadwal.index', $request->query()))
                 ->with('type', 'success')
                 ->with('message', 'Jadwal berhasil diperbarui');
         } catch (\Exception $e) {
-            Log::error('Error updating jadwal: ' . $e->getMessage());
-            return redirect()->back()->with('type', 'error')->with('message', 'Gagal memperbarui jadwal: ' . $e->getMessage());
+            Log::error('Error updating jadwal: '.$e->getMessage());
+
+            return redirect()->back()->withInput()->with('type', 'error')->with('message', 'Perubahan jadwal belum dapat disimpan. Isian Anda tetap tersedia. Silakan coba lagi atau hubungi operator.');
         }
     }
 
@@ -211,22 +238,25 @@ class JadwalController extends Controller
             $jadwal = Jadwal::findOrFail($id);
             $jadwal->delete();
 
-            return redirect()->route('jadwal.index', request()->query())
+            return redirect()->back(fallback: route('jadwal.index', request()->query()))
                 ->with('success', 'Jadwal berhasil dihapus');
         } catch (\Exception $e) {
-            Log::error('Error deleting jadwal: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal menghapus jadwal: ' . $e->getMessage());
+            Log::error('Error deleting jadwal: '.$e->getMessage());
+
+            return redirect()->back()->with('error', 'Jadwal belum dapat dihapus. Silakan coba lagi atau hubungi operator.');
         }
     }
 
     public function getJadwalJson()
     {
         try {
-            $jadwal = Jadwal::with(['mapel','kelas','pegawai'])->get();
+            $jadwal = Jadwal::with(['mapel', 'kelas', 'pegawai'])->get();
+
             return response()->json(['data' => $jadwal], 200);
         } catch (\Exception $e) {
-            Log::error('Error fetching jadwal JSON: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
+            Log::error('Error fetching jadwal JSON: '.$e->getMessage());
+
+            return response()->json(['error' => 'Data jadwal belum dapat dimuat. Silakan coba lagi atau hubungi operator.'], 500);
         }
     }
 
@@ -235,97 +265,80 @@ class JadwalController extends Controller
         $ids = $request->input('ids');
 
         if (empty($ids)) {
-            return redirect()->back()->with('error', 'Tidak ada ID yang dikirim');
+            return redirect()->back()->with('error', 'Pilih setidaknya satu jadwal yang akan dihapus.');
         }
 
         try {
             Jadwal::whereIn('id', $ids)->delete();
+
             return redirect()->back()->with('success', 'Jadwal berhasil dihapus');
         } catch (\Exception $e) {
-            Log::error('Error bulk deleting jadwal: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal menghapus jadwal: ' . $e->getMessage());
+            Log::error('Error bulk deleting jadwal: '.$e->getMessage());
+
+            return redirect()->back()->with('error', 'Jadwal belum dapat dihapus. Silakan coba lagi atau hubungi operator.');
         }
     }
 
     public function updateAll(Request $request)
-{
-    try {
-        $ids         = $request->input('id', []);
-        $kelas_ids   = $request->input('kelas_id', []);
-        $haris       = $request->input('hari', []);
-        $mapel_ids   = $request->input('mapel_id', []);
-        $pegawai_ids = $request->input('pegawai_id', []);
-        $jams        = $request->input('jam', []);
-        $mulais      = $request->input('mulai', []);
-        $akhirs      = $request->input('akhir', []);
-        $kets        = $request->input('ket', []);
+    {
+        $request->merge(['_jadwal_bulk' => true]);
+        $request->validate([
+            'id' => 'required|array|min:1',
+            'id.*' => 'nullable|integer|exists:jadwals,id',
+            'tahun_id' => 'required|exists:tahuns,id',
+        ], self::VALIDATION_MESSAGES);
 
-        $bentrokList = [];
+        try {
+            DB::transaction(function () use ($request): void {
+                foreach ($request->input('id') as $index => $id) {
+                    $data = ['tahun_id' => $request->input('tahun_id')];
+                    foreach (['kelas_id', 'hari', 'mapel_id', 'pegawai_id', 'jam', 'mulai', 'akhir', 'ket'] as $field) {
+                        $data[$field] = $request->input($field.'.'.$index);
+                    }
 
-        foreach ($ids as $index => $id) {
-            $data = [
-                'kelas_id'   => $kelas_ids[$index] ?? null,
-                'hari'       => $haris[$index] ?? null,
-                'mapel_id'   => $mapel_ids[$index] ?? null,
-                'pegawai_id' => $pegawai_ids[$index] ?? null,
-                'jam'        => $jams[$index] ?? null,
-                'mulai'      => $mulais[$index] ?? null,
-                'akhir'      => $akhirs[$index] ?? null,
-                'ket'        => $kets[$index] ?? null,
-                'tahun_id'   => $request->input('tahun_id'), // pastikan tahun_id tersedia
-            ];
+                    $validator = Validator::make($data, $this->jadwalRules(), self::VALIDATION_MESSAGES);
+                    if ($validator->fails()) {
+                        $errors = [];
+                        foreach ($validator->errors()->messages() as $field => $messages) {
+                            $errors[$field.'.'.$index] = $messages;
+                        }
+                        throw ValidationException::withMessages($errors);
+                    }
 
-            // Validasi minimal data wajib
-            if (!$data['kelas_id'] || !$data['mapel_id'] || !$data['pegawai_id'] || !$data['hari']) {
-                Log::warning("Data tidak lengkap untuk index $index: " . json_encode($data));
-                continue;
-            }
+                    if (Jadwal::conflict($data, $id)->exists()) {
+                        throw ValidationException::withMessages([
+                            'id.'.$index => 'Baris '.($index + 1).': guru atau kelas bentrok pada waktu tersebut. Belum ada baris yang disimpan.',
+                        ]);
+                    }
 
-            // Validasi bentrok jadwal
-            if (Jadwal::conflict($data, $id)->exists()) {
-                $bentrokList[] = $data;
-                continue;
-            }
-
-            if (!empty($id)) {
-                Jadwal::where('id', $id)->update($data);
-            } else {
-                Jadwal::create($data);
-            }
-        }
-
-        if (count($bentrokList) > 0) {
-            $pesanBentrok = "Beberapa jadwal gagal diperbarui karena bentrok:\n";
-
-            foreach ($bentrokList as $jadwal) {
-                // Ambil info nama agar lebih manusiawi
-                $pName = Pegawai::find($jadwal['pegawai_id'])->name ?? 'N/A';
-                $kName = Kelas::find($jadwal['kelas_id'])->kelas ?? 'N/A';
-                $pesanBentrok .= "• $pName ($kName) pada {$jadwal['hari']} ({$jadwal['mulai']}–{$jadwal['akhir']})\n";
-            }
+                    if ($id) {
+                        Jadwal::findOrFail($id)->update($data);
+                    } else {
+                        Jadwal::create($data);
+                    }
+                }
+            });
 
             return redirect()->back()
-                ->with('type', 'warning')
-                ->with('message', $pesanBentrok);
-        }
+                ->with('type', 'success')
+                ->with('message', 'Data jadwal berhasil diperbarui.');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Error bulk updating jadwal: '.$e->getMessage());
 
-        return redirect()->back()
-            ->with('type', 'success')
-            ->with('message', 'Data jadwal berhasil diperbarui.');
-    } catch (\Exception $e) {
-        Log::error('Error bulk updating jadwal: ' . $e->getMessage());
-        return redirect()->back()
-            ->with('type', 'error')
-            ->with('message', 'Gagal memperbarui data jadwal: ' . $e->getMessage());
+            return redirect()->back()->withInput()
+                ->with('type', 'error')
+                ->with('message', 'Data jadwal belum dapat disimpan. Isian Anda tetap tersedia. Silakan coba lagi atau hubungi operator.');
+        }
     }
-}
 
     public function export(Request $request)
     {
         $ids = $request->input('ids');
         $type = $request->input('type');
 
-        if ($type === 'selected' && !empty($ids)) {
+        if ($type === 'selected' && ! empty($ids)) {
             // IDs come as "1,2,3" string from the hidden input
             return Excel::download(new JadwalExport($ids), 'jadwal_selected.xlsx');
         }
@@ -339,15 +352,17 @@ class JadwalController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:csv,xls,xlsx'
-        ]);
+            'file' => 'required|mimes:csv,xls,xlsx',
+        ], self::VALIDATION_MESSAGES);
 
         try {
             Excel::import(new JadwalImport, $request->file('file'));
-            return redirect()->route('jadwal.index')->with('success', 'Data Jadwal berhasil diimport');
+
+            return redirect()->back(fallback: route('jadwal.index'))->with('success', 'Data Jadwal berhasil diimport');
         } catch (\Exception $e) {
-            Log::error('Import error: ' . $e->getMessage());
-            return redirect()->back()->with('type', 'error')->with('message', 'Gagal import data: ' . $e->getMessage());
+            Log::error('Import error: '.$e->getMessage());
+
+            return redirect()->back()->with('type', 'error')->with('message', 'Data jadwal gagal diimpor. Periksa isi dan format berkas, lalu coba lagi. Jika masalah berlanjut, hubungi operator.');
         }
     }
 
@@ -376,30 +391,30 @@ class JadwalController extends Controller
         // Eager load jadwals with filters
         $query->with(['jadwals' => function ($q) use ($tahunIDUntukProses, $filter_kelas) {
             $q->where('tahun_id', $tahunIDUntukProses);
-            if (!empty($filter_kelas)) {
+            if (! empty($filter_kelas)) {
                 $q->where('kelas_id', $filter_kelas);
             }
             $q->with(['mapel', 'kelas']);
         }]);
 
         // 3. Apply Search on Pegawai
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('nuptk', 'like', "%{$search}%");
+                    ->orWhere('nuptk', 'like', "%{$search}%");
             });
         }
 
         // 4. Optimization: Calculate total hours directly in Database
         $query->withSum(['jadwals as total_menit' => function ($q) use ($tahunIDUntukProses, $filter_kelas) {
             $q->where('tahun_id', $tahunIDUntukProses);
-            if (!empty($filter_kelas)) {
+            if (! empty($filter_kelas)) {
                 $q->where('kelas_id', $filter_kelas);
             }
             // Logic: SUM(TIMESTAMPDIFF(MINUTE, mulai, akhir))
             $q->select(DB::raw('SUM(TIMESTAMPDIFF(MINUTE, mulai, akhir))'));
         }], 'total_menit');
-        
+
         $pegawais = $query->paginate($perpage)->appends($request->query());
 
         // 5. Build presentation details
@@ -410,10 +425,10 @@ class JadwalController extends Controller
             foreach ($guru->jadwals as $jadwal) {
                 $start = strtotime($jadwal->mulai);
                 $end = strtotime($jadwal->akhir);
-                
+
                 if ($end > $start) {
                     $hours = ($end - $start) / 3600;
-                    
+
                     $mapel = $jadwal->mapel->mapel ?? 'Unknown';
                     $kelas = $jadwal->kelas->kelas ?? 'Unknown';
                     $key = "{$mapel} - {$kelas}";
@@ -424,8 +439,8 @@ class JadwalController extends Controller
 
             // The total is now taken from database result (total_menit / 60)
             $guru->total_jam_mengajar = round(($guru->total_menit ?? 0) / 60, 1);
-            
-            foreach($details as $k => $v) {
+
+            foreach ($details as $k => $v) {
                 $details[$k] = round($v, 1);
             }
             $guru->detail_mengajar = $details;
@@ -443,19 +458,20 @@ class JadwalController extends Controller
             'pegawais'
         ));
     }
+
     public function presensiHarianGuru(Request $request)
     {
         $date = $request->input('date', now()->toDateString());
-        
+
         // 1. Tentukan Hari (Bahasa Indonesia)
         $dayName = \Carbon\Carbon::parse($date)->locale('id')->isoFormat('dddd');
-        
+
         // 2. Ambil Tahun Aktif (Default logic similar to index)
         $activeYear = Cache::remember('active_year_default', 3600, function () {
             return Tahun::aktif()->first();
         });
-        
-        if (!$activeYear) {
+
+        if (! $activeYear) {
             return redirect()->back()->with('error', 'Tidak ada tahun ajaran aktif.');
         }
 
@@ -467,7 +483,7 @@ class JadwalController extends Controller
 
         // Filter Kelas Logic
         $filter_kelas = $request->input('filter_kelas');
-        if($filter_kelas) {
+        if ($filter_kelas) {
             $query->where('kelas_id', $filter_kelas);
         }
 
@@ -477,7 +493,7 @@ class JadwalController extends Controller
         $viewMode = $request->input('view_mode', 'all');
 
         if ($user->role === 'guru') {
-            if (!$user->pegawai_id) {
+            if (! $user->pegawai_id) {
                 return redirect()->back()->with('error', 'Akun anda tidak terhubung dengan data pegawai.');
             }
 
@@ -488,20 +504,20 @@ class JadwalController extends Controller
                 ->exists();
 
             // Jika BUKAN piket, maka hanya bisa lihat jadwal sendiri
-            if (!$isPiket) {
+            if (! $isPiket) {
                 $query->where('pegawai_id', $user->pegawai_id);
                 $viewMode = 'mine';
             } else {
                 // Guru Piket
                 if ($viewMode === 'mine') {
-                   $query->where('pegawai_id', $user->pegawai_id);
+                    $query->where('pegawai_id', $user->pegawai_id);
                 }
             }
         } else {
-             // Admin/Operator/Kepala
-             if ($viewMode === 'mine' && $user->pegawai_id) {
-                 $query->where('pegawai_id', $user->pegawai_id);
-             }
+            // Admin/Operator/Kepala
+            if ($viewMode === 'mine' && $user->pegawai_id) {
+                $query->where('pegawai_id', $user->pegawai_id);
+            }
         }
 
         $jadwals = $query->get();
@@ -517,6 +533,7 @@ class JadwalController extends Controller
         $jadwals->transform(function ($jadwal) use ($logbooks) {
             $jadwal->logbook = $logbooks->get($jadwal->id);
             $jadwal->status_presensi = $jadwal->logbook ? 'sudah' : 'belum';
+
             return $jadwal;
         });
 
@@ -525,5 +542,4 @@ class JadwalController extends Controller
 
         return view('jadwal.presensiHarianGuru', compact('jadwals', 'date', 'dayName', 'activeYear', 'isPiket', 'viewMode', 'kelas', 'filter_kelas'));
     }
-
 }

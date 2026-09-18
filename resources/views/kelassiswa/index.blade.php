@@ -1,9 +1,25 @@
 <x-layout.layout>
+    @php
+        $initialAssignment = isset($pemetaan)
+            ? $pemetaan->only(['id', 'siswa_id', 'kelas_id', 'tahun_id', 'ket'])
+            : null;
+    @endphp
     <x-breadcrumb :breadcrumbs="[
         ['name' => 'Home', 'href' => route('dashboard.index')],
         ['name' => 'Akademik', 'href' => '#'],
         ['name' => 'Rombongan Belajar', 'href' => route('kelassiswa.index')],
     ]" />
+
+    @if ($errors->any())
+        <x-alerts.warning title="Data belum disimpan." class="border border-yellow-200 dark:border-yellow-800">
+            <p class="mt-1">Periksa isian berikut; isian Anda tetap tersedia.</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5">
+                @foreach ($errors->all() as $message)
+                    <li>{{ $message }}</li>
+                @endforeach
+            </ul>
+        </x-alerts.warning>
+    @endif
 
     {{-- Main Content Container (Style Jadwal) --}}
     <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-base border border-gray-200 dark:border-gray-700">
@@ -50,6 +66,7 @@
             <form action="{{ isset($pemetaan) ? route('kelassiswa.update', $pemetaan->id) : route('kelassiswa.store') }}"
                 id="InputSiswa" method="POST">
                 @csrf
+                <input type="hidden" name="_kelassiswa_form" value="1">
                 @isset($pemetaan)
                     @method('PUT')
                 @endisset
@@ -67,7 +84,7 @@
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white transition-all">
                                 <option value="">-- Pilih Tahun Ajaran --</option>
                                 @foreach ($tahun as $t)
-                                    <option value="{{ $t->id }}">
+                                    <option value="{{ $t->id }}" @selected(old('tahun_id', old('tahun', request('filter_tahun'))) == $t->id)>
                                         {{ $t->tahun }} - {{ $t->semester }}
                                     </option>
                                 @endforeach
@@ -86,61 +103,7 @@
 
                 <!-- Repeater Container -->
                 <div id="repeater-container" class="space-y-3 mb-6">
-                    <!-- Row 1 (Default) -->
-                    <div class="repeater-row grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all hover:border-blue-300 dark:hover:border-blue-700 group">
-                        <!-- Siswa -->
-                        <div class="md:col-span-5">
-                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Siswa</label>
-                            <x-form.searchable-select
-                                id="siswa-initial"
-                                name="siswa_id[]"
-                                aria-label="Nama siswa"
-                                placeholder="Pilih Siswa"
-                                search-placeholder="Cari nama atau NIPD siswa..."
-                                required
-                            >
-                                @foreach ($siswa as $s)
-                                    <option value="{{ $s->id }}">{{ $s->nama }} - {{ $s->nipd }}</option>
-                                @endforeach
-                            </x-form.searchable-select>
-                        </div>
-                        
-                        <!-- Kelas -->
-                        <div class="md:col-span-4">
-                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Kelas</label>
-                            <x-form.searchable-select
-                                id="kelas-initial"
-                                name="kelas_id[]"
-                                aria-label="Kelas"
-                                placeholder="Pilih Kelas"
-                                search-placeholder="Cari kelas..."
-                                required
-                            >
-                                @foreach ($kelas as $k)
-                                    <option value="{{ $k->id }}">{{ $k->kelas }}</option>
-                                @endforeach
-                            </x-form.searchable-select>
-                        </div>
-
-                        <!-- Keterangan -->
-                        <div class="md:col-span-2">
-                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Status</label>
-                            <select name="ket[]" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                                <option value="aktif">Aktif</option>
-                                <option value="berhenti">Berhenti</option>
-                                <option value="naik">Naik Kelas</option>
-                                <option value="tinggal">Tidak Naik Kelas</option>
-                            </select>
-                        </div>
-
-                        <!-- Delete Button -->
-                        <div class="md:col-span-1 flex justify-center items-center h-full pt-1">
-                            <button type="button" onclick="removeRow(this)" class="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100" title="Hapus Baris">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </div>
-                    </div>
+                    @include('kelassiswa._form-row', ['rowKey' => 'initial'])
                 </div>
 
                 <!-- Add Row Button -->
@@ -153,52 +116,7 @@
 
                 <!-- Template for Javascript cloning (Hidden) -->
                 <template id="row-template">
-                    <div class="repeater-row grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all hover:border-blue-300 dark:hover:border-blue-700 group animate-fade-in-down">
-                        <div class="md:col-span-5">
-                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Siswa</label>
-                            <x-form.searchable-select
-                                id="siswa-row-__ROW__"
-                                name="siswa_id[]"
-                                aria-label="Nama siswa"
-                                placeholder="Pilih Siswa"
-                                search-placeholder="Cari nama atau NIPD siswa..."
-                                required
-                            >
-                                @foreach ($siswa as $s)
-                                    <option value="{{ $s->id }}">{{ $s->nama }} - {{ $s->nipd }}</option>
-                                @endforeach
-                            </x-form.searchable-select>
-                        </div>
-                        <div class="md:col-span-4">
-                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Kelas</label>
-                            <x-form.searchable-select
-                                id="kelas-row-__ROW__"
-                                name="kelas_id[]"
-                                aria-label="Kelas"
-                                placeholder="Pilih Kelas"
-                                search-placeholder="Cari kelas..."
-                                required
-                            >
-                                @foreach ($kelas as $k)
-                                    <option value="{{ $k->id }}">{{ $k->kelas }}</option>
-                                @endforeach
-                            </x-form.searchable-select>
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:hidden">Status</label>
-                            <select name="ket[]" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                                <option value="aktif">Aktif</option>
-                                <option value="do">Berhenti</option>
-                                <option value="naik">Naik Kelas</option>
-                                <option value="tinggal">Tidak Naik Kelas</option>
-                            </select>
-                        </div>
-                        <div class="md:col-span-1 flex justify-center items-center h-full pt-1">
-                            <button type="button" onclick="removeRow(this)" class="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100" title="Hapus Baris">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </div>
-                    </div>
+                    @include('kelassiswa._form-row', ['rowKey' => '__ROW__'])
                 </template>
 
                 <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -413,7 +331,7 @@
                                     {{ $pemetaan->tahun->tahun }}-{{ $pemetaan->tahun->semester }}
                                 </td>
                                 <td class="px-4 py-4">
-                                    <select onchange="updateStatus({{ $pemetaan->id }}, this)"
+                                    <select data-saved-status="{{ $pemetaan->ket }}" onchange="updateStatus({{ $pemetaan->id }}, this)"
                                         class="text-xs rounded-lg block w-full p-2 border transition-colors duration-200 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                         <option value="aktif" class="text-green-600 bg-green-50" {{ $pemetaan->ket == 'aktif' ? 'selected' : '' }}>Aktif</option>
                                         <option value="do" class="text-red-600 bg-red-50" {{ $pemetaan->ket == 'do' ? 'selected' : '' }}>Berhenti</option>
@@ -502,14 +420,6 @@
 
         {{-- Script JS --}}
         <script>
-            // Handle perPage dropdown change
-            const perPageSelect = document.querySelector('select[name="per_page"]');
-            if(perPageSelect) {
-                perPageSelect.addEventListener('change', function() {
-                    this.form.submit();
-                });
-            }
-
             // DOM Elements
             const panel = document.getElementById('InputSiswaPanel');
             const form = document.getElementById('InputSiswa');
@@ -517,11 +427,15 @@
             const container = document.getElementById('repeater-container');
             const template = document.getElementById('row-template');
             const panelTitle = document.getElementById('panelTitle');
+            const yearInput = document.getElementById('tahun');
+            const addRowButton = document.querySelector('button[onclick="addRow()"]');
+            const updateUrl = id => "{{ route('kelassiswa.update', '__ID__') }}".replace('__ID__', id);
+            let editingId = null;
             let studentRowSequence = 0;
 
             // --- Repeater Logic ---
 
-            function addRow() {
+            function addRow(values = {}, isEdit = false) {
                 if (!template || !container) {
                     return;
                 }
@@ -537,6 +451,14 @@
                     });
                 });
 
+                row.querySelectorAll('select[name]').forEach(select => {
+                    const field = select.name.replace(/\[\]$/, '');
+                    if (Object.hasOwn(values, field)) {
+                        select.value = values[field] ?? '';
+                    }
+                    select.name = isEdit ? field : `${field}[]`;
+                });
+                row.querySelector('button[onclick="removeRow(this)"]').style.display = isEdit ? 'none' : '';
                 container.appendChild(clone);
                 row.dispatchEvent(new CustomEvent('searchable-select:init', { bubbles: true }));
                 return row;
@@ -563,193 +485,95 @@
                 }
             }
 
-            // --- Modal/Panel Logic ---
+            function setFormMode(id = null) {
+                editingId = id;
+                const isEdit = id !== null;
+                form.action = isEdit ? updateUrl(id) : "{{ route('kelassiswa.store') }}";
+
+                let methodInput = form.querySelector('input[name="_method"]');
+                if (isEdit && !methodInput) {
+                    methodInput = document.createElement('input');
+                    methodInput.type = 'hidden';
+                    methodInput.name = '_method';
+                    form.appendChild(methodInput);
+                }
+                if (isEdit) {
+                    methodInput.value = 'PUT';
+                } else {
+                    methodInput?.remove();
+                }
+
+                panelTitle.textContent = isEdit ? 'Edit Data Siswa' : 'Tambah Data Rombongan Belajar';
+                submitButton.textContent = isEdit ? 'Simpan Perubahan' : 'Simpan Semua';
+                addRowButton.style.display = isEdit ? 'none' : 'flex';
+            }
 
             function tambah() {
-                // 1. Reset Form
-                if(form) {
+                if (editingId !== null) {
                     form.reset();
-                    form.action = "{{ route('kelassiswa.store') }}";
-                    
-                    const methodInput = form.querySelector('input[name="_method"]');
-                    if (methodInput) methodInput.remove();
-
-                    const inputTahun = document.getElementById('tahun');
-                    if (inputTahun) {
-                        inputTahun.name = 'tahun_id';
-                    }
-                }
-
-                if(panelTitle) panelTitle.innerText = "Tambah Data (Bulk Input)";
-                if(submitButton) {
-                    submitButton.innerText = "Simpan Semua";
-                    submitButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
-                    submitButton.classList.add('bg-green-600', 'hover:bg-green-700');
-                }
-
-                // 2. Reset Repeater
-                if(container) {
                     clearRows();
-                    addRow(); 
+                    addRow();
                 }
-
-                // 3. Show Add Row Button
-                const addRowBtn = document.querySelector('button[onclick="addRow()"]');
-                if(addRowBtn) addRowBtn.style.display = 'flex';
-
-                // 4. Show Panel
-                if(panel) panel.classList.remove('hidden');
-                
-                // Show 'tambah' in previous code was 'muncul'. 
-                // Previous code: onclick="muncul()"
-                // I changed onclick to 'tambah()' in the Header Section (Part 1).
+                setFormMode();
+                panel.classList.remove('hidden');
             }
-            
-            // Backward compatibility if user clicks old button maybe? 
-            // I updated the button to onclick="tambah()" in Part 1.
-            function muncul() { tambah(); }
 
-            function edit(id, siswa_id, kelas_id, tahun_id, ket) {
-                // 1. Setup Form
-                if(form) {
-                    form.action = `/kelassiswa/${id}`;
-                    
-                    let methodInput = form.querySelector('input[name="_method"]');
-                    if (!methodInput) {
-                        methodInput = document.createElement('input');
-                        methodInput.type = 'hidden';
-                        methodInput.name = '_method';
-                        methodInput.value = 'PUT';
-                        form.appendChild(methodInput);
-                    } else {
-                        methodInput.value = 'PUT';
-                    }
-                }
-
-                if(panelTitle) panelTitle.innerText = "Edit Data Siswa";
-                if(submitButton) {
-                    submitButton.innerText = "Update Data";
-                    submitButton.classList.remove('bg-green-600', 'hover:bg-green-700');
-                    submitButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
-                }
-
-                // 2. Prepare Repeater (Single Row)
-                if(container) {
-                    clearRows();
-                    addRow(); 
-                    
-                    const row = container.querySelector('.repeater-row');
-                    
-                    if(row) {
-                        // 3. Populate & Rename for Single Update
-                        const inputTahun = document.getElementById('tahun');
-                        if(inputTahun) {
-                            inputTahun.name = 'tahun'; 
-                            inputTahun.value = tahun_id;
-                        }
-
-                        const inputSiswa = row.querySelector('select[name="siswa_id[]"]');
-                        if(inputSiswa) {
-                            inputSiswa.name = 'siswa'; 
-                            inputSiswa.value = siswa_id;
-                            inputSiswa.dispatchEvent(new Event('change', { bubbles: true }));
-                        }
-
-                        const inputKelas = row.querySelector('select[name="kelas_id[]"]');
-                        if(inputKelas) {
-                            inputKelas.name = 'kelas'; 
-                            inputKelas.value = kelas_id;
-                            inputKelas.dispatchEvent(new Event('change', { bubbles: true }));
-                        }
-
-                        const inputKet = row.querySelector('select[name="ket[]"]');
-                        if(inputKet) {
-                            inputKet.name = 'ket'; 
-                            inputKet.value = ket;
-                        }
-                        
-                        // Hide Remove Button in Row
-                        const removeBtn = row.querySelector('button[onclick="removeRow(this)"]');
-                        if(removeBtn) removeBtn.style.display = 'none';
-                    }
-                }
-
-                // 4. Hide Add Row Button
-                const addRowBtn = document.querySelector('button[onclick="addRow()"]');
-                if(addRowBtn) addRowBtn.style.display = 'none';
-                
-                // 5. Show Panel
-                if(panel) panel.classList.remove('hidden');
+            function edit(id, studentId, classId, yearId, status) {
+                setFormMode(id);
+                yearInput.value = yearId;
+                clearRows();
+                addRow({ siswa_id: studentId, kelas_id: classId, ket: status }, true);
+                panel.classList.remove('hidden');
             }
 
             function tutup() {
                 container.querySelectorAll('[data-select-native]').forEach(select => {
                     select.searchableSelect?.close();
                 });
-                if(panel) panel.classList.add('hidden');
-                
-                // Reset to default name for bulk input
-                const inputTahun = document.getElementById('tahun');
-                if(inputTahun) inputTahun.name = 'tahun_id';
+                panel.classList.add('hidden');
             }
 
-            // --- Inline Status Update (Fetch API) ---
-            function updateStatus(id, selectElement) {
-                const statusBaru = selectElement.value;
-                const msgSpan = document.getElementById(`status-msg-${id}`);
+            function showStatusMessage(id, message, isError = false) {
+                const messageElement = document.getElementById(`status-msg-${id}`);
+                messageElement.textContent = message;
+                messageElement.classList.remove('hidden', 'text-green-600', 'text-red-600', 'text-gray-500');
+                messageElement.classList.add(isError ? 'text-red-600' : 'text-green-600');
+            }
 
-                // Update Color Immediately
-                updateSelectColor(selectElement);
+            async function updateStatus(id, selectElement) {
+                const previousStatus = selectElement.dataset.savedStatus;
+                selectElement.disabled = true;
+                showStatusMessage(id, 'Menyimpan...');
 
-                // Show "Saving..." indicator
-                if(msgSpan) {
-                    msgSpan.innerText = 'Menyimpan...';
-                    msgSpan.classList.remove('hidden', 'text-green-600', 'text-red-600');
-                    msgSpan.classList.add('text-gray-500');
+                try {
+                    const response = await fetch(updateUrl(id), {
+                        method: 'PUT',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        },
+                        body: JSON.stringify({ ket: selectElement.value }),
+                    });
+                    const result = await response.json();
+                    if (!response.ok || !result.data) {
+                        const validationMessage = Object.values(result.errors ?? {}).flat()[0];
+                        throw new Error(validationMessage ?? result.message ?? 'Perubahan status gagal disimpan.');
+                    }
+
+                    selectElement.dataset.savedStatus = result.data.ket;
+                    selectElement.value = result.data.ket;
+                    showStatusMessage(id, 'Tersimpan!');
+                } catch (error) {
+                    selectElement.value = previousStatus;
+                    const message = error instanceof SyntaxError || error instanceof TypeError
+                        ? 'Status belum tersimpan. Periksa koneksi atau muat ulang halaman, lalu coba lagi.'
+                        : error.message;
+                    showStatusMessage(id, message, true);
+                } finally {
+                    updateSelectColor(selectElement);
+                    selectElement.disabled = false;
                 }
-                selectElement.disabled = true; // Prevent multiple changes while saving
-
-                fetch(`/kelassiswa/${id}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        _method: 'PUT',
-                        ket: statusBaru
-                    })
-                })
-                .then(response => {
-                    if (response.ok) {
-                        // Success Feedback
-                        if(msgSpan) {
-                            msgSpan.innerText = 'Tersimpan!';
-                            msgSpan.classList.remove('text-gray-500');
-                            msgSpan.classList.add('text-green-600');
-                            
-                            // Hide message after 2 seconds
-                            setTimeout(() => {
-                                msgSpan.classList.add('hidden');
-                            }, 2000);
-                        }
-                    } else {
-                        // Error Feedback
-                        throw new Error('Gagal menyimpan');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert("Gagal menyimpan perubahan status. Periksa koneksi internet.");
-                    if(msgSpan) {
-                        msgSpan.innerText = 'Gagal!';
-                        msgSpan.classList.remove('text-gray-500');
-                        msgSpan.classList.add('text-red-600');
-                    }
-                })
-                .finally(() => {
-                    selectElement.disabled = false; // Re-enable select
-                });
             }
 
             // Function to set color based on value
@@ -829,6 +653,28 @@
 
                 window.location.href = url;
             }
+            function restoreForm(input, initialAssignment) {
+                if (input._kelassiswa_form && input._kelassiswa_edit_id) {
+                    edit(input._kelassiswa_edit_id, input.siswa_id ?? input.siswa ?? '',
+                        input.kelas_id ?? input.kelas ?? '', input.tahun_id ?? input.tahun ?? '', input.ket ?? '');
+                } else if (input._kelassiswa_form && Array.isArray(input.siswa_id)) {
+                    setFormMode();
+                    clearRows();
+                    input.siswa_id.forEach((studentId, index) => {
+                        addRow({ siswa_id: studentId, kelas_id: input.kelas_id?.[index] ?? '', ket: input.ket?.[index] ?? '' });
+                    });
+                    yearInput.value = input.tahun_id ?? '';
+                    panel.classList.remove('hidden');
+                } else if (initialAssignment) {
+                    edit(initialAssignment.id, initialAssignment.siswa_id, initialAssignment.kelas_id,
+                        initialAssignment.tahun_id, initialAssignment.ket);
+                }
+            }
+
+            restoreForm(
+                {{ Illuminate\Support\Js::from(session()->getOldInput()) }},
+                {{ Illuminate\Support\Js::from($initialAssignment) }}
+            );
         </script>
 
 </x-layout.layout>

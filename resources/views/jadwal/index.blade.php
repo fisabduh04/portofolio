@@ -5,7 +5,16 @@
         ['name' => 'Jadwal Mata Pelajaran', 'href' => route('jadwal.index')],
     ]" />
 
-
+    @if ($errors->any())
+        <x-alerts.warning title="Data belum disimpan." class="border border-yellow-200 dark:border-yellow-800">
+            <p class="mt-1">Periksa isian berikut; isian Anda tetap tersedia.</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5">
+                @foreach ($errors->all() as $message)
+                    <li>{{ $message }}</li>
+                @endforeach
+            </ul>
+        </x-alerts.warning>
+    @endif
 
     {{-- Alert Bentrok Jadwal --}}
     @if (isset($bentrokJadwalList) && $bentrokJadwalList->isNotEmpty())
@@ -95,7 +104,8 @@
 
         {{-- Filters & Search Section --}}
         <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 mb-6">
-             <form action="/jadwal" method="GET" id="searchForm" class="flex flex-wrap items-center w-full gap-3">
+             <form action="{{ route('jadwal.index') }}" method="GET" id="searchForm" class="flex flex-wrap items-center w-full gap-3">
+                    <input type="hidden" name="per_page" value="{{ $perpage }}">
                     {{-- Search --}}
                     <div class="relative w-full md:w-auto md:flex-1">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -111,7 +121,7 @@
                     {{-- Filter Tahun --}}
                     <select id="tahun" name="filter_tahun" onchange="this.form.submit()"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full md:w-64 p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <option value="" {{ request('filter_tahun') == '' ? 'selected' : '' }}>Semua Tahun</option>
+                        <option value="" {{ empty($filter_tahun) || $filter_tahun === 'all' ? 'selected' : '' }}>Semua Tahun Aktif</option>
                         @foreach ($tahun as $t)
                             <option value="{{ $t->id }}" {{ request('filter_tahun') == $t->id ? 'selected' : '' }}>
                                 {{ $t->tahun }} - {{ $t->semester }}
@@ -122,6 +132,7 @@
                     {{-- Filter Kelas --}}
                     <div class="w-full md:w-40">
                         <x-form.searchable-select
+                                    :restore-old-input="false"
                             id="kelas"
                             name="filter_kelas"
                             size="sm"
@@ -293,6 +304,7 @@
                             <td class="min-w-40 px-2 py-3">
                                  <input type="hidden" name="id[]" value="" form="bulkFormJadwal">
                                  <x-form.searchable-select
+                                    :restore-old-input="false"
                                      id="jadwal-kelas-new-__ROW__"
                                      size="sm"
                                      name="kelas_id[]"
@@ -312,6 +324,7 @@
                             </td>
                             <td class="min-w-48 px-2 py-3">
                                 <x-form.searchable-select
+                                    :restore-old-input="false"
                                     id="jadwal-mapel-new-__ROW__"
                                     size="sm"
                                     name="mapel_id[]"
@@ -328,6 +341,7 @@
                             </td>
                              <td class="min-w-48 px-2 py-3">
                                 <x-form.searchable-select
+                                    :restore-old-input="false"
                                     id="jadwal-guru-new-__ROW__"
                                     size="sm"
                                     name="pegawai_id[]"
@@ -352,7 +366,7 @@
                                 </div>
                             </td>
                              <td class="px-2 py-3">
-                                <input type="text" name="ket" form="bulkFormJadwal" placeholder="Status..." class="table-form-control">
+                                <input type="text" name="ket[]" form="bulkFormJadwal" placeholder="Status..." class="table-form-control">
                             </td>
                         </tr>
                     </template>
@@ -411,12 +425,26 @@
                             </td>
                         </tr>
 
+                        @php
+                            $restoreEdit = (string) old('_jadwal_edit_id', '') === (string) $j->id;
+                            $edit = [];
+                            foreach (['tahun_id', 'kelas_id', 'hari', 'mapel_id', 'pegawai_id', 'jam', 'ket'] as $field) {
+                                $edit[$field] = $j->{$field};
+                            }
+                            $edit['mulai'] = \Carbon\Carbon::parse($j->mulai)->format('H:i');
+                            $edit['akhir'] = \Carbon\Carbon::parse($j->akhir)->format('H:i');
+                            if ($restoreEdit) {
+                                foreach ($edit as $field => $value) {
+                                    $edit[$field] = old($field, $value);
+                                }
+                            }
+                        @endphp
                         {{-- Inline Edit Row (Hidden by default) --}}
                          <tr id="edit-form-{{ $j->id }}" class="hidden bg-blue-50 border-b border-default dark:bg-blue-900/10 dark:border-gray-700">
                             <td class="w-10 px-2 py-3">
                                 <form action="{{ route('jadwal.update', $j->id) }}?{{ request()->getQueryString() }}" method="POST" id="form-edit-{{ $j->id }}">
     @csrf @method('PUT')
-    <input type="hidden" name="tahun_id" value="{{ $j->tahun_id }}">
+    <input type="hidden" name="tahun_id" value="{{ $edit['tahun_id'] }}">
 </form>
                             </td>
                             <td class="w-12 px-2 py-3 text-center text-gray-500 dark:text-gray-400">
@@ -430,6 +458,7 @@
                             </td>
                              <td class="min-w-40 px-2 py-3">
                                  <x-form.searchable-select
+                                    :restore-old-input="false"
                                      id="jadwal-kelas-edit-{{ $j->id }}"
                                      size="sm"
                                      name="kelas_id"
@@ -437,21 +466,22 @@
                                      aria-label="Kelas"
                                      placeholder="Pilih Kelas"
                                      search-placeholder="Cari kelas..."
-                                     :selected="$j->kelas_id"
+                                     :selected="$edit['kelas_id']"
                                      :portal="true"
                                  >
                                      @foreach ($kelas as $k)
-                                         <option value="{{ $k->id }}" @selected($j->kelas_id == $k->id)>{{ $k->kelas }}</option>
+                                         <option value="{{ $k->id }}" @selected($edit['kelas_id'] == $k->id)>{{ $k->kelas }}</option>
                                      @endforeach
                                  </x-form.searchable-select>
                              </td>
                              <td class="px-2 py-3">
                                 <select name="hari" form="form-edit-{{ $j->id }}" class="table-form-control">
-                                    @foreach ($hari as $h) <option value="{{ $h }}" @selected($j->hari == $h)>{{ $h }}</option> @endforeach
+                                    @foreach ($hari as $h) <option value="{{ $h }}" @selected($edit['hari'] == $h)>{{ $h }}</option> @endforeach
                                 </select>
                              </td>
                              <td class="min-w-48 px-2 py-3">
                                 <x-form.searchable-select
+                                    :restore-old-input="false"
                                     id="jadwal-mapel-edit-{{ $j->id }}"
                                     size="sm"
                                     name="mapel_id"
@@ -459,16 +489,17 @@
                                     aria-label="Mata pelajaran"
                                     placeholder="Pilih Mapel"
                                     search-placeholder="Cari mata pelajaran..."
-                                    :selected="$j->mapel_id"
+                                    :selected="$edit['mapel_id']"
                                     :portal="true"
                                 >
                                     @foreach ($mapel as $m)
-                                        <option value="{{ $m->id }}" @selected($j->mapel_id == $m->id)>{{ $m->mapel }}</option>
+                                        <option value="{{ $m->id }}" @selected($edit['mapel_id'] == $m->id)>{{ $m->mapel }}</option>
                                     @endforeach
                                 </x-form.searchable-select>
                              </td>
                               <td class="min-w-48 px-2 py-3">
                                 <x-form.searchable-select
+                                    :restore-old-input="false"
                                     id="jadwal-guru-edit-{{ $j->id }}"
                                     size="sm"
                                     name="pegawai_id"
@@ -476,25 +507,25 @@
                                     aria-label="Guru"
                                     placeholder="Pilih Guru"
                                     search-placeholder="Cari nama guru..."
-                                    :selected="$j->pegawai_id"
+                                    :selected="$edit['pegawai_id']"
                                     :portal="true"
                                 >
                                     @foreach ($pegawai as $p)
-                                        <option value="{{ $p->id }}" @selected($j->pegawai_id == $p->id)>{{ $p->name }}</option>
+                                        <option value="{{ $p->id }}" @selected($edit['pegawai_id'] == $p->id)>{{ $p->name }}</option>
                                     @endforeach
                                 </x-form.searchable-select>
                              </td>
                              <td class="px-2 py-3">
-                                <input type="number" name="jam" value="{{ $j->jam }}" form="form-edit-{{ $j->id }}" class="table-form-control">
+                                <input type="number" name="jam" value="{{ $edit['jam'] }}" form="form-edit-{{ $j->id }}" class="table-form-control">
                             </td>
                              <td class="w-px whitespace-nowrap px-2 py-3">
                                 <div class="inline-flex items-center gap-2">
-                                     <input type="time" name="mulai" value="{{ \Carbon\Carbon::parse($j->mulai)->format('H:i') }}" form="form-edit-{{ $j->id }}" class="table-form-control w-24 shrink-0 px-2">
-                                     <input type="time" name="akhir" value="{{ \Carbon\Carbon::parse($j->akhir)->format('H:i') }}" form="form-edit-{{ $j->id }}" class="table-form-control w-24 shrink-0 px-2">
+                                     <input type="time" name="mulai" value="{{ $edit['mulai'] }}" form="form-edit-{{ $j->id }}" class="table-form-control w-24 shrink-0 px-2">
+                                     <input type="time" name="akhir" value="{{ $edit['akhir'] }}" form="form-edit-{{ $j->id }}" class="table-form-control w-24 shrink-0 px-2">
                                 </div>
                             </td>
                              <td class="px-2 py-3">
-                                <input type="text" name="ket" value="{{ $j->ket }}" form="form-edit-{{ $j->id }}" class="table-form-control">
+                                <input type="text" name="ket" value="{{ $edit['ket'] }}" form="form-edit-{{ $j->id }}" class="table-form-control">
                             </td>
                         </tr>
 
@@ -643,7 +674,7 @@
     // 4. Tambah Row Logic
     let jadwalRowSequence = 0;
 
-    function tambah() {
+    function tambah(values = {}) {
         document.getElementById('btnSimpanWrapper')?.classList.remove('hidden');
         document.getElementById('btnSimpanWrapper')?.classList.add('flex');
         const tpl = document.getElementById('tplNewJadwalRow');
@@ -657,6 +688,10 @@
                     element.setAttribute(attribute, element.getAttribute(attribute).replaceAll('__ROW__', rowKey));
                 }
             });
+        });
+        row.querySelectorAll('[name]').forEach(input => {
+            const field = input.name.replace(/\[\]$/, '');
+            if (Object.hasOwn(values, field)) input.value = values[field] ?? '';
         });
         tbody.insertBefore(clone, tbody.firstChild);
         row.dispatchEvent(new CustomEvent('searchable-select:init', { bubbles: true }));
@@ -678,6 +713,20 @@
         clearTimeout(timer);
         timer = setTimeout(() => document.getElementById('searchForm').submit(), 800);
     });
+
+    const oldJadwalInput = {{ Illuminate\Support\Js::from(session()->getOldInput()) }};
+    if (oldJadwalInput._jadwal_bulk && Array.isArray(oldJadwalInput.id)) {
+        for (let index = oldJadwalInput.id.length - 1; index >= 0; index--) {
+            const values = {};
+            ['id', 'kelas_id', 'hari', 'mapel_id', 'pegawai_id', 'jam', 'mulai', 'akhir', 'ket'].forEach(field => {
+                values[field] = oldJadwalInput[field]?.[index] ?? '';
+            });
+            tambah(values);
+        }
+    }
+    if (oldJadwalInput._jadwal_edit_id && document.getElementById('edit-form-' + oldJadwalInput._jadwal_edit_id)) {
+        editRow(oldJadwalInput._jadwal_edit_id);
+    }
 
 </script>
 </x-layout.layout>

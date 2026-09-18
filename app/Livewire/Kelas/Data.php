@@ -2,40 +2,60 @@
 
 namespace App\Livewire\Kelas;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use App\Models\Kelas;
-use App\Models\Jurusan;
-use Livewire\WithFileUploads;
 use App\Imports\KelasImport;
+use App\Models\Jurusan;
+use App\Models\Kelas;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
-
 
 class Data extends Component
 {
-    use WithPagination;
     use WithFileUploads;
+    use WithPagination;
 
     public $kelas = [];
+
     public $i = 0;
+
     public $jurusan = [];
+
     public $ket = [];
+
     public $editkelasindex = null;
+
     public $editkelas;
+
     public $editjurusan;
+
     public $editket;
+
     public $kelas_id = [];
+
     public $kelas_selected_id = [];
+
     public $SelectAll = false;
+
     public $perPage = 10;
-    public $search = "";
+
+    public $search = '';
+
     // Maximum number of items considered safe to render 'All' in the browser
     protected int $maxDisplayAll = 20000;
+
     // Allowed fields for sorting to prevent accidental SQL injection / invalid columns
     protected array $allowedSortFields = ['id', 'kelas', 'jurusan', 'ket'];
+
     public $tombol_tambah = false;
+
     public $file;
+
     public $sortField = 'kelas'; // Default sorting column
+
     public $sortAsc = true; // Default sorting order
 
     public function updatedPerPage($value)
@@ -64,12 +84,12 @@ class Data extends Component
     {
         $query = Kelas::query()->with('jurusan')->select('kelas.*');
 
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $query->where(function ($q) {
-                $q->where('kelas', 'like', '%' . $this->search . '%')
-                  ->orWhereHas('jurusan', function ($subQuery) {
-                      $subQuery->where('jurusan', 'like', '%' . $this->search . '%');
-                  });
+                $q->where('kelas', 'like', '%'.$this->search.'%')
+                    ->orWhereHas('jurusan', function ($subQuery) {
+                        $subQuery->where('jurusan', 'like', '%'.$this->search.'%');
+                    });
             });
         }
 
@@ -77,7 +97,7 @@ class Data extends Component
         if ($this->sortField === 'jurusan') {
             // join is fine here because we still select kelas.* and eager load 'jurusan'
             $query->join('jurusans', 'kelas.jurusan_id', '=', 'jurusans.id')
-                  ->select('kelas.*', 'jurusans.jurusan as jurusan_name');
+                ->select('kelas.*', 'jurusans.jurusan as jurusan_name');
             $orderBy = 'jurusan_name';
         } else {
             $orderBy = $this->sortField;
@@ -144,11 +164,10 @@ class Data extends Component
             ]);
         }
 
-    //
+        //
         $this->dispatch('showToast', message: 'Data berhasil disimpan!', type: 'success');
 
-
-       $this->resetFields();
+        $this->resetFields();
     }
 
     private function resetFields()
@@ -169,6 +188,7 @@ class Data extends Component
         if (! $kelas) {
             $this->dispatch('showToast', message: 'Data tidak ditemukan', type: 'error');
             $this->editkelasindex = null;
+
             return;
         }
         $this->editkelas = $kelas->kelas;
@@ -182,6 +202,7 @@ class Data extends Component
         $data = Kelas::find($useId);
         if (! $data) {
             $this->dispatch('showToast', message: 'Data tidak ditemukan', type: 'error');
+
             return;
         }
         $data->update([
@@ -192,9 +213,7 @@ class Data extends Component
 
         $this->editkelasindex = null;
 
-
         $this->dispatch('showToast', message: 'Data berhasil diupdate!', type: 'warning');
-
 
     }
 
@@ -206,13 +225,43 @@ class Data extends Component
         $this->editket = null;
     }
 
-    public function del()
+    public function del(): void
     {
-        Kelas::destroy($this->kelas_selected_id);
+        Gate::authorize('manage-data-master');
+        abort_unless(auth()->user()->is_active, 403);
+        $this->validate([
+            'kelas_selected_id' => ['array'],
+            'kelas_selected_id.*' => ['required', 'integer', 'distinct', 'exists:kelas,id'],
+        ]);
 
-        $this->dispatch('showToast', message: 'Data berhasil dihapus!', type: 'error');
+        if ($this->kelas_selected_id === []) {
+            $this->dispatch('showToast', message: 'Pilih kelas yang akan dihapus.', type: 'warning');
+
+            return;
+        }
+
+        try {
+            DB::transaction(function (): void {
+                $classes = Kelas::whereKey($this->kelas_selected_id)->orderBy('id')->lockForUpdate()->get();
+                foreach ($classes as $class) {
+                    $class->delete();
+                }
+            });
+        } catch (QueryException $exception) {
+            if (($exception->errorInfo[1] ?? null) === 1451 || str_contains($exception->getMessage(), 'FOREIGN KEY constraint failed')) {
+                $this->dispatch('showToast', message: 'Penghapusan dibatalkan. Kelas masih digunakan oleh penempatan siswa, jadwal, jurnal mengajar, atau wali kelas.', type: 'warning');
+            } else {
+                report($exception);
+                $this->dispatch('showToast', message: 'Data kelas gagal dihapus. Silakan coba kembali.', type: 'error');
+            }
+
+            return;
+        }
+
+        $this->dispatch('showToast', message: 'Data kelas berhasil dihapus.', type: 'success');
 
         $this->resetFields();
+        $this->resetPage();
     }
 
     public function updatedSelectAll($value)
@@ -250,12 +299,12 @@ class Data extends Component
     public function sortBy($field)
     {
         // validate allowed sort fields
-        if (!in_array($field, $this->allowedSortFields)) {
+        if (! in_array($field, $this->allowedSortFields)) {
             return; // ignore unknown fields
         }
 
         $this->sortField = $field;
-        $this->sortAsc = !$this->sortAsc;
+        $this->sortAsc = ! $this->sortAsc;
         $this->resetPage();
     }
 
@@ -266,10 +315,12 @@ class Data extends Component
         ]);
 
     }
+
     public function import()
     {
-        if (!$this->file) {
+        if (! $this->file) {
             $this->dispatch('showToast', message: 'Tidak ada file yang dipilih!', type: 'error');
+
             return;
         }
 
@@ -283,7 +334,7 @@ class Data extends Component
             if ($jumlahSkip > 0) {
                 // Ada baris yang dilewati — beri tahu user secara spesifik
                 $detail = collect($importer->skippedRows)
-                    ->map(fn($r) => "• [{$r['data']}]: {$r['alasan']}")
+                    ->map(fn ($r) => "• [{$r['data']}]: {$r['alasan']}")
                     ->join(' | ');
                 $this->dispatch('showToast',
                     message: "{$jumlahSkip} baris dilewati: {$detail}",
@@ -293,10 +344,9 @@ class Data extends Component
                 $this->dispatch('showToast', message: 'Semua data berhasil diimport!', type: 'success');
             }
         } catch (\Exception $e) {
-            $this->dispatch('showToast', message: 'Import Gagal: ' . $e->getMessage(), type: 'error');
+            $this->dispatch('showToast', message: 'Import Gagal: '.$e->getMessage(), type: 'error');
         }
 
         $this->reset('file');
     }
-
 }
