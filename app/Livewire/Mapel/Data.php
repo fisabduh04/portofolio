@@ -10,6 +10,7 @@ use App\Models\Mapel;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -134,7 +135,7 @@ class Data extends Component
         $this->validate([
             'kode.*' => 'required',
             'mapel.*' => 'required',
-            'jurusan.*' => 'required',
+            'jurusan.*' => ['nullable', 'integer', 'exists:jurusans,id'],
         ]);
 
         try {
@@ -142,7 +143,7 @@ class Data extends Component
                 Mapel::create([
                     'mapel' => $value,
                     'kode' => $this->kode[$key],
-                    'jurusan_id' => $this->jurusan[$key],
+                    'jurusan_id' => ($this->jurusan[$key] ?? '') === '' ? null : $this->jurusan[$key],
                     'ket' => $this->ket[$key],
                 ]);
             }
@@ -179,11 +180,17 @@ class Data extends Component
 
     public function update($id)
     {
+        $this->validate([
+            'editkode' => ['required'],
+            'editmapel' => ['required'],
+            'editjurusan' => ['nullable', 'integer', 'exists:jurusans,id'],
+        ]);
+
         $data = Mapel::find($id); // Gunakan Mapel
         $data->update([
             'kode' => $this->editkode,
             'mapel' => $this->editmapel,
-            'jurusan_id' => $this->editjurusan,
+            'jurusan_id' => $this->editjurusan === '' ? null : $this->editjurusan,
             'ket' => $this->editket,
         ]);
 
@@ -192,24 +199,25 @@ class Data extends Component
         $this->resetPage(); // Reset ke halaman 1 setelah update
     }
 
-    public function del(): void
+    public function del(?int $id = null): void
     {
         Gate::authorize('manage-data-master');
         abort_unless(auth()->user()->is_active, 403);
-        $this->validate([
+        $selectedIds = $id === null ? $this->mapel_selected_id : [$id];
+        Validator::make(['mapel_selected_id' => $selectedIds], [
             'mapel_selected_id' => ['array'],
             'mapel_selected_id.*' => ['required', 'integer', 'distinct', 'exists:mapels,id'],
-        ]);
+        ])->validate();
 
-        if ($this->mapel_selected_id === []) {
+        if ($selectedIds === []) {
             $this->dispatch('showToast', message: 'Pilih mata pelajaran yang akan dihapus.', type: 'warning');
 
             return;
         }
 
         try {
-            $deleted = DB::transaction(function (): bool {
-                $mapels = Mapel::whereKey($this->mapel_selected_id)->orderBy('id')->lockForUpdate()->get();
+            $deleted = DB::transaction(function () use ($selectedIds): bool {
+                $mapels = Mapel::whereKey($selectedIds)->orderBy('id')->lockForUpdate()->get();
 
                 if (Jadwal::whereIn('mapel_id', $mapels->modelKeys())->exists()) {
                     return false;

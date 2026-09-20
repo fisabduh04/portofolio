@@ -162,7 +162,7 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <select wire:model="jurusan.{{ $index }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                        <option value="">Pilih Jurusan</option>
+                                        <option value="">Semua Jurusan (Umum)</option>
                                         @foreach ($jurusanlist as $j)
                                             <option value="{{ $j->id }}">{{ $j->jurusan }}</option>
                                         @endforeach
@@ -192,9 +192,8 @@
                                     @else
                                         <div class="flex items-center space-x-2">
                                             <x-btn wire:click="edit({{ $m->id }})" icon="pencil-square" color="blue" variant="ghost" size="sm" class="!p-2" title="Edit" />
-                                            <x-btn data-modal-target="popup-modal-{{ $m->id }}" data-modal-toggle="popup-modal-{{ $m->id }}" icon="trash" color="red" variant="ghost" size="sm" class="!p-2" title="Delete" />
+                                            <x-btn wire:click="del({{ $m->id }})" wire:confirm="Hapus mata pelajaran {{ $m->mapel }}?" wire:loading.attr="disabled" wire:target="del" icon="trash" color="red" variant="ghost" size="sm" class="!p-2" title="Hapus" />
                                         </div>
-                                        <x-modal.hapus :id="$m->id" :action="route('mapel.destroy', $m->id)" />
                                     @endif
                                 </td>
                                 <td class="px-4 py-3">
@@ -214,7 +213,7 @@
                                 <td class="px-4 py-3">
                                     @if ($editmapelindex === $m->id)
                                         <select wire:model="editjurusan" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                            <option value="">Pilih Jurusan</option>
+                                            <option value="">Semua Jurusan (Umum)</option>
                                             @foreach ($jurusanlist as $item)
                                                 <option value="{{ $item->id }}" {{ $item->id == $m->jurusan_id ? 'selected' : '' }}>{{ $item->jurusan }}</option>
                                             @endforeach
@@ -223,7 +222,7 @@
                                         {{-- Null-safe: jika jurusan dihapus (null), tetap aman --}}
                                         <x-badge
                                             color="{{ $m->jurusan?->badge_color ?? 'gray' }}"
-                                            text="{{ $m->jurusan?->jurusan ?? 'Tanpa Jurusan' }}"
+                                            text="{{ $m->jurusan?->jurusan ?? 'Semua Jurusan' }}"
                                         />
                                     @endif
                                 </td>
