@@ -342,6 +342,10 @@
                 if (!rows || rows.children.length >= 100) return;
                 const template = document.getElementById('assignment-row-template');
                 rows.insertAdjacentHTML('beforeend', template.innerHTML.replaceAll('__INDEX__', String(nextIndex++)));
+                rows.lastElementChild.dispatchEvent(new CustomEvent('searchable-select:init', { bubbles: true }));
+            };
+            const destroyRowSelects = root => {
+                root.querySelectorAll('[data-select-native]').forEach(select => select.searchableSelect?.destroy());
             };
             const showPanel = () => {
                 panel.classList.remove('hidden');
@@ -366,6 +370,7 @@
                 form.action = form.dataset.storeUrl;
                 form.querySelector('[name="_method"]')?.remove();
                 year.value = document.getElementById('filter-tahun').value;
+                destroyRowSelects(rows);
                 rows.replaceChildren();
                 addRow();
                 setMode(false);
@@ -373,6 +378,7 @@
             });
             document.querySelectorAll('[data-close-assignment]').forEach(button => {
                 button.addEventListener('click', () => {
+                    rows.querySelectorAll('[data-select-native]').forEach(select => select.searchableSelect?.close());
                     panel.classList.add('hidden');
                     toggle.setAttribute('aria-expanded', 'false');
                     const url = new URL(window.location.href);
@@ -396,6 +402,7 @@
                     }
                     method.value = 'PUT';
                     year.value = button.dataset.tahunId;
+                    destroyRowSelects(rows);
                     rows.replaceChildren();
                     addRow();
                     const values = { pegawai_id: button.dataset.pegawaiId, kelas_id: button.dataset.kelasId, is_active: button.dataset.status, keterangan: button.dataset.notes };
@@ -403,6 +410,7 @@
                         const field = input.name.match(/\[([^\]]+)\]$/)[1];
                         input.name = field;
                         input.value = values[field] ?? '';
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
                     });
                     rows.querySelector('[data-remove-row]').style.display = 'none';
                     setMode(true);
@@ -414,7 +422,9 @@
                 const button = event.target.closest('[data-remove-row]');
                 if (!button) return;
                 if (rows.children.length > 1) {
-                    button.closest('[data-assignment-row]').remove();
+                    const row = button.closest('[data-assignment-row]');
+                    destroyRowSelects(row);
+                    row.remove();
                 } else {
                     alert('Minimal satu baris data harus ada.');
                 }

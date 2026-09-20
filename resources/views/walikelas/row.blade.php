@@ -1,21 +1,37 @@
 <div data-assignment-row class="repeater-row grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all hover:border-blue-300 dark:hover:border-blue-700 group">
     <div class="min-w-0 md:col-span-4">
         <label for="pegawai-{{ $index }}" class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:sr-only">Wali Kelas</label>
-        <select id="pegawai-{{ $index }}" name="{{ $isEditing ? 'pegawai_id' : 'penugasans['.$index.'][pegawai_id]' }}" required class="block h-11 w-full rounded-lg border border-gray-300 bg-gray-50 py-0 pl-3 pr-9 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-            <option value="">Pilih Pegawai</option>
+        <x-form.searchable-select
+            :restore-old-input="false"
+            :selected="$row['pegawai_id'] ?? ''"
+            id="pegawai-{{ $index }}"
+            name="{{ $isEditing ? 'pegawai_id' : 'penugasans['.$index.'][pegawai_id]' }}"
+            aria-label="Wali Kelas"
+            placeholder="Pilih Pegawai"
+            search-placeholder="Cari nama atau NUPTK pegawai..."
+            required
+        >
             @foreach ($pegawai as $item)
                 <option value="{{ $item->id }}" @selected(($row['pegawai_id'] ?? '') == $item->id)>{{ $item->name }}{{ $item->nuptk ? ' - '.$item->nuptk : '' }}</option>
             @endforeach
-        </select>
+        </x-form.searchable-select>
     </div>
     <div class="min-w-0 md:col-span-2">
         <label for="kelas-{{ $index }}" class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:sr-only">Kelas</label>
-        <select id="kelas-{{ $index }}" name="{{ $isEditing ? 'kelas_id' : 'penugasans['.$index.'][kelas_id]' }}" required class="block h-11 w-full rounded-lg border border-gray-300 bg-gray-50 py-0 pl-3 pr-9 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-            <option value="">Pilih Kelas</option>
+        <x-form.searchable-select
+            :restore-old-input="false"
+            :selected="$row['kelas_id'] ?? ''"
+            id="kelas-{{ $index }}"
+            name="{{ $isEditing ? 'kelas_id' : 'penugasans['.$index.'][kelas_id]' }}"
+            aria-label="Kelas"
+            placeholder="Pilih Kelas"
+            search-placeholder="Cari kelas..."
+            required
+        >
             @foreach ($kelas as $item)
                 <option value="{{ $item->id }}" @selected(($row['kelas_id'] ?? '') == $item->id)>{{ $item->kelas }}</option>
             @endforeach
-        </select>
+        </x-form.searchable-select>
     </div>
     <div class="min-w-0 md:col-span-2">
         <label for="status-{{ $index }}" class="block mb-1 text-xs font-semibold text-gray-700 dark:text-gray-300 md:sr-only">Status</label>
