@@ -207,6 +207,85 @@ test('import returns to the same table state', function () {
     $this->assertDatabaseHas('jadwals', ['tahun_id' => $jadwal->tahun_id, 'hari' => 'Selasa', 'jam' => 2]);
 });
 
+test('exported schedules can be imported repeatedly without duplicates or losing their period', function () {
+    $jadwal = Jadwal::factory()->create(['tahun_id' => Tahun::factory()->create(['isActive' => false])->id, 'mulai' => '07:00:02', 'akhir' => '08:00:00', 'ket' => 'Catatan ekspor']);
+    Tahun::factory()->create(['isActive' => true]);
+    Pegawai::factory()->create(['name' => $jadwal->pegawai->name]);
+    $bytes = \Maatwebsite\Excel\Facades\Excel::raw(new \App\Exports\JadwalExport([$jadwal->id]), \Maatwebsite\Excel\Excel::XLSX);
+    $jadwal->update(['jam' => 9, 'ket' => 'Diubah']);
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]));
+
+    foreach ([1, 2] as $attempt) {
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('jadwal.xlsx', $bytes);
+        $this->from(route('jadwal.index'))->post(route('jadwal.import'), ['file' => $file])
+            ->assertSessionHasNoErrors()->assertSessionHas('success', 'Impor selesai: 0 jadwal ditambahkan, 1 jadwal diperbarui.');
+    }
+    $this->assertDatabaseCount('jadwals', 1);
+    $this->assertDatabaseHas('jadwals', ['id' => $jadwal->id, 'tahun_id' => $jadwal->tahun_id, 'jam' => 1, 'mulai' => '07:00:02', 'ket' => 'Catatan ekspor']);
+});
+
+test('legacy exported period and Excel numeric times import correctly', function () {
+    $jadwal = Jadwal::factory()->create(['tahun_id' => Tahun::factory()->create(['isActive' => false])->id]);
+    Tahun::factory()->create(['isActive' => true]);
+    $csv = "ID,Tahun,Kelas,Hari,Mapel,Guru,Jam,Mulai,Akhir,Keterangan\n{$jadwal->id},{$jadwal->tahun->tahun} - {$jadwal->tahun->semester},{$jadwal->kelas_id},selasa,{$jadwal->mapel_id},{$jadwal->pegawai_id},2,0.291666666666667,0.333333333333333,Diperbarui\n";
+    $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('jadwal.csv', $csv);
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]))
+        ->from(route('jadwal.index'))->post(route('jadwal.import'), ['file' => $file])
+        ->assertSessionHasNoErrors()->assertSessionHas('success');
+    $this->assertDatabaseCount('jadwals', 1);
+    $this->assertDatabaseHas('jadwals', ['id' => $jadwal->id, 'tahun_id' => $jadwal->tahun_id, 'hari' => 'Selasa', 'mulai' => '07:00:00', 'akhir' => '08:00:00', 'ket' => 'Diperbarui']);
+});
+
+test('separate semester selects the right period when importing names without ids', function () {
+    $ganjil = Tahun::factory()->create(['tahun' => '2026-2027', 'semester' => 'Ganjil']);
+    $genap = Tahun::factory()->create(['tahun' => '2026-2027', 'semester' => 'Genap']);
+    $jadwal = Jadwal::factory()->create(['tahun_id' => $ganjil->id]);
+    $jadwal->kelas->update(['kelas' => 'XI A DKV']);
+    $jadwal->mapel->update(['mapel' => 'Matematika']);
+    $jadwal->pegawai->update(['name' => 'Guru Contoh']);
+    $csv = "Tahun,Semester,Kelas,Hari,Mapel,Guru,Jam,Mulai,Akhir\n2026-2027,Genap,XI A DKV,Selasa,Matematika,Guru Contoh,1,07:00,08:00\n";
+    $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('jadwal.csv', $csv);
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]))
+        ->from(route('jadwal.index'))->post(route('jadwal.import'), ['file' => $file])
+        ->assertSessionHasNoErrors()->assertSessionHas('success', 'Impor selesai: 1 jadwal ditambahkan, 0 jadwal diperbarui.');
+    $this->assertDatabaseHas('jadwals', ['tahun_id' => $genap->id, 'kelas_id' => $jadwal->kelas_id, 'mapel_id' => $jadwal->mapel_id, 'pegawai_id' => $jadwal->pegawai_id, 'hari' => 'Selasa']);
+});
+
+test('an empty schedule file is not reported as a successful import', function () {
+    $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('jadwal.csv', "Tahun,Kelas,Hari,Jam\n");
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]))
+        ->from(route('jadwal.index'))->post(route('jadwal.import'), ['file' => $file])
+        ->assertSessionHasErrors('file')->assertSessionHas('message', 'Baris 2: Berkas tidak berisi data jadwal.');
+    $this->assertDatabaseCount('jadwals', 0);
+});
+
+test('invalid schedule import reports its row and leaves all schedules untouched', function (string $failure) {
+    $jadwal = Jadwal::factory()->create(['tahun_id' => Tahun::factory()->create(['isActive' => true])->id]);
+    $row = ['', $jadwal->tahun_id, $jadwal->kelas_id, 'Selasa', $jadwal->mapel_id, $jadwal->pegawai_id, 2, '09:00', '10:00'];
+    $bad = $row;
+    match ($failure) {
+        'year' => $bad[1] = 'Tahun tidak ada',
+        'id' => $bad[0] = 999999,
+        'class' => $bad[2] = 999999,
+        'time' => $bad[7] = '25:00',
+        'end' => $bad[8] = '08:00',
+        'required' => $bad[3] = '',
+        'jam' => $bad[6] = 0,
+        'duplicate' => $bad[0] = $row[0] = $jadwal->id,
+        'ambiguous' => $bad[5] = 'Nama Sama',
+    };
+    if ($failure === 'ambiguous') {
+        Pegawai::factory()->count(2)->create(['name' => 'Nama Sama']);
+    }
+    $csv = "ID,Tahun,Kelas,Hari,Mapel,Guru,Jam,Mulai,Akhir\n".implode(',', $row)."\n".implode(',', $bad)."\n";
+    $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('jadwal.csv', $csv);
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]))
+        ->from(route('jadwal.index'))->post(route('jadwal.import'), ['file' => $file])
+        ->assertSessionHasErrors('file')->assertSessionHas('message', fn ($message) => str_contains($message, 'Baris 3:'));
+    $this->assertDatabaseCount('jadwals', 1);
+    $this->assertDatabaseHas('jadwals', ['id' => $jadwal->id, 'jam' => 1]);
+})->with(['year', 'id', 'class', 'time', 'end', 'required', 'jam', 'duplicate', 'ambiguous']);
+
 test('failed edits restore all values only to the edited row', function (string $failure) {
     $year = Tahun::factory()->create(['isActive' => true]);
     $jadwal = Jadwal::factory()->create(['tahun_id' => $year->id]);

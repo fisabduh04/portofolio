@@ -349,9 +349,13 @@ class JadwalController extends Controller
         ], self::VALIDATION_MESSAGES);
 
         try {
-            Excel::import(new JadwalImport, $request->file('file'));
+            $import = new JadwalImport;
+            DB::transaction(fn () => Excel::import($import, $request->file('file')));
 
-            return redirect()->back(fallback: route('jadwal.index'))->with('success', 'Data Jadwal berhasil diimport');
+            return redirect()->back(fallback: route('jadwal.index'))->with('success', "Impor selesai: {$import->created} jadwal ditambahkan, {$import->updated} jadwal diperbarui.");
+        } catch (ValidationException $e) {
+            return redirect()->back(fallback: route('jadwal.index'))->withErrors($e->errors())
+                ->with('type', 'error')->with('message', $e->validator->errors()->first());
         } catch (\Exception $e) {
             Log::error('Import error: '.$e->getMessage());
 

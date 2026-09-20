@@ -357,12 +357,12 @@
                                 </x-form.searchable-select>
                             </td>
                              <td class="w-20 px-2 py-3">
-                                <input type="number" name="jam[]" form="bulkFormJadwal" class="table-form-control" placeholder="Ke">
+                                <input type="number" name="jam[]" value="1" form="bulkFormJadwal" class="table-form-control" placeholder="Ke">
                             </td>
                              <td class="w-px whitespace-nowrap px-2 py-3">
-                                <div class="inline-flex items-center gap-2">
-                                    <input type="time" name="mulai[]" form="bulkFormJadwal" class="table-form-control w-24 shrink-0 px-2">
-                                    <input type="time" name="akhir[]" form="bulkFormJadwal" class="table-form-control w-24 shrink-0 px-2">
+                                <div class="inline-flex items-center gap-1">
+                                    <input type="time" name="mulai[]" value="07:00" step="60" aria-label="Jam mulai" form="bulkFormJadwal" class="table-form-control w-22 shrink-0 px-1 text-xs">
+                                    <input type="time" name="akhir[]" value="08:00" step="60" aria-label="Jam selesai" form="bulkFormJadwal" class="table-form-control w-22 shrink-0 px-1 text-xs">
                                 </div>
                             </td>
                              <td class="px-2 py-3">
@@ -519,9 +519,9 @@
                                 <input type="number" name="jam" value="{{ $edit['jam'] }}" form="form-edit-{{ $j->id }}" class="table-form-control">
                             </td>
                              <td class="w-px whitespace-nowrap px-2 py-3">
-                                <div class="inline-flex items-center gap-2">
-                                     <input type="time" name="mulai" value="{{ $edit['mulai'] }}" form="form-edit-{{ $j->id }}" class="table-form-control w-24 shrink-0 px-2">
-                                     <input type="time" name="akhir" value="{{ $edit['akhir'] }}" form="form-edit-{{ $j->id }}" class="table-form-control w-24 shrink-0 px-2">
+                                <div class="inline-flex items-center gap-1">
+                                     <input type="time" name="mulai" value="{{ $edit['mulai'] }}" step="60" aria-label="Jam mulai" form="form-edit-{{ $j->id }}" class="table-form-control w-22 shrink-0 px-1 text-xs">
+                                     <input type="time" name="akhir" value="{{ $edit['akhir'] }}" step="60" aria-label="Jam selesai" form="form-edit-{{ $j->id }}" class="table-form-control w-22 shrink-0 px-1 text-xs">
                                 </div>
                             </td>
                              <td class="px-2 py-3">

@@ -3,13 +3,13 @@
 namespace App\Exports;
 
 use App\Models\Jadwal;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class JadwalExport implements FromQuery, WithMapping, WithHeadings, ShouldAutoSize
+class JadwalExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
 {
     use Exportable;
 
@@ -28,11 +28,11 @@ class JadwalExport implements FromQuery, WithMapping, WithHeadings, ShouldAutoSi
     public function query()
     {
         $query = Jadwal::query()->with(['tahun', 'kelas', 'mapel', 'pegawai']);
-        
-        if (!empty($this->ids)) {
+
+        if (! empty($this->ids)) {
             $query->whereIn('id', $this->ids);
         }
-        
+
         return $query;
     }
 
@@ -40,7 +40,7 @@ class JadwalExport implements FromQuery, WithMapping, WithHeadings, ShouldAutoSi
     {
         return [
             $jadwal->id,
-            $jadwal->tahun ? $jadwal->tahun->tahun . ' - ' . $jadwal->tahun->semester : '',
+            $jadwal->tahun->tahun ?? '',
             $jadwal->kelas->kelas ?? '',
             $jadwal->hari,
             $jadwal->mapel->mapel ?? '',
@@ -48,7 +48,12 @@ class JadwalExport implements FromQuery, WithMapping, WithHeadings, ShouldAutoSi
             $jadwal->jam,
             $jadwal->mulai,
             $jadwal->akhir,
-            $jadwal->ket
+            $jadwal->ket,
+            $jadwal->tahun->semester ?? '',
+            $jadwal->tahun_id,
+            $jadwal->kelas_id,
+            $jadwal->mapel_id,
+            $jadwal->pegawai_id,
         ];
     }
 
@@ -64,7 +69,12 @@ class JadwalExport implements FromQuery, WithMapping, WithHeadings, ShouldAutoSi
             'Jam',
             'Mulai',
             'Akhir',
-            'Keterangan'
+            'Keterangan',
+            'Semester',
+            'Tahun ID',
+            'Kelas ID',
+            'Mapel ID',
+            'Pegawai ID',
         ];
     }
 }
