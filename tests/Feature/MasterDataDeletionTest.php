@@ -105,6 +105,39 @@ dataset('master bulk components', [
     'mapel' => [MapelData::class, Mapel::class, 'mapel_selected_id', 'mapel jadwal', 'Mapel tidak dapat dihapus karena masih digunakan dalam jadwal atau jurnal mengajar.'],
 ]);
 
+it('deletes only the clicked class after search without deleting another selected class', function () {
+    $target = Kelas::factory()->create(['kelas' => 'Kelas Target']);
+    $other = Kelas::factory()->create(['kelas' => 'Kelas Lain']);
+
+    Livewire::actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]))
+        ->test(KelasData::class)->set('kelas_selected_id', [$other->id])->set('search', 'Kelas Target')
+        ->assertSee('wire:click="del('.$target->id.')"', false)
+        ->call('del', $target->id)->assertDispatched('showToast', message: 'Data kelas berhasil dihapus.', type: 'success');
+
+    $this->assertModelMissing($target);
+    $this->assertModelExists($other);
+});
+
+it('protects a used class when its individual delete button is invoked', function (string $relationship) {
+    $dependency = masterDeletionDependency($relationship);
+
+    Livewire::actingAs(User::factory()->create(['role' => 'operator', 'is_active' => true]))
+        ->test(KelasData::class)->call('del', $dependency['parent']->id)
+        ->assertDispatched('showToast', type: 'warning');
+
+    $this->assertModelExists($dependency['parent']);
+    $this->assertDatabaseHas($dependency['table'], ['id' => $dependency['id']]);
+})->with(['kelas jadwal', 'kelas siswa', 'kelas logbook', 'kelas wali']);
+
+it('denies individual class deletion by a teacher', function () {
+    $target = Kelas::factory()->create();
+
+    Livewire::actingAs(User::factory()->create(['role' => 'guru', 'is_active' => true]))
+        ->test(KelasData::class)->call('del', $target->id)->assertForbidden();
+
+    $this->assertModelExists($target);
+});
+
 it('protects each master relation against direct database deletion', function (string $relationship) {
     $dependency = masterDeletionDependency($relationship);
     $parent = $dependency['parent'];

@@ -8,6 +8,7 @@ use App\Models\Kelas;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -225,24 +226,25 @@ class Data extends Component
         $this->editket = null;
     }
 
-    public function del(): void
+    public function del(?int $id = null): void
     {
         Gate::authorize('manage-data-master');
         abort_unless(auth()->user()->is_active, 403);
-        $this->validate([
+        $selectedIds = $id === null ? $this->kelas_selected_id : [$id];
+        Validator::make(['kelas_selected_id' => $selectedIds], [
             'kelas_selected_id' => ['array'],
             'kelas_selected_id.*' => ['required', 'integer', 'distinct', 'exists:kelas,id'],
-        ]);
+        ])->validate();
 
-        if ($this->kelas_selected_id === []) {
+        if ($selectedIds === []) {
             $this->dispatch('showToast', message: 'Pilih kelas yang akan dihapus.', type: 'warning');
 
             return;
         }
 
         try {
-            DB::transaction(function (): void {
-                $classes = Kelas::whereKey($this->kelas_selected_id)->orderBy('id')->lockForUpdate()->get();
+            DB::transaction(function () use ($selectedIds): void {
+                $classes = Kelas::whereKey($selectedIds)->orderBy('id')->lockForUpdate()->get();
                 foreach ($classes as $class) {
                     $class->delete();
                 }
