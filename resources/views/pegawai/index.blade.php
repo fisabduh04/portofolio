@@ -114,14 +114,23 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center">
-                                        @if ($peg->aktif === 'Aktif')
+                                        @php
+                                            $activity = strtolower(trim((string) $peg->aktif));
+                                            $activityLabel = match ($activity) {
+                                                'aktif' => 'Aktif',
+                                                'non-aktif', 'nonaktif', 'non aktif' => 'Non-Aktif',
+                                                'cuti' => 'Cuti',
+                                                default => trim((string) $peg->aktif),
+                                            };
+                                        @endphp
+                                        @if ($activity === 'aktif')
                                             <div class="h-2.5 w-2.5 rounded-full bg-green-500 mr-2 animate-pulse"></div>
                                             <span
                                                 class="text-green-700 dark:text-green-400 font-medium text-xs">Aktif</span>
                                         @else
                                             <div class="h-2.5 w-2.5 rounded-full bg-red-500 mr-2"></div>
                                             <span
-                                                class="text-red-700 dark:text-red-400 font-medium text-xs">{{ $peg->aktif }}</span>
+                                                class="text-red-700 dark:text-red-400 font-medium text-xs">{{ $activityLabel }}</span>
                                         @endif
                                     </div>
                                 </td>

@@ -46,16 +46,19 @@
                             <div>
                                 <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Status
                                     Pegawai</label>
+                                @php
+                                    $activity = strtolower(trim((string) old('aktif', $pegawai->aktif ?? 'Aktif')));
+                                @endphp
                                 <select name="aktif"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-base focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                     <option value="Aktif"
-                                        {{ old('aktif', $pegawai->aktif ?? '') == 'Aktif' ? 'selected' : '' }}>Aktif
+                                        {{ $activity === 'aktif' ? 'selected' : '' }}>Aktif
                                     </option>
                                     <option value="Non-Aktif"
-                                        {{ old('aktif', $pegawai->aktif ?? '') == 'Non-Aktif' ? 'selected' : '' }}>
+                                        {{ in_array($activity, ['non-aktif', 'nonaktif', 'non aktif'], true) ? 'selected' : '' }}>
                                         Non-Aktif</option>
                                     <option value="Cuti"
-                                        {{ old('aktif', $pegawai->aktif ?? '') == 'Cuti' ? 'selected' : '' }}>Cuti
+                                        {{ $activity === 'cuti' ? 'selected' : '' }}>Cuti
                                     </option>
                                 </select>
                             </div>

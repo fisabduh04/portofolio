@@ -35,8 +35,17 @@
                                 </p>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="bg-{{ $pegawai->aktif == 'Aktif' ? 'green' : 'red' }}-100 text-{{ $pegawai->aktif == 'Aktif' ? 'green' : 'red' }}-800 text-xs font-medium px-2.5 py-0.5 rounded border border-{{ $pegawai->aktif == 'Aktif' ? 'green' : 'red' }}-400">
-                                    {{ $pegawai->aktif }}
+                                @php
+                                    $activity = strtolower(trim((string) $pegawai->aktif));
+                                    $activityLabel = match ($activity) {
+                                        'aktif' => 'Aktif',
+                                        'non-aktif', 'nonaktif', 'non aktif' => 'Non-Aktif',
+                                        'cuti' => 'Cuti',
+                                        default => trim((string) $pegawai->aktif),
+                                    };
+                                @endphp
+                                <span class="{{ $activity === 'aktif' ? 'bg-green-100 text-green-800 border-green-400' : 'bg-red-100 text-red-800 border-red-400' }} text-xs font-medium px-2.5 py-0.5 rounded border">
+                                    {{ $activityLabel }}
                                 </span>
                                 <a href="{{ route('pegawai.edit', $pegawai->id) }}" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
                                     Edit Profil
