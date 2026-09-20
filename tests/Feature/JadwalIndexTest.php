@@ -1,10 +1,14 @@
 <?php
 
 use App\Models\Jadwal;
+use App\Models\Kelas;
+use App\Models\Mapel;
+use App\Models\Pegawai;
 use App\Models\Tahun;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 
 uses(Tests\TestCase::class);
 
@@ -32,6 +36,75 @@ beforeEach(function () {
 
 afterEach(function () {
     DB::purge('sqlite');
+});
+
+test('daily attendance uses the current active year instead of an old cached year', function () {
+    $old = Tahun::factory()->create(['isActive' => true]);
+    $current = Tahun::factory()->create(['isActive' => false]);
+    Cache::put('active_year_default', $old, 3600);
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]));
+
+    $old->update(['isActive' => false]);
+    $current->update(['isActive' => true]);
+
+    $this->get(route('jadwal.presensiHarian', ['date' => '2026-09-21']))->assertOk()
+        ->assertViewHas('activeYear', fn ($year) => $year->id === $current->id);
+
+    $current->update(['isActive' => false]);
+    $this->from(route('jadwal.index'))->get(route('jadwal.presensiHarian'))
+        ->assertRedirect(route('jadwal.index'))
+        ->assertSessionHas('error', 'Tidak ada tahun ajaran aktif.');
+});
+
+test('schedule employee and class options reflect current data despite old caches', function () {
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]));
+    Cache::put('dropdown_pegawai', collect(), 3600);
+    Cache::put('dropdown_kelas', collect(), 3600);
+    $this->get(route('jadwal.index'))->assertOk();
+    $pegawai = Pegawai::factory()->create(['name' => 'Guru Baru']);
+    $kelas = Kelas::factory()->create(['kelas' => 'Kelas Baru']);
+
+    $this->get(route('jadwal.index'))->assertOk()
+        ->assertViewHas('pegawai', fn ($options) => $options->firstWhere('id', $pegawai->id)?->name === 'Guru Baru')
+        ->assertViewHas('kelas', fn ($options) => $options->firstWhere('id', $kelas->id)?->kelas === 'Kelas Baru');
+
+    $pegawai->update(['name' => 'Guru Terbaru']);
+    $kelas->update(['kelas' => 'Kelas Terbaru']);
+    $this->get(route('jadwal.index'))->assertOk()
+        ->assertViewHas('pegawai', fn ($options) => $options->firstWhere('id', $pegawai->id)?->name === 'Guru Terbaru')
+        ->assertViewHas('kelas', fn ($options) => $options->firstWhere('id', $kelas->id)?->kelas === 'Kelas Terbaru');
+
+    $pegawai->delete();
+    $kelas->delete();
+    $this->get(route('jadwal.index'))->assertOk()
+        ->assertViewHas('pegawai', fn ($options) => ! $options->contains('id', $pegawai->id))
+        ->assertViewHas('kelas', fn ($options) => ! $options->contains('id', $kelas->id));
+});
+
+test('schedule subject options reflect additions edits and deletions despite a stale cache', function () {
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]));
+    Cache::put('dropdown_mapel', collect(), 3600);
+    $this->get(route('jadwal.index'))->assertOk();
+
+    Livewire::test(\App\Livewire\Mapel\Data::class)->call('add')
+        ->set('kode.1', 'BARU')->set('mapel.1', 'Mata Pelajaran Baru')
+        ->set('jurusan.1', '')->call('store')->assertHasNoErrors();
+    $mapel = Mapel::where('kode', 'BARU')->firstOrFail();
+
+    $response = $this->get(route('jadwal.index'))->assertOk();
+    $document = new DOMDocument;
+    $document->loadHTML($response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+    $xpath = new DOMXPath($document);
+    expect($xpath->query('//select[@data-select-native]//option[@value="'.$mapel->id.'" and text()="Mata Pelajaran Baru"]')->length)->toBeGreaterThan(0);
+
+    Livewire::test(\App\Livewire\Mapel\Data::class)->call('edit', $mapel->id)
+        ->set('editmapel', 'Nama Mapel Terbaru')->call('update', $mapel->id)->assertHasNoErrors();
+    $this->get(route('jadwal.index'))->assertOk()
+        ->assertViewHas('mapel', fn ($options) => $options->firstWhere('id', $mapel->id)?->mapel === 'Nama Mapel Terbaru');
+
+    Livewire::test(\App\Livewire\Mapel\Data::class)->call('del', $mapel->id);
+    $this->get(route('jadwal.index'))->assertOk()
+        ->assertViewHas('mapel', fn ($options) => ! $options->contains('id', $mapel->id));
 });
 
 test('all years shows every active period and ignores a stale dropdown cache', function (array $filters) {

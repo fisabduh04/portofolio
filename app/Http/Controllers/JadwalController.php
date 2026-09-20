@@ -10,7 +10,6 @@ use App\Models\Mapel;
 use App\Models\Pegawai;
 use App\Models\Tahun;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -84,17 +83,11 @@ class JadwalController extends Controller
             $tahun = Tahun::aktif()->select('id', 'tahun', 'semester')
                 ->orderByDesc('tanggalmulai')->orderByDesc('id')->get();
 
-            $kelas = Cache::remember('dropdown_kelas', 3600, function () {
-                return Kelas::select('id', 'kelas')->get();
-            });
+            $kelas = Kelas::select('id', 'kelas')->get();
 
-            $mapel = Cache::remember('dropdown_mapel', 3600, function () {
-                return Mapel::select('id', 'mapel')->get();
-            });
+            $mapel = Mapel::select('id', 'mapel')->get();
 
-            $pegawai = Cache::remember('dropdown_pegawai', 3600, function () {
-                return Pegawai::select('id', 'name')->get();
-            });
+            $pegawai = Pegawai::select('id', 'name')->get();
             $hari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
             // --- 1. LOGIKA PENENTUAN TAHUN ID YANG BERLAKU ---
 
@@ -467,9 +460,7 @@ class JadwalController extends Controller
         $dayName = \Carbon\Carbon::parse($date)->locale('id')->isoFormat('dddd');
 
         // 2. Ambil Tahun Aktif (Default logic similar to index)
-        $activeYear = Cache::remember('active_year_default', 3600, function () {
-            return Tahun::aktif()->first();
-        });
+        $activeYear = Tahun::aktif()->first();
 
         if (! $activeYear) {
             return redirect()->back()->with('error', 'Tidak ada tahun ajaran aktif.');
