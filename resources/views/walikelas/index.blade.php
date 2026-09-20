@@ -149,11 +149,12 @@
                 </select>
             </div>
             <div class="min-w-0 md:col-span-2">
-                <label for="filter-status" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-                <select id="filter-status" name="status" class="h-11 min-w-0 pr-10 block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                    <option value="">Semua Status</option>
-                    <option value="aktif" @selected(request('status') === 'aktif')>Aktif</option>
-                    <option value="nonaktif" @selected(request('status') === 'nonaktif')>Nonaktif</option>
+                <label for="filter-jurusan" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Jurusan</label>
+                <select id="filter-jurusan" name="jurusan_id" class="h-11 min-w-0 pr-10 block w-full rounded-base border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    <option value="">Semua Jurusan</option>
+                    @foreach ($jurusan as $item)
+                        <option value="{{ $item->id }}" @selected(request('jurusan_id') == $item->id)>{{ $item->jurusan }}</option>
+                    @endforeach
                 </select>
             </div>
             <div class="min-w-0 md:col-span-2">
@@ -173,7 +174,7 @@
                 <div id="assignment-actions" class="hidden z-10 w-48 bg-white rounded-base divide-y divide-gray-100 shadow-xl dark:bg-gray-700 dark:divide-gray-600 border border-gray-200 dark:border-gray-600">
                     <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="assignment-actions-button">
                         <li><button type="button" data-modal-target="wali-import-modal" data-modal-toggle="wali-import-modal" class="block w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600">Import Excel</button></li>
-                        <li><a id="assignment-export" href="{{ route('walikelas.export', array_merge(request()->only(['kelas_id', 'status', 'search', 'sort', 'direction']), ['tahun_id' => $selectedTahun->id])) }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">Export Excel</a></li>
+                        <li><a id="assignment-export" href="{{ route('walikelas.export', array_merge(request()->only(['kelas_id', 'jurusan_id', 'status', 'search', 'sort', 'direction']), ['tahun_id' => $selectedTahun->id])) }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600">Export Excel</a></li>
                     </ul>
                     @if ($penugasans->isNotEmpty())
                         <div class="py-1 border-t border-gray-100 dark:border-gray-600">

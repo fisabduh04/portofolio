@@ -53,7 +53,7 @@
                             </ul>
                             @if ($kelas_selected_id)
                                 <div class="py-1">
-                                    <button type="button" wire:click.prevent="del()" wire:confirm="Apakah anda yakin ingin menghapus data yang dipilih?" class="block w-full text-left py-2 px-4 text-sm text-red-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-red-200 dark:hover:text-white">Delete Selected ({{ count($kelas_selected_id) }})</button>
+                                    <button type="button" x-on:click="$dispatch('open-delete-modal', { modal: 'kelas-delete', id: null })" class="block w-full text-left py-2 px-4 text-sm text-red-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-red-200 dark:hover:text-white">Delete Selected ({{ count($kelas_selected_id) }})</button>
                                 </div>
                             @endif
                         </div>
@@ -182,7 +182,7 @@
                                     @else
                                         <div class="flex items-center space-x-2">
                                             <x-btn wire:click="edit({{ $m->id }})" icon="pencil-square" color="blue" variant="ghost" size="sm" class="!p-2" title="Edit" />
-                                            <x-btn wire:click="del({{ $m->id }})" wire:confirm="Hapus kelas {{ $m->kelas }}?" wire:loading.attr="disabled" wire:target="del" icon="trash" color="red" variant="ghost" size="sm" class="!p-2" title="Hapus" />
+                                            <x-btn x-on:click="$dispatch('open-delete-modal', { modal: 'kelas-delete', id: {{ $m->id }} })" icon="trash" color="red" variant="ghost" size="sm" class="!p-2" title="Hapus" />
                                         </div>
                                     @endif
                                 </td>
@@ -230,4 +230,5 @@
                 {{ $kelaslist->links() }}
             </nav>
     </div>
+    <x-modal.hapus id="kelas-delete" wire-action="del" message="Apakah Anda yakin ingin menghapus kelas yang dipilih?" />
 </div>

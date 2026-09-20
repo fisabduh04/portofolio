@@ -1,13 +1,20 @@
-@props(['id', 'action' => '#', 'message' => null, 'formTarget' => null])
+@props(['id', 'action' => '#', 'message' => null, 'formTarget' => null, 'wireAction' => null])
 
-<div>
+<div
+    @if ($wireAction)
+        x-data="{ open: false, recordId: null, trigger: null, close() { this.open = false; this.trigger?.focus(); } }"
+        x-on:open-delete-modal.window="if ($event.detail.modal === @js((string) $id)) { recordId = $event.detail.id ?? null; trigger = $event.target.closest('button'); open = true; $nextTick(() => $refs.cancel.focus()); }"
+        x-on:keydown.escape.window="if (open) close()"
+    @endif
+>
     <div id="popup-modal-{{ $id }}" tabindex="-1"
-        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        @if ($wireAction) x-show="open" x-trap.inert.noscroll="open" style="display: none" role="dialog" aria-modal="true" aria-labelledby="delete-title-{{ $id }}" x-on:click.self="close()" @endif
+        class="{{ $wireAction ? 'flex bg-black/50' : 'hidden' }} overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
         <div class="relative w-full max-w-md max-h-full p-4">
             <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
                 <button type="button"
                     class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                    data-modal-hide="popup-modal-{{ $id }}">
+                    @if ($wireAction) x-on:click="close()" @else data-modal-hide="popup-modal-{{ $id }}" @endif>
                     <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 14 14">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -21,11 +28,22 @@
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
-                    <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                    <h3 id="delete-title-{{ $id }}" class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
                         {{ $message ?? 'Apakah Anda akan menghapus data ini?' }}
                     </h3>
 
-                    @if($formTarget)
+                    @if ($wireAction)
+                        <div class="flex justify-center space-x-3">
+                            <button type="button" x-on:click="await $wire[@js($wireAction)](recordId); close()" wire:loading.attr="disabled" wire:target="{{ $wireAction }}"
+                                class="inline-flex text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm items-center px-5 py-2.5 text-center">
+                                Ya Benar
+                            </button>
+                            <button type="button" x-ref="cancel" x-on:click="close()"
+                                class="inline-flex py-2.5 px-5 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
+                                No, Batalkan
+                            </button>
+                        </div>
+                    @elseif($formTarget)
                         <div class="flex justify-center space-x-3">
                             <button type="button" onclick="document.getElementById('{{ $formTarget }}').submit();"
                                 class="inline-flex text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">

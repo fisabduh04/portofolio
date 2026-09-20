@@ -7,6 +7,7 @@ use App\Http\Requests\ImportWaliKelasRequest;
 use App\Http\Requests\StoreWaliKelasRequest;
 use App\Http\Requests\UpdateWaliKelasRequest;
 use App\Imports\WaliKelasImport;
+use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Pegawai;
 use App\Models\Tahun;
@@ -35,6 +36,7 @@ class WaliKelasController extends Controller
         $selectedTahun = $tahun->firstWhere('id', $filters['tahun_id'] ?? $request->old('tahun_id'))
             ?? $tahun->firstWhere('isActive', 1) ?? $tahun->first();
         $kelas = Kelas::orderBy('kelas')->get(['id', 'kelas']);
+        $jurusan = Jurusan::orderBy('jurusan')->get(['id', 'jurusan']);
         $pegawai = Pegawai::orderBy('name')->get(['id', 'name', 'nuptk']);
         $oldRows = $request->old('penugasans', []);
         $inputRows = is_array($oldRows) ? array_values(array_filter($oldRows, 'is_array')) : [];
@@ -46,10 +48,10 @@ class WaliKelasController extends Controller
 
         $penugasans = $this->assignments($filters, $selectedTahun?->id)
             ->paginate((int) ($filters['per_page'] ?? 10))
-            ->appends($request->only(['kelas_id', 'status', 'search', 'per_page', 'sort', 'direction']))
+            ->appends($request->only(['kelas_id', 'jurusan_id', 'status', 'search', 'per_page', 'sort', 'direction']))
             ->appends(['tahun_id' => $selectedTahun?->id]);
 
-        return view('walikelas.index', compact('tahun', 'selectedTahun', 'kelas', 'pegawai', 'penugasans', 'editing', 'inputRows'));
+        return view('walikelas.index', compact('tahun', 'selectedTahun', 'kelas', 'jurusan', 'pegawai', 'penugasans', 'editing', 'inputRows'));
     }
 
     public function store(StoreWaliKelasRequest $request): RedirectResponse|JsonResponse
@@ -181,6 +183,7 @@ class WaliKelasController extends Controller
         return $request->validate([
             'tahun_id' => ['nullable', 'integer', 'exists:tahuns,id'],
             'kelas_id' => ['nullable', 'integer', 'exists:kelas,id'],
+            'jurusan_id' => ['nullable', 'integer', 'exists:jurusans,id'],
             'status' => ['nullable', Rule::in(['aktif', 'nonaktif'])],
             'search' => ['nullable', 'string', 'max:100'],
             'per_page' => ['nullable', Rule::in([10, 25, 50, 100])],
@@ -195,6 +198,7 @@ class WaliKelasController extends Controller
     {
         $query = WaliKelas::with(['kelas:id,kelas', 'pegawai:id,name,nuptk'])->where('tahun_id', $tahunId)
             ->when($filters['kelas_id'] ?? null, fn (Builder $query, int|string $id): Builder => $query->where('kelas_id', $id))
+            ->when($filters['jurusan_id'] ?? null, fn (Builder $query, int|string $id): Builder => $query->whereHas('kelas', fn (Builder $kelas): Builder => $kelas->where('jurusan_id', $id)))
             ->when($filters['status'] ?? null, fn (Builder $query, string $status): Builder => $query->where('is_active', $status === 'aktif'));
         if (isset($filters['search']) && $filters['search'] !== '') {
             $search = $filters['search'];

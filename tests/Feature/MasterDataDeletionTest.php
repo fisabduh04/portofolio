@@ -111,7 +111,9 @@ it('deletes only the clicked class after search without deleting another selecte
 
     Livewire::actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]))
         ->test(KelasData::class)->set('kelas_selected_id', [$other->id])->set('search', 'Kelas Target')
-        ->assertSee('wire:click="del('.$target->id.')"', false)
+        ->assertSee("modal: 'kelas-delete', id: ".$target->id, false)
+        ->assertSee('id="popup-modal-kelas-delete"', false)
+        ->assertSee('Ya Benar')
         ->call('del', $target->id)->assertDispatched('showToast', message: 'Data kelas berhasil dihapus.', type: 'success');
 
     $this->assertModelMissing($target);

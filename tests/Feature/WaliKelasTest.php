@@ -15,6 +15,35 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 uses(Tests\TestCase::class);
 
+it('filters assignments and exports by the class department while preserving pagination', function () {
+    $kelas = Kelas::factory()->create();
+    $period = Tahun::factory()->create(['isActive' => true]);
+    WaliKelas::factory()->count(11)->create(['kelas_id' => $kelas->id, 'tahun_id' => $period->id, 'is_active' => false]);
+    WaliKelas::factory()->create(['tahun_id' => $period->id]);
+    WaliKelas::factory()->create(['kelas_id' => $kelas->id]);
+    $filters = ['tahun_id' => $period->id, 'jurusan_id' => $kelas->jurusan_id];
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => 1]));
+
+    $response = $this->get(route('walikelas.index', $filters));
+    $response->assertOk()->assertSee('Semua Jurusan')->assertDontSee('id="filter-status"', false)
+        ->assertViewHas('penugasans', fn ($rows) => $rows->total() === 11 && str_contains($rows->nextPageUrl(), 'jurusan_id='.$kelas->jurusan_id));
+    $document = new DOMDocument;
+    $document->loadHTML($response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+    $xpath = new DOMXPath($document);
+    expect($xpath->evaluate('string(//select[@id="filter-jurusan"]/option[@selected]/@value)'))->toBe((string) $kelas->jurusan_id);
+    expect($xpath->evaluate('string(//a[@id="assignment-export"]/@href)'))->toContain('jurusan_id='.$kelas->jurusan_id);
+
+    $export = $this->get(route('walikelas.export', $filters))->assertDownload('WaliKelas.xlsx');
+    $sheet = IOFactory::load($export->baseResponse->getFile()->getPathname())->getActiveSheet();
+    expect($sheet->getHighestRow())->toBe(12);
+    expect($sheet->getCell('C2')->getValue())->toBe($kelas->kelas);
+});
+
+it('rejects an unknown department filter', function () {
+    $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => 1]))
+        ->getJson(route('walikelas.index', ['jurusan_id' => 999]))->assertInvalid('jurusan_id');
+});
+
 beforeEach(function () {
     $this->waliTestDatabase = null;
     if (getenv('WALIKELAS_TEST_MYSQL') === '1') {
