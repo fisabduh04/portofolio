@@ -4,26 +4,26 @@ namespace App\Exports;
 
 use App\Models\Pegawai;
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class PegawaiExport implements FromQuery, ShouldAutoSize, WithMapping, WithHeadings
+class PegawaiExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
 {
     use Exportable;
+
     /**
-    * @return \Illuminate\Support\Collection
-    */
+     * @return \Illuminate\Support\Collection
+     */
     public function query()
     {
         return pegawai::query();
     }
-    public function map($pegawai):array
+
+    public function map($pegawai): array
     {
-        return[
+        return [
             $pegawai->name,
             $pegawai->nuptk,
             $pegawai->email,
@@ -52,14 +52,15 @@ class PegawaiExport implements FromQuery, ShouldAutoSize, WithMapping, WithHeadi
             $pegawai->foto,
         ];
     }
-    public function headings():array
+
+    public function headings(): array
     {
-        return[
+        return [
             'name',
             'nuptk',
             'email',
-            'aktif',
             'status',
+            'aktif',
             'jk',
             'kota_lahir',
             'tanggal_lahir',

@@ -81,7 +81,7 @@
                                     </svg>
                                 </a>
                             </th>
-                            <th scope="col" class="px-6 py-3 font-medium">Status</th>
+                            <th scope="col" class="px-6 py-3 font-medium">Aktif</th>
                             <th scope="col" class="px-6 py-3 font-medium text-right">Aksi</th>
                         </tr>
                     </thead>

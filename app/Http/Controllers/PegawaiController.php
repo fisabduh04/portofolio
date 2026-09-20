@@ -228,11 +228,16 @@ class PegawaiController extends Controller
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:2048',
         ]);
-        $file = $request->file('file')->store('public/import');
-        Excel::import(new PegawaiImport, $file);
+        $import = new PegawaiImport;
+        Excel::import($import, $request->file('file'));
 
-        // return redirect('/pegawai')->with('success','Data berhasil di import');
-        return redirect('/pegawai')->with('message', 'Data berhasil di import')->with('type', 'success');
+        $skippedCount = count($import->skippedRows);
+        $message = "Impor pegawai: {$import->createdCount} baru, {$import->updatedCount} diperbarui, {$import->unchangedCount} tidak berubah, {$skippedCount} dilewati.";
+        if ($skippedCount > 0) {
+            $message .= ' Baris dilewati karena kolom nuptk atau name kosong. Periksa judul kolom file.';
+        }
+
+        return redirect()->route('pegawai.index')->with('message', $message)->with('type', $skippedCount > 0 ? 'warning' : 'success');
 
     }
 
