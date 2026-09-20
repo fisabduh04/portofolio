@@ -3,17 +3,34 @@
 namespace App\Exports;
 
 use App\Models\Siswa;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class SiswaExport implements FromQuery, ShouldAutoSize, WithMapping, WithHeadings
+class SiswaExport extends DefaultValueBinder implements FromQuery, ShouldAutoSize, WithCustomValueBinder, WithHeadings, WithMapping
 {
     use Exportable;
+
     protected $ids;
+
+    public function bindValue(Cell $cell, mixed $value): bool
+    {
+        if (in_array($cell->getColumn(), ['B', 'D', 'I', 'T', 'U', 'W', 'Y', 'AE', 'AK', 'AQ', 'AS', 'AT', 'AV', 'AX', 'AY', 'BA', 'BJ'], true) && $cell->getRow() > 1 && $value !== null) {
+            $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
+            $cell->getStyle()->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
+
+            return true;
+        }
+
+        return parent::bindValue($cell, $value);
+    }
 
     public function __construct($ids = null)
     {
@@ -21,21 +38,22 @@ class SiswaExport implements FromQuery, ShouldAutoSize, WithMapping, WithHeading
     }
 
     /**
-    * @return \Illuminate\Support\Collection
-    */
+     * @return \Illuminate\Support\Collection
+     */
     public function query()
     {
         $query = Siswa::query();
-        
+
         if ($this->ids) {
             $query->whereIn('id', $this->ids);
         }
 
         return $query;
     }
-    public function map($siswa):array
+
+    public function map($siswa): array
     {
-        return[
+        return [
             $siswa->nama,
             $siswa->nipd,
             $siswa->jk,
@@ -51,62 +69,63 @@ class SiswaExport implements FromQuery, ShouldAutoSize, WithMapping, WithHeading
             $siswa->rw,
             $siswa->dusun,
             $siswa->kelurahan,
-        $siswa->kecamatan,
-        $siswa->kode_pos,
-        $siswa->jenis_tinggal,
-        $siswa->alat_transportasi,
-        $siswa->telepon,
-        $siswa->hp,
-        $siswa->email,
-        $siswa->skhun,
-        $siswa->penerima_kps,
-        $siswa->nokps,
-        $siswa->ayah,
-        $siswa->tahunlahirayah,
-        $siswa->pendidikanayah,
-        $siswa->pekerjaanayah,
-        $siswa->penghasilanayah,
-        $siswa->nikayah,
-        $siswa->namaibu,
-        $siswa->tahunlahiribu,
-        $siswa->pendidikanibu,
-        $siswa->pekerjaanibu,
-        $siswa->penghasilanibu,
-        $siswa->nikibu,
-        $siswa->namawali,
-        $siswa->tahunlahirwali,
-        $siswa->pendidikanwali,
-        $siswa->pekerjaanwali,
-        $siswa->penghasilanwali,
-        $siswa->nikwali,
-        $siswa->rombelsaatini,
-        $siswa->nopesertaunas,
-        $siswa->noijazah,
-        $siswa->penerimakip,
-        $siswa->nomorkip,
-        $siswa->namadikip,
-        $siswa->nomorkks,
-        $siswa->noaktalahir,
-        $siswa->bank,
-        $siswa->nomor_rekening_bank,
-        $siswa->rekening_atas_nama,
-        $siswa->layakpip,
-        $siswa->alasanlayakpip,
-        $siswa->kebutuhankhusus,
-        $siswa->sekolahasal,
-        $siswa->anakke,
-        $siswa->lintang,
-        $siswa->bujur,
-        $siswa->nokk,
-        $siswa->beratbadan,
-        $siswa->tinggibadan,
-        $siswa->lingkarkepala,
-        $siswa->jmlsaudara,
+            $siswa->kecamatan,
+            $siswa->kode_pos,
+            $siswa->jenis_tinggal,
+            $siswa->alat_transportasi,
+            $siswa->telepon,
+            $siswa->hp,
+            $siswa->email,
+            $siswa->skhun,
+            $siswa->penerima_kps,
+            $siswa->nokps,
+            $siswa->ayah,
+            $siswa->tahunlahirayah,
+            $siswa->pendidikanayah,
+            $siswa->pekerjaanayah,
+            $siswa->penghasilanayah,
+            $siswa->nikayah,
+            $siswa->namaibu,
+            $siswa->tahunlahiribu,
+            $siswa->pendidikanibu,
+            $siswa->pekerjaanibu,
+            $siswa->penghasilanibu,
+            $siswa->nikibu,
+            $siswa->namawali,
+            $siswa->tahunlahirwali,
+            $siswa->pendidikanwali,
+            $siswa->pekerjaanwali,
+            $siswa->penghasilanwali,
+            $siswa->nikwali,
+            $siswa->rombelsaatini,
+            $siswa->nopesertaunas,
+            $siswa->noijazah,
+            $siswa->penerimakip,
+            $siswa->nomorkip,
+            $siswa->namadikip,
+            $siswa->nomorkks,
+            $siswa->noaktalahir,
+            $siswa->bank,
+            $siswa->nomor_rekening_bank,
+            $siswa->rekening_atas_nama,
+            $siswa->layakpip,
+            $siswa->alasanlayakpip,
+            $siswa->kebutuhankhusus,
+            $siswa->sekolahasal,
+            $siswa->anakke,
+            $siswa->lintang,
+            $siswa->bujur,
+            $siswa->nokk,
+            $siswa->beratbadan,
+            $siswa->tinggibadan,
+            $siswa->lingkarkepala,
+            $siswa->jmlsaudara,
         ];
     }
-    public function headings():array
+
+    public function headings(): array
     {
-        return[
+        return [
             'nama',
             'nipd',
             'jenis_kelamin',
@@ -122,58 +141,58 @@ class SiswaExport implements FromQuery, ShouldAutoSize, WithMapping, WithHeading
             'rw',
             'dusun',
             'kelurahan',
-        'kecamatan',
-        'kode_pos',
-        'jenis_tinggal',
-        'alat_transportasi',
-        'telepon',
-        'hp',
-        'email',
-        'skhun',
-        'penerima_kps',
-        'nokps',
-        'ayah',
-        'tahunlahirayah',
-        'pendidikanayah',
-        'pekerjaanayah',
-        'penghasilanayah',
-        'nikayah',
-        'namaibu',
-        'tahunlahiribu',
-        'pendidikanibu',
-        'pekerjaanibu',
-        'penghasilanibu',
-        'nikibu',
-        'namawali',
-        'tahunlahirwali',
-        'pendidikanwali',
-        'pekerjaanwali',
-        'penghasilanwali',
-        'nikwali',
-        'rombelsaatini',
-        'nopesertaunas',
-        'noijazah',
-        'penerimakip',
-        'nomorkip',
-        'namadikip',
-        'nomorkks',
-        'noaktalahir',
-        'bank',
-        'nomor_rekening bank',
-        'rekening_atas_nama',
-        'layakpip',
-        'alasanlayakpip',
-        'kebutuhankhusus',
-        'sekolahasal',
-        'anakke',
-        'lintang',
-        'bujur',
-        'nokk',
-        'beratbadan',
-        'tinggibadan',
-        'lingkarkepala',
-        'jmlsaudara',
-        'jarakrumah',
+            'kecamatan',
+            'kode_pos',
+            'jenis_tinggal',
+            'alat_transportasi',
+            'telepon',
+            'hp',
+            'email',
+            'skhun',
+            'penerima_kps',
+            'nokps',
+            'ayah',
+            'tahunlahirayah',
+            'pendidikanayah',
+            'pekerjaanayah',
+            'penghasilanayah',
+            'nikayah',
+            'namaibu',
+            'tahunlahiribu',
+            'pendidikanibu',
+            'pekerjaanibu',
+            'penghasilanibu',
+            'nikibu',
+            'namawali',
+            'tahunlahirwali',
+            'pendidikanwali',
+            'pekerjaanwali',
+            'penghasilanwali',
+            'nikwali',
+            'rombelsaatini',
+            'nopesertaunas',
+            'noijazah',
+            'penerimakip',
+            'nomorkip',
+            'namadikip',
+            'nomorkks',
+            'noaktalahir',
+            'bank',
+            'nomor_rekening bank',
+            'rekening_atas_nama',
+            'layakpip',
+            'alasanlayakpip',
+            'kebutuhankhusus',
+            'sekolahasal',
+            'anakke',
+            'lintang',
+            'bujur',
+            'nokk',
+            'beratbadan',
+            'tinggibadan',
+            'lingkarkepala',
+            'jmlsaudara',
+            'jarakrumah',
         ];
     }
 }
