@@ -1,9 +1,14 @@
 <?php
 
+use App\Exports\PegawaiExport;
 use App\Models\Pegawai;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 uses(Tests\TestCase::class);
 
@@ -19,6 +24,43 @@ beforeEach(function () {
 afterEach(function () {
     DB::purge('sqlite');
 });
+
+it('preserves every identifier digit when exporting and importing an xlsx file', function (string $identifier) {
+    $pegawai = Pegawai::factory()->create([
+        'nuptk' => $identifier, 'hp' => '081234567890', 'skpengangkatan' => '00001234567890123456',
+        'npwp' => $identifier, 'nonik' => $identifier, 'nokk' => $identifier,
+    ]);
+    $file = tmpfile();
+
+    try {
+        $contents = Excel::raw(new PegawaiExport, \Maatwebsite\Excel\Excel::XLSX);
+        fwrite($file, $contents);
+        $workbook = (new Xlsx)->load(stream_get_meta_data($file)['uri']);
+        $sheet = $workbook->getActiveSheet();
+
+        foreach (['B2' => $identifier, 'N2' => '081234567890', 'O2' => '00001234567890123456', 'W2' => $identifier, 'X2' => $identifier, 'Y2' => $identifier] as $address => $expected) {
+            $cell = $sheet->getCell($address);
+            expect($cell->getValue())->toBe($expected);
+            expect($cell->getDataType())->toBe(DataType::TYPE_STRING);
+            expect($cell->getFormattedValue())->toBe($expected);
+            expect($cell->getStyle()->getNumberFormat()->getFormatCode())->toBe(NumberFormat::FORMAT_TEXT);
+        }
+        $workbook->disconnectWorksheets();
+
+        $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => 1]))
+            ->post(route('importpegawai'), ['file' => UploadedFile::fake()->createWithContent('pegawai.xlsx', $contents)])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('pegawai.index'));
+
+        $this->assertDatabaseCount('pegawais', 1);
+        $this->assertDatabaseHas('pegawais', [
+            'id' => $pegawai->id, 'nuptk' => $identifier, 'nonik' => $identifier, 'nokk' => $identifier,
+            'npwp' => $identifier, 'hp' => '081234567890', 'skpengangkatan' => '00001234567890123456',
+        ]);
+    } finally {
+        fclose($file);
+    }
+})->with(['16 digits' => '3578123456789123', 'leading zeros' => '0012345678901234']);
 
 it('updates the existing employee by NUPTK and reports new unchanged and skipped rows', function () {
     $pegawai = Pegawai::factory()->create(['nuptk' => '0012345678901234', 'name' => 'Nama Lama', 'aktif' => 'GTY/PTY', 'status' => 'Aktif']);

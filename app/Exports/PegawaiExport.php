@@ -6,12 +6,29 @@ use App\Models\Pegawai;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class PegawaiExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
+class PegawaiExport extends DefaultValueBinder implements FromQuery, ShouldAutoSize, WithCustomValueBinder, WithHeadings, WithMapping
 {
     use Exportable;
+
+    public function bindValue(Cell $cell, mixed $value): bool
+    {
+        if (in_array($cell->getColumn(), ['B', 'N', 'O', 'W', 'X', 'Y'], true) && $cell->getRow() > 1 && $value !== null) {
+            $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
+            $cell->getStyle()->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
+
+            return true;
+        }
+
+        return parent::bindValue($cell, $value);
+    }
 
     /**
      * @return \Illuminate\Support\Collection
