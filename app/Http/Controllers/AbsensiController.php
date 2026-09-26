@@ -12,6 +12,7 @@ use App\Models\Tahun;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
 class AbsensiController extends Controller
@@ -49,6 +50,8 @@ class AbsensiController extends Controller
         // Guru Mapel Normal -> 'mapel'
         // Guru Piket (Pengganti) -> 'piket_sub'
         $kategori = ($mode === 'piket') ? 'piket_sub' : 'mapel';
+
+        Gate::authorize('input-presensi', [$jadwal, $kategori]);
 
         // Cek apakah sudah ada logbook untuk kategori ini
         $existingLogbook = Logbook::with(['absensis', 'jadwal'])
@@ -94,6 +97,9 @@ class AbsensiController extends Controller
 
         $user = auth()->user();
 
+        $jadwal = Jadwal::findOrFail($request->jadwal_id);
+        Gate::authorize('input-presensi', [$jadwal, $request->kategori]);
+
         // --- AUTO-FIX: Coba hubungkan akun Admin/Operator ke Pegawai jika belum ada ---
         if (! $user->pegawai_id && in_array($user->role, ['admin', 'operator', 'kepala'])) {
             $matchingPegawai = Pegawai::where('email', $user->email) // Prioritas 1: Email sama
@@ -114,7 +120,6 @@ class AbsensiController extends Controller
         try {
             DB::beginTransaction();
 
-            $jadwal = Jadwal::findOrFail($request->jadwal_id);
             $date = $request->input('tanggal', now()->toDateString());
 
             // Cek Logbook yang sudah ada (Mode Edit/Update) berdasarkan Kategori dan Tanggal

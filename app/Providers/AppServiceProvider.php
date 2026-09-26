@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Enums\UserRole;
+use App\Models\Jadwal;
 use App\Models\Sekolah;
 use App\Models\User;
 use App\Policies\UserPolicy;
@@ -50,6 +52,27 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('is-guru', function (User $user) {
             return $user->role->value === 'guru';
+        });
+
+        Gate::define('input-presensi', function (User $user, Jadwal $jadwal, string $kategori): bool {
+            if (! $user->is_active || ! in_array($kategori, ['mapel', 'piket_sub'], true)) {
+                return false;
+            }
+
+            if (in_array($user->role, [UserRole::Admin, UserRole::Operator, UserRole::Kepala], true)) {
+                return true;
+            }
+
+            if ($user->role !== UserRole::Guru || ! $user->pegawai_id) {
+                return false;
+            }
+
+            if ($kategori === 'piket_sub') {
+                return $user->isPiketToday();
+            }
+
+            return (string) $user->pegawai_id === (string) $jadwal->pegawai_id
+                || $user->isPiketToday();
         });
 
         // ------------------------------------

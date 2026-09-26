@@ -389,6 +389,7 @@
                             </td>
                             <td class="w-px whitespace-nowrap px-2 py-3 text-left">
                                 <div class="inline-flex items-center gap-1">
+                                    @can('manage-jadwal')
                                     {{-- Absen Button --}}
                                     <a href="{{ route('absensi.create', ['jadwal_id' => $j->id, 'mode' => request('mode')]) }}" 
                                        class="p-2 inline-flex items-center justify-center text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -396,7 +397,6 @@
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                                     </a>
 
-                                    @can('manage-jadwal')
                                     {{-- Edit Button --}}
                                     <x-btn onclick="editRow({{ $j->id }})" icon="pencil-square" color="blue" variant="ghost" size="sm" class="!p-2" />
                                     {{-- Delete Button --}}

@@ -31,12 +31,30 @@ beforeEach(function () {
         'database/migrations/2024_05_04_110313_create_tahuns_table.php',
         'database/migrations/2024_05_04_110343_create_jadwals_table.php',
         'database/migrations/2024_05_04_110407_create_logbooks_table.php',
+        'database/migrations/2026_01_28_031755_create_jadwal_pikets_table.php',
     ], '--no-interaction' => true])->assertExitCode(0);
 });
 
 afterEach(function () {
     DB::purge('sqlite');
 });
+
+test('teachers cannot access attendance actions from the schedule list', function () {
+    $jadwal = Jadwal::factory()->create(['tahun_id' => Tahun::factory()->create(['isActive' => true])->id]);
+    $user = User::factory()->create(['role' => 'guru', 'is_active' => true, 'pegawai_id' => $jadwal->pegawai_id]);
+
+    $this->actingAs($user)->get(route('jadwal.index'))->assertOk()
+        ->assertDontSee('title="Input Presensi"', false)
+        ->assertDontSee(route('absensi.create', ['jadwal_id' => $jadwal->id]));
+});
+
+test('schedule managers retain attendance actions on the schedule list', function (string $role) {
+    $jadwal = Jadwal::factory()->create(['tahun_id' => Tahun::factory()->create(['isActive' => true])->id]);
+
+    $this->actingAs(User::factory()->create(['role' => $role, 'is_active' => true]))->get(route('jadwal.index'))->assertOk()
+        ->assertSee('title="Input Presensi"', false)
+        ->assertSee(route('absensi.create', ['jadwal_id' => $jadwal->id]));
+})->with(['admin', 'operator']);
 
 test('daily attendance uses the current active year instead of an old cached year', function () {
     $old = Tahun::factory()->create(['isActive' => true]);

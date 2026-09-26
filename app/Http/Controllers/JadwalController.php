@@ -487,7 +487,7 @@ class JadwalController extends Controller
         $isPiket = false;
         $viewMode = $request->input('view_mode', 'all');
 
-        if ($user->role === 'guru') {
+        if ($user->can('is-guru')) {
             if (! $user->pegawai_id) {
                 return redirect()->back()->with('error', 'Akun anda tidak terhubung dengan data pegawai.');
             }

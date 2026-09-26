@@ -188,19 +188,21 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    @can('input-presensi', [$jadwal, 'mapel'])
                                     @if($jadwal->status_presensi == 'sudah')
-                                        <a href="{{ route('absensi.create', ['jadwal_id' => $jadwal->id]) }}" 
+                                        <a href="{{ route('absensi.create', ['jadwal_id' => $jadwal->id, 'date' => $date]) }}"
                                            class="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-all duration-200 shadow-sm">
                                             <svg class="w-3 h-3 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                             Edit Absensi
                                         </a>
                                     @else
-                                        <a href="{{ route('absensi.create', ['jadwal_id' => $jadwal->id]) }}" 
+                                        <a href="{{ route('absensi.create', ['jadwal_id' => $jadwal->id, 'date' => $date]) }}"
                                            class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-all duration-200 shadow-sm hover:shadow-md transform active:scale-95">
                                             <svg class="w-3 h-3 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                             Isi Absensi
                                         </a>
                                     @endif
+                                    @endcan
                                 </td>
                             </tr>
                             @endforeach
