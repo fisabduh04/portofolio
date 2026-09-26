@@ -86,10 +86,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     // 1. AKSES UNTUK SEMUA ROLE (Dashboard)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
-    // 2. AKSES REKAPITULASI & ATTENDANCE (Kepala Sekolah, Admin, Operator, Staff)
-    Route::middleware(['role:kepala,admin,operator,staff'])->group(function () {
-        // ... (Report routes unrelated to attendance module) ...
-
+    // Rekapitulasi presensi siswa, termasuk akses guru.
+    Route::middleware(['role:kepala,admin,operator,staff,guru'])->group(function () {
         Route::get('/absensi/rekap', [AbsensiReportController::class, 'rekap'])->name('absensi.rekap');
         Route::get('/absensi/rekap-harian', [AbsensiReportController::class, 'rekapHarian'])->name('absensi.rekap-harian');
         Route::get('/absensi/rekap-harian/export', [AbsensiExportController::class, 'exportRekapHarian'])->name('absensi.rekap-harian.export');
@@ -102,6 +100,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/absensi/export-periode', [AbsensiExportController::class, 'exportRekapPeriode'])->name('absensi.export-periode');
         Route::get('/absensi/export-bulanan', [AbsensiExportController::class, 'exportBulanan'])->name('absensi.export-bulanan');
         Route::get('/absensi/export-tahunan', [AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.export-tahunan');
+    });
+
+    // Rekap jam mengajar dan kehadiran pegawai.
+    Route::middleware(['role:kepala,admin,operator,staff'])->group(function () {
         Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
 
         // PEGAWAI ATTENDANCE SYSTEM

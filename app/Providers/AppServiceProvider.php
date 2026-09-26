@@ -2,15 +2,14 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View;
-use Illuminate\Pagination\Paginator;
 use App\Models\Sekolah;
 use App\Models\User;
-use Illuminate\Support\Facades\Gate;
 use App\Policies\UserPolicy;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,8 +20,6 @@ class AppServiceProvider extends ServiceProvider
     {
         //
     }
-
-   
 
     public function boot(): void
     {
@@ -36,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('view-rekapitulasi', function (User $user) {
-            return in_array($user->role->value, ['kepala', 'admin', 'operator', 'staff']);
+            return in_array($user->role->value, ['kepala', 'admin', 'operator', 'staff', 'guru']);
         });
 
         Gate::define('manage-jadwal', function (User $user) {
@@ -59,8 +56,8 @@ class AppServiceProvider extends ServiceProvider
 
         // 2. Optimasi: Hanya jalankan query jika aplikasi TIDAK sedang berjalan di terminal (CLI/Migration)
         // Ini mencegah error saat Anda menjalankan 'php artisan migrate' di server baru
-        if (!$this->app->runningInConsole()) {
-            
+        if (! $this->app->runningInConsole()) {
+
             // 3. Gunakan Cache agar tidak membebani database di SETIAP refresh halaman
             $sekolah = Cache::remember('global_sekolah_data', now()->addHours(4), function () {
                 try {
@@ -70,9 +67,9 @@ class AppServiceProvider extends ServiceProvider
                 }
             });
 
-            if (!$sekolah) {
+            if (! $sekolah) {
                 Cache::forget('global_sekolah_data');
-                $sekolah = new Sekolah();
+                $sekolah = new Sekolah;
             }
 
             // 4. Logika Logo: Jika ada di DB pakai DB, jika tidak pakai default
@@ -81,5 +78,4 @@ class AppServiceProvider extends ServiceProvider
             View::share('sekolah', $sekolah);
         }
     }
-        
 }
