@@ -56,16 +56,6 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('importmapel', [MapelController::class, 'import'])->name('importmapel');
     Route::get('exporttmapel', [MapelController::class, 'export'])->name('mapel.export');
 
-    // Route pegawai
-    // Event & Override Routes
-    // Event & Override Routes
-    Route::resource('attendance/events', \App\Http\Controllers\SpecialEventController::class, ['as' => 'attendance']);
-    Route::resource('attendance/overrides', \App\Http\Controllers\ScheduleOverrideController::class, ['as' => 'attendance']);
-
-    // NEW: Mandatory Days (Jadwal Wajib)
-    Route::get('attendance/mandatory', [\App\Http\Controllers\MandatoryScheduleController::class, 'index'])->name('attendance.mandatory.index');
-    Route::post('attendance/mandatory', [\App\Http\Controllers\MandatoryScheduleController::class, 'store'])->name('attendance.mandatory.store');
-
     // Existing Routes
     Route::resource('pegawai', PegawaiController::class);
     Route::post('importpegawai', [PegawaiController::class, 'import'])->name('importpegawai');
@@ -102,53 +92,45 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/absensi/export-tahunan', [AbsensiExportController::class, 'exportRekapTahunan'])->name('absensi.export-tahunan');
     });
 
-    // Rekap jam mengajar dan kehadiran pegawai.
+    // Rekap jam mengajar.
     Route::middleware(['role:kepala,admin,operator,staff'])->group(function () {
         Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
+    });
 
-        // PEGAWAI ATTENDANCE SYSTEM
-        Route::prefix('attendance')->name('attendance.')->group(function () {
+    // Kepegawaian hanya dapat diakses administrator.
+    Route::middleware(['can:view-kepegawaian'])->prefix('attendance')->name('attendance.')->group(function () {
+        Route::resource('overrides', \App\Http\Controllers\ScheduleOverrideController::class);
+        Route::get('mandatory', [\App\Http\Controllers\MandatoryScheduleController::class, 'index'])->name('mandatory.index');
+        Route::post('mandatory', [\App\Http\Controllers\MandatoryScheduleController::class, 'store'])->name('mandatory.store');
 
-            // ADMIN Only Routes
-            Route::middleware(['role:kepala,admin,operator'])->group(function () {
-                Route::resource('rules', AttendanceRuleController::class)->parameters(['rules' => 'attendanceRule']);
-                Route::post('fingerprint/{fingerprint}/pull', [FingerprintMachineController::class, 'pull'])->name('fingerprint.pull');
-                Route::resource('fingerprint', FingerprintMachineController::class);
-                Route::get('create', [PegawaiAttendanceController::class, 'create'])->name('create');
-                Route::post('store', [PegawaiAttendanceController::class, 'store'])->name('store');
-                Route::post('process', [PegawaiAttendanceController::class, 'process'])->name('process');
-                Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
-                Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
-            });
+        Route::resource('rules', AttendanceRuleController::class)->parameters(['rules' => 'attendanceRule']);
+        Route::post('fingerprint/{fingerprint}/pull', [FingerprintMachineController::class, 'pull'])->name('fingerprint.pull');
+        Route::resource('fingerprint', FingerprintMachineController::class);
+        Route::get('create', [PegawaiAttendanceController::class, 'create'])->name('create');
+        Route::post('store', [PegawaiAttendanceController::class, 'store'])->name('store');
+        Route::post('process', [PegawaiAttendanceController::class, 'process'])->name('process');
 
-            // STAFF & ADMIN Routes (Self Service)
-            Route::get('dashboard', [PegawaiAttendanceController::class, 'index'])->name('index');
-            Route::get('rekap-pegawai', [PegawaiAttendanceController::class, 'rekapPegawai'])->name('rekap-pegawai');
-            Route::get('report', [PegawaiAttendanceController::class, 'report'])->name('report');
-            Route::get('report/employee', [AbsensiPegawaiReportController::class, 'index'])->name('report.employee');
-            Route::get('report/employee/export', [AbsensiPegawaiReportController::class, 'export'])->name('report.employee.export');
-            Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
-            Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
+        Route::get('dashboard', [PegawaiAttendanceController::class, 'index'])->name('index');
+        Route::get('rekap-pegawai', [PegawaiAttendanceController::class, 'rekapPegawai'])->name('rekap-pegawai');
+        Route::get('report', [PegawaiAttendanceController::class, 'report'])->name('report');
+        Route::get('report/employee', [AbsensiPegawaiReportController::class, 'index'])->name('report.employee');
+        Route::get('report/employee/export', [AbsensiPegawaiReportController::class, 'export'])->name('report.employee.export');
+        Route::get('setting', [PegawaiAttendanceController::class, 'setting'])->name('setting');
+        Route::post('setting', [PegawaiAttendanceController::class, 'updateSetting'])->name('updateSetting');
 
-            // Wajib Hadir Routes
-            Route::get('wajib-hadir', [PegawaiWajibHadirController::class, 'index'])->name('wajib-hadir.index');
-            Route::post('wajib-hadir', [PegawaiWajibHadirController::class, 'store'])->name('wajib-hadir.store');
+        // Wajib Hadir Routes
+        Route::get('wajib-hadir', [PegawaiWajibHadirController::class, 'index'])->name('wajib-hadir.index');
+        Route::post('wajib-hadir', [PegawaiWajibHadirController::class, 'store'])->name('wajib-hadir.store');
 
-            // PAYROLL MANAGEMENT (Admin, Operator, Bendahara)
-            Route::middleware(['role:admin,operator,bendahara'])->group(function () {
-                Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
-            });
+        // Payroll dan slip gaji.
+        Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
+        Route::get('payroll/{id}/slip', [PayrollController::class, 'slip'])->name('payroll.slip');
 
-            // SELF SERVICE (Semua User bisa buka slip sendiri)
-            Route::get('payroll/{id}/slip', [PayrollController::class, 'slip'])->name('payroll.slip');
+        // Special Events
+        Route::resource('events', SpecialEventController::class);
 
-            // Special Events
-            Route::resource('events', SpecialEventController::class);
-
-            // Perizinan (Izin/Sakit/Cuti)
-            Route::resource('izin', PegawaiIzinController::class);
-        });
-
+        // Perizinan (Izin/Sakit/Cuti)
+        Route::resource('izin', PegawaiIzinController::class);
     });
 
     // 3. AKSES KHUSUS GURU & ADMIN (Presensi) - MOVED UP TO FIX ROUTE PRECEDENCE

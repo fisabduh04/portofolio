@@ -30,8 +30,8 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useTailwind();
 
         // --- Definisi Akses Menu (Gates) ---
-        Gate::define('view-kepegawaian', function (User $user) {
-            return in_array($user->role->value, ['kepala', 'admin', 'operator', 'staff', 'bendahara']);
+        Gate::define('view-kepegawaian', function (User $user): bool {
+            return $user->role === UserRole::Admin;
         });
 
         Gate::define('view-rekapitulasi', function (User $user) {
