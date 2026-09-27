@@ -1,6 +1,6 @@
 import '../css/face-prototype.css';
 import { metricsCsv } from './face-prototype-export.js';
-import { motionSignals, runMotionChallenge } from './face-prototype-challenge.js';
+import { motionSignals, runMotionChallenge, motionFailureInstruction } from './face-prototype-challenge.js';
 import { trialScenario, trialError, failureOutcome, trialWarning, summarizeTrials } from './face-prototype-trials.js';
 import { detectorInputSize, graphicsDiagnostic, initializeFaceBackend } from './face-prototype-performance.js';
 import { facePositionAssessment, faceImageQuality, createPassageGate } from './face-prototype-quality.js';
@@ -60,6 +60,7 @@ function stop() {
 function clearResults() {
     stop();
     references.length = 0;
+    element('reference-setup').open = true;
     samples.length = 0;
     passage.reset();
     element('csv-preview').value = '';
@@ -81,6 +82,7 @@ async function start() {
     if (busy || stream) return;
     const issue = cameraActivationIssue(element('token').value, element('consent').checked);
     if (issue) {
+        element('camera-setup').open = true;
         status(issue.message);
         element('operator-status').textContent = issue.message;
         element(issue.field).focus();
@@ -132,6 +134,7 @@ async function start() {
         video.srcObject = stream;
         await video.play();
         if (run !== generation) return;
+        element('camera-setup').open = false;
         element('position-guide').hidden = !element('show-position-guide').checked;
         element('position-help').textContent = 'Pastikan seluruh wajah terlihat jelas di gambar kamera. Ambil referensi atau klik Pindai sekali untuk memeriksa posisi.';
         element('performance-info').textContent = `Backend: ${faceapi.tf.getBackend()}. Video: ${video.videoWidth} × ${video.videoHeight}. ${faceapi.tf.getBackend() === 'cpu'
@@ -141,6 +144,7 @@ async function start() {
         if (run !== generation) return;
         stop();
         if (stage === 'access') {
+            element('camera-setup').open = true;
             element('operator-status').textContent = scanFailureMessage(error);
             status('Kamera belum diaktifkan karena kode akses belum terverifikasi.');
         } else {
@@ -228,6 +232,7 @@ async function enroll() {
         const captured = await capture();
         if (run !== generation) return;
         references.push({ alias, descriptor: captured.descriptor });
+        element('reference-setup').open = false;
         element('position-help').textContent = 'Referensi berhasil diambil. Pertahankan jarak dan posisi saat melakukan uji.';
         const counts = {};
         references.forEach((reference) => { counts[reference.alias] = (counts[reference.alias] || 0) + 1; });
@@ -343,7 +348,7 @@ async function scan(withMotion = false) {
             : 'Hasil belum diterima sebagai kandidat. Perbaiki posisi atau minta pemeriksaan operator.');
     } catch (error) {
         if (run === generation) {
-            if (withMotion) element('motion-status').textContent = `Uji tantangan belum selesai sebagai pencocokan: ${scanFailureMessage(error)}`;
+            if (withMotion) element('motion-status').textContent = motionFailureInstruction(error);
             element('position-help').textContent = scanFailureMessage(error);
             const outcome = failureOutcome(error, stage);
             if (outcome) recordTrial({ ...outcome, scenario, attempt_ms: performance.now() - attempted,

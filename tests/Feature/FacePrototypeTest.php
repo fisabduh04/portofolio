@@ -5,7 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 
-class FacePrototypeTestCase extends Tests\TestCase
+class FacePrototypeTestCase extends Illuminate\Foundation\Testing\TestCase
 {
     public function createApplication(): Application
     {

@@ -121,6 +121,16 @@ test('isolated launcher serves local assets and accepts its displayed operator c
         assert.match(pageHtml, /id="challenge" disabled/);
         assert.match(pageHtml, /id="motion-status"/);
         assert.match(pageHtml, /Tidak ada bukti liveness terverifikasi server/);
+        assert.match(pageHtml, /<details id="camera-setup" open/);
+        assert.match(pageHtml, /<details id="reference-setup" open/);
+        assert.match(pageHtml, /<details id="metrics-panel" class=/);
+        assert.ok(pageHtml.indexOf('</header>') < pageHtml.indexOf('id="camera-workspace"'), 'Header must close before the testing workspace.');
+        const workspace = pageHtml.slice(pageHtml.indexOf('id="camera-workspace"'), pageHtml.indexOf('<details id="metrics-panel"'));
+        for (const id of ['video', 'motion-status', 'challenge', 'scan', 'result', 'download']) {
+            assert.ok(workspace.includes(`id="${id}"`), `${id} must remain visible in the primary testing area.`);
+        }
+        const ids = [...pageHtml.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
+        assert.equal(new Set(ids).size, ids.length, 'Moving controls must not duplicate IDs or event targets.');
         const versionedScript = pageHtml.match(/src="(\/prototype-assets\/app\.js\?v=[a-f0-9]{64})"/)?.[1];
         assert.ok(versionedScript, 'The camera script must be versioned so updates replace stale browser assets.');
         const scriptResponse = await fetch(`${base}${versionedScript}`);

@@ -3,10 +3,31 @@ import { test } from 'node:test';
 import { metricsCsv } from '../../resources/js/face-prototype-export.js';
 import { trialScenario, trialError, failureOutcome, trialWarning, summarizeTrials } from '../../resources/js/face-prototype-trials.js';
 import { detectorInputSize, rendererCategory, graphicsDiagnostic, initializeFaceBackend } from '../../resources/js/face-prototype-performance.js';
-import { motionSignals, randomMotionPlan, createMotionChallenge, runMotionChallenge } from '../../resources/js/face-prototype-challenge.js';
+import { motionSignals, randomMotionPlan, createMotionChallenge, runMotionChallenge, motionFailureInstruction } from '../../resources/js/face-prototype-challenge.js';
 
 const motionSample = (values = {}) => ({ leftEar: 0.3, rightEar: 0.3, yaw: 0, descriptor: Array(128).fill(0), ...values });
 const closedEyes = () => motionSample({ leftEar: 0.1, rightEar: 0.1 });
+
+test('motion instructions retain the requested step and explain restarting after capture failure', async () => {
+    const samples = [motionSample(), motionSample()];
+    let at = 0;
+    await assert.rejects(runMotionChallenge({ plan: { actions: ['blink', 'turn'], direction: 1 },
+        now: () => at, active: () => true, notify: () => {}, pause: async () => {},
+        capture: async () => {
+            at += 100;
+            if (!samples.length) throw trialError('NO_FACE', 'Wajah belum terdeteksi.');
+            const sample = samples.shift();
+            return { started: at, motion: sample, descriptor: sample.descriptor };
+        },
+    }), (error) => {
+        const message = motionFailureInstruction(error);
+        assert.match(message, /Petunjuk terakhir: Langkah 1\/2: tutup kedua mata/);
+        assert.match(message, /Uji dihentikan: Wajah belum terdeteksi/);
+        assert.match(message, /untuk memulai ulang/);
+        return true;
+    });
+    assert.doesNotMatch(motionFailureInstruction(new Error('Jaringan terputus')), /undefined|Petunjuk terakhir/);
+});
 
 test('motion plans vary both action order and image direction', () => {
     for (const a of [0, 1]) for (const b of [0, 1]) {

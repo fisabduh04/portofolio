@@ -44,11 +44,12 @@ export function createMotionChallenge(plan, started, duration = 25000) {
         get prompt() {
             if (failed) return 'Tantangan dihentikan. Mulai ulang jika ingin mencoba lagi.';
             if (done) return 'Gerakan selesai; belum membuktikan keaslian wajah.';
-            if (stage === 'prepare') return 'Hadapkan wajah lurus, buka kedua mata, dan diam sebentar.';
-            if (stage === 'blink') return 'Tutup kedua mata sebentar, lalu buka kembali. Jangan sekadar menggerakkan foto.';
-            if (stage === 'reopen') return 'Buka kembali kedua mata dan hadapkan wajah lurus.';
-            if (stage === 'return') return 'Kembali menghadap lurus ke kamera.';
-            return `Putar kepala sedikit agar hidung mengarah ke sisi ${plan.direction === 1 ? 'kanan' : 'kiri'} gambar kamera, lalu kembali lurus.`;
+            if (stage === 'prepare') return 'Persiapan: hadapkan wajah lurus, buka kedua mata, dan diam sebentar.';
+            const step = `Langkah ${actionIndex + 1}/2: `;
+            if (stage === 'blink') return step + 'tutup kedua mata sebentar, lalu buka kembali.';
+            if (stage === 'reopen') return step + 'buka kembali kedua mata dan hadapkan wajah lurus.';
+            if (stage === 'return') return step + 'kembali menghadap lurus ke kamera.';
+            return step + `putar kepala sedikit agar hidung mengarah ke sisi ${plan.direction === 1 ? 'kanan' : 'kiri'} gambar kamera, lalu kembali lurus.`;
         },
         observe(sample, now) {
             if (failed) return { failed, done: false };
@@ -94,6 +95,7 @@ export async function runMotionChallenge({ capture, active, notify, now = () => 
     const challenge = createMotionChallenge(plan, started);
     let firstStarted;
     let frames = 0;
+    let lastPrompt = challenge.prompt;
     const error = (code, message) => Object.assign(new Error(message), { code });
     const messages = {
         MOTION_TIMEOUT: 'Waktu tantangan habis. Coba lagi dengan cahaya merata dan wajah terlihat jelas.',
@@ -103,7 +105,8 @@ export async function runMotionChallenge({ capture, active, notify, now = () => 
     };
     try {
         while (active()) {
-            notify(challenge.prompt);
+            lastPrompt = challenge.prompt;
+            notify(lastPrompt);
             const frame = await capture();
             if (!active()) throw error('MOTION_CANCELLED', 'Tantangan dibatalkan.');
             firstStarted ??= frame.started;
@@ -116,9 +119,15 @@ export async function runMotionChallenge({ capture, active, notify, now = () => 
         }
         throw error('MOTION_CANCELLED', 'Tantangan dibatalkan.');
     } catch (failure) {
+        failure.motion_prompt = lastPrompt;
         failure.motion_ms = now() - started;
         failure.motion_frames = frames;
         failure.motion_plan = `${plan.actions.join('_')}_${plan.direction === 1 ? 'right' : 'left'}`;
         throw failure;
     }
+}
+
+export function motionFailureInstruction(error) {
+    const last = error.motion_prompt ? `Petunjuk terakhir: ${error.motion_prompt} ` : '';
+    return `${last}Uji dihentikan: ${error.message} Perbaiki kondisi, lalu klik Uji gerakan acak lalu cocokkan untuk memulai ulang.`;
 }
