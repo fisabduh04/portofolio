@@ -8,6 +8,7 @@ use App\Http\Controllers\AttendanceRuleController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FingerprintMachineController;
+use App\Http\Controllers\GuruAbsensiController;
 use App\Http\Controllers\HariLiburController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\JadwalPiketController;
@@ -106,8 +107,10 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::resource('rules', AttendanceRuleController::class)->parameters(['rules' => 'attendanceRule']);
         Route::post('fingerprint/{fingerprint}/pull', [FingerprintMachineController::class, 'pull'])->name('fingerprint.pull');
         Route::resource('fingerprint', FingerprintMachineController::class);
-        Route::get('create', [PegawaiAttendanceController::class, 'create'])->name('create');
-        Route::post('store', [PegawaiAttendanceController::class, 'store'])->name('store');
+        Route::get('create', [GuruAbsensiController::class, 'create'])->name('create');
+        Route::post('store', [GuruAbsensiController::class, 'store'])->name('store');
+        Route::get('rekap-guru', [GuruAbsensiController::class, 'report'])->name('rekap-guru');
+        Route::get('rekap-guru/export', [GuruAbsensiController::class, 'export'])->name('rekap-guru.export');
         Route::post('process', [PegawaiAttendanceController::class, 'process'])->name('process');
 
         Route::get('dashboard', [PegawaiAttendanceController::class, 'index'])->name('index');

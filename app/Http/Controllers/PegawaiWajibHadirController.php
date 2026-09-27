@@ -2,127 +2,90 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\StorePegawaiWajibHadirRequest;
+use App\Models\Jadwal;
+use App\Models\JadwalPiket;
+use App\Models\Pegawai;
+use App\Models\PegawaiWajibHadir;
+use App\Models\Tahun;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PegawaiWajibHadirController extends Controller
 {
-    public function index()
+    public function index(): View|RedirectResponse
     {
-        $activeYear = \App\Models\Tahun::where('isActive', 1)->first();
-        if (!$activeYear) {
-            return redirect()->back()->with('type', 'error')->with('message', 'Tahun ajaran aktif tidak ditemukan.');
+        $activeYear = Tahun::aktif()->orderBy('id')->first();
+        if (! $activeYear) {
+            return back()->with('type', 'error')->with('message', 'Tahun ajaran aktif tidak ditemukan.');
         }
 
-        $pegawais = \App\Models\Pegawai::where('aktif', 'Aktif')
-            ->orderBy('name')
-            ->with(['wajibHadirs' => function($q) use ($activeYear) {
-                $q->where('tahun_id', $activeYear->id);
-            }])
-            ->get();
-
-        // Fetch Schedules (Jadwal & Piket) for Auto-Check
-        // Use flat string keys "pegawai_id-hari" for reliable lookup in Blade
-        $autoSchedules = [];
-
-        $jadwals = \App\Models\Jadwal::where('tahun_id', $activeYear->id)->get(['pegawai_id', 'hari']);
-        foreach ($jadwals as $jadwal) {
-            $autoSchedules[$jadwal->pegawai_id . '-' . $jadwal->hari] = true;
-        }
-
-        $pikets = \App\Models\JadwalPiket::where('tahun_id', $activeYear->id)->get(['pegawai_id', 'hari']);
-        foreach ($pikets as $piket) {
-            $autoSchedules[$piket->pegawai_id . '-' . $piket->hari] = true;
-        }
-
-        return view('attendance.wajib-hadir.index', compact('pegawais', 'autoSchedules', 'activeYear'));
+        return view('attendance.wajib-hadir.index', $this->scheduleState($activeYear) + compact('activeYear'));
     }
 
-    public function store(Request $request)
+    public function store(StorePegawaiWajibHadirRequest $request): RedirectResponse
     {
-        $request->validate([
-            'manual_days' => 'array', // [pegawai_id => [days...]]
-        ]);
+        $validated = $request->validated();
 
-        $activeYear = \App\Models\Tahun::where('isActive', 1)->first();
-        if (!$activeYear) return back();
-
-        \Illuminate\Support\Facades\DB::beginTransaction();
-        try {
-            // Logic:
-            // 1. We ONLY touch manual entries. 
-            // 2. But wait, the table stores mixed data (Auto + Manual)?
-            //    Or does the table only store "Checklist Result"?
-            //    Best approach: The table stores THE TRUTH (Official Wajib Hadir).
-            //    So we must merge Auto + Manual and save ALL as 'Wajib Hadir'.
-            //    Why? Because AttendanceService only checks this table. It doesn't check Jadwal/Piket again (performance).
-            
-            // However, the UI sends "manual_days" (checkboxes).
-            // Auto days are disabled checkboxes, so they might POST or might NOT depending on implementation.
-            // If disabled, they don't post. We must Re-Calculate Auto Days here to be safe.
-
-            // A. Get Assignments from DB (Jadwal/Piket)
-            $autoSchedules = [];
-            $jadwals = \App\Models\Jadwal::where('tahun_id', $activeYear->id)->get(['pegawai_id', 'hari']);
-            foreach ($jadwals as $jadwal) {
-                $autoSchedules[$jadwal->pegawai_id][] = $jadwal->hari;
-            }
-            $pikets = \App\Models\JadwalPiket::where('tahun_id', $activeYear->id)->get(['pegawai_id', 'hari']);
-            foreach ($pikets as $piket) {
-                $autoSchedules[$piket->pegawai_id][] = $piket->hari;
+        DB::transaction(function () use ($validated): void {
+            $activeYear = Tahun::aktif()->orderBy('id')->lockForUpdate()->first();
+            if (! $activeYear || $activeYear->id !== (int) $validated['tahun_id']) {
+                throw ValidationException::withMessages(['tahun_id' => 'Tahun ajaran aktif berubah. Muat ulang jadwal sebelum menyimpan.']);
             }
 
-            // B. Prepare Data to Sync
-            // Strategy: Clear existing for this year, then Insert distinct merged days.
-            // Note: This is heavy if many employees. Optimizing by looping inputs is better?
-            // But we need to handle "Uncheck" behavior (deletion).
-            // So Deleting all for active year and Re-inserting is safest for bulk update.
-            
-            \App\Models\PegawaiWajibHadir::where('tahun_id', $activeYear->id)->delete();
+            $state = $this->scheduleState($activeYear);
+            if (! hash_equals($state['version'], $validated['version'])) {
+                throw ValidationException::withMessages(['version' => 'Jadwal atau daftar pegawai telah berubah. Muat ulang halaman agar perubahan terbaru tidak tertimpa.']);
+            }
 
-            $pegawais = \App\Models\Pegawai::where('aktif', 'Aktif')->pluck('id');
-            $inserts = [];
-            $now = now();
+            $manualDays = $validated['manual_days'] ?? [];
+            if (array_diff(array_keys($manualDays), $state['pegawais']->modelKeys())) {
+                throw ValidationException::withMessages(['manual_days' => 'Daftar pegawai tidak valid. Muat ulang jadwal sebelum menyimpan.']);
+            }
 
-            foreach ($pegawais as $pegawaiId) {
-                $days = [];
-
-                // 1. Add Auto Days
-                if (isset($autoSchedules[$pegawaiId])) {
-                    $days = array_merge($days, $autoSchedules[$pegawaiId]);
-                }
-
-                // 2. Add Manual Days (from Form)
-                if ($request->has("manual_days.$pegawaiId")) {
-                    $manual = $request->input("manual_days.$pegawaiId");
-                    if (is_array($manual)) {
-                        $days = array_merge($days, $manual);
+            foreach ($state['pegawais'] as $pegawai) {
+                $days = $manualDays[$pegawai->id] ?? [];
+                foreach (PegawaiWajibHadir::DAYS as $day) {
+                    if (isset($state['autoSchedules'][$pegawai->id.'-'.$day])) {
+                        $days[] = $day;
                     }
                 }
-
-                // 3. Unique & Insert
                 $days = array_unique($days);
+
+                PegawaiWajibHadir::where('tahun_id', $activeYear->id)->where('pegawai_id', $pegawai->id)
+                    ->whereNotIn('hari', $days)->delete();
                 foreach ($days as $day) {
-                    $inserts[] = [
-                        'pegawai_id' => $pegawaiId,
-                        'tahun_id' => $activeYear->id,
-                        'hari' => $day,
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ];
+                    PegawaiWajibHadir::firstOrCreate([
+                        'pegawai_id' => $pegawai->id, 'tahun_id' => $activeYear->id, 'hari' => $day,
+                    ]);
                 }
             }
+        });
 
-            // Bulk Insert (Chunk if necessary, but assuming fits in memory for now)
-            foreach (array_chunk($inserts, 1000) as $chunk) {
-                \App\Models\PegawaiWajibHadir::insert($chunk);
+        return redirect()->route('attendance.wajib-hadir.index')
+            ->with('type', 'success')->with('message', 'Jadwal wajib hadir berhasil disimpan.');
+    }
+
+    /** @return array{pegawais: Collection<int, Pegawai>, autoSchedules: array<string, bool>, version: string} */
+    private function scheduleState(Tahun $activeYear): array
+    {
+        $pegawais = Pegawai::whereRaw('LOWER(TRIM(aktif)) = ?', ['aktif'])->orderBy('name')->orderBy('id')
+            ->with(['wajibHadirs' => fn ($query) => $query->where('tahun_id', $activeYear->id)->orderBy('id')])->get();
+        $autoSchedules = [];
+        foreach ([Jadwal::class, JadwalPiket::class] as $model) {
+            foreach ($model::where('tahun_id', $activeYear->id)->orderBy('id')->get(['pegawai_id', 'hari']) as $schedule) {
+                $autoSchedules[$schedule->pegawai_id.'-'.$schedule->hari] = true;
             }
-
-            \Illuminate\Support\Facades\DB::commit();
-            return back()->with('type', 'success')->with('message', 'Jadwal wajib hadir berhasil diperbarui.');
-
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\DB::rollBack();
-            return back()->with('type', 'error')->with('message', 'Gagal menyimpan: ' . $e->getMessage());
         }
+        ksort($autoSchedules);
+        $savedDays = $pegawais->map(fn (Pegawai $pegawai): array => [
+            $pegawai->id, $pegawai->wajibHadirs->map(fn (PegawaiWajibHadir $day): array => [$day->id, $day->hari])->all(),
+        ])->all();
+        $version = hash('sha256', json_encode([$activeYear->id, $savedDays, $autoSchedules], JSON_THROW_ON_ERROR));
+
+        return compact('pegawais', 'autoSchedules', 'version');
     }
 }

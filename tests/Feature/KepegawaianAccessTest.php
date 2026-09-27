@@ -2,15 +2,12 @@
 
 use App\Models\Sekolah;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 
 uses(Tests\TestCase::class);
 
 beforeEach(function () {
-    config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null]);
-    DB::purge('sqlite');
     $this->withoutVite();
     View::share('sekolah', new Sekolah);
     $this->artisan('migrate', ['--path' => [
@@ -20,10 +17,6 @@ beforeEach(function () {
         'database/migrations/2024_05_04_110210_create_kelas_table.php',
         'database/migrations/2024_05_04_110313_create_tahuns_table.php',
     ], '--no-interaction' => true])->assertExitCode(0);
-});
-
-afterEach(function () {
-    DB::purge('sqlite');
 });
 
 test('only administrators have permission to access kepegawaian', function (string $role, bool $allowed) {
@@ -74,6 +67,8 @@ test('operators cannot open kepegawaian pages directly', function (string $route
     'attendance.overrides.index',
     'attendance.mandatory.index',
     'attendance.create',
+    'attendance.rekap-guru',
+    'attendance.rekap-guru.export',
 ]);
 
 test('operators cannot submit kepegawaian changes', function (string $routeName) {

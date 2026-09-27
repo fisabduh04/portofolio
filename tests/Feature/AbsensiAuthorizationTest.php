@@ -13,8 +13,6 @@ use Illuminate\Support\Facades\Gate;
 uses(Tests\TestCase::class);
 
 beforeEach(function () {
-    config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null]);
-    DB::purge('sqlite');
     $this->withoutVite();
     \Illuminate\Support\Facades\View::share('sekolah', new \App\Models\Sekolah);
     $this->travelTo(\Carbon\Carbon::parse('2026-09-21 08:00:00'));
@@ -36,7 +34,6 @@ beforeEach(function () {
 
 afterEach(function () {
     $this->travelBack();
-    DB::purge('sqlite');
 });
 
 test('attendance gate enforces role ownership and account state', function (string $role, ?int $employeeId, bool $active, string $category, bool $allowed) {

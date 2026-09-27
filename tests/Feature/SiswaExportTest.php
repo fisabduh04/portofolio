@@ -2,7 +2,6 @@
 
 use App\Exports\SiswaExport;
 use App\Models\Siswa;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
@@ -11,13 +10,7 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 uses(Tests\TestCase::class);
 
 beforeEach(function () {
-    config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null]);
-    DB::purge('sqlite');
     $this->artisan('migrate', ['--path' => 'database/migrations/2024_05_04_110145_create_siswas_table.php', '--no-interaction' => true])->assertExitCode(0);
-});
-
-afterEach(function () {
-    DB::purge('sqlite');
 });
 
 it('preserves student identifiers as text in the exported xlsx while keeping measurements numeric', function (?string $identifier) {

@@ -16,6 +16,8 @@ use Tests\TestCase;
 
 class DashboardTest extends TestCase
 {
+    protected bool $migrateAllTables = true;
+
     /**
      * Test dashboard page load and stats aggregation with Pulang status.
      */
@@ -154,15 +156,5 @@ class DashboardTest extends TestCase
         $response->assertViewHas('todayStats', function ($todayStats) {
             return $todayStats['Hadir'] >= 1 && $todayStats['Pulang'] >= 1;
         });
-
-        // 6. Cleanup
-        $absensiHadir->delete();
-        $absensiPulang->delete();
-        $logbook->delete();
-        \DB::table('kelas_siswas')->whereIn('siswa_id', [$siswaHadir->id, $siswaPulang->id])->delete();
-        $siswaHadir->delete();
-        $siswaPulang->delete();
-        $jadwal->delete();
-        $pegawai->delete();
     }
 }

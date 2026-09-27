@@ -19,6 +19,7 @@
             <div class="flex justify-between items-center mb-4">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Jadwal Wajib Hadir</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $activeYear->tahun }} · {{ $activeYear->semester }}</p>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Hari yang <span class="font-medium text-blue-600">terkunci</span> otomatis dari jadwal mengajar/piket.
                         Operator hanya bisa mengubah hari yang <span class="font-medium text-gray-700 dark:text-gray-300">tidak terkunci</span>.
@@ -27,7 +28,8 @@
                 </div>
                 <form action="{{ route('attendance.wajib-hadir.store') }}" method="POST" id="wajib-hadir-form">
                     @csrf
-                    {{-- Hidden inputs for auto-checked days will be injected by JS --}}
+                    <input type="hidden" name="tahun_id" value="{{ $activeYear->id }}">
+                    <input type="hidden" name="version" value="{{ $version }}">
                     <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -37,6 +39,12 @@
                 </form>
             </div>
 
+            @if ($errors->any())
+                <div role="alert" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-800 dark:bg-gray-800 dark:text-red-400">
+                    {{ $errors->first() }}
+                </div>
+            @endif
+            <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Setelah mengubah centang, klik <strong>Simpan Perubahan</strong> dan tunggu pesan berhasil sebelum memuat ulang halaman.</p>
             @if(session('type') === 'success')
                 <div class="flex items-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400" role="alert">
                     <svg class="shrink-0 inline w-4 h-4 me-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/></svg>
@@ -105,8 +113,6 @@
                                                     class="w-4 h-4 text-blue-600 bg-blue-50 border-blue-400 rounded cursor-not-allowed opacity-80 dark:bg-gray-700 dark:border-blue-500">
                                                 <span class="text-[10px] font-semibold text-blue-600 dark:text-blue-400 leading-none">Jadwal</span>
                                             </div>
-                                            {{-- Hidden input so it's submitted even though checkbox is disabled --}}
-                                            <input type="hidden" form="wajib-hadir-form" name="manual_days[{{ $pegawai->id }}][]" value="{{ $hari }}">
                                         @else
                                             {{-- Manual: editable by operator --}}
                                             <input type="checkbox"
@@ -130,6 +136,7 @@
                 </table>
             </div>
 
+            <input type="hidden" form="wajib-hadir-form" name="complete" value="1">
             <div class="mt-4 flex justify-end">
                 <button type="submit" form="wajib-hadir-form"
                     class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 transition-colors">

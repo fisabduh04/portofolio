@@ -4,22 +4,15 @@ use App\Imports\ImportMapel;
 use App\Livewire\Mapel\Data;
 use App\Models\Jurusan;
 use App\Models\Mapel;
-use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
 uses(Tests\TestCase::class);
 
 beforeEach(function () {
-    config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null]);
-    DB::purge('sqlite');
     $this->artisan('migrate', ['--path' => [
         'database/migrations/2024_05_04_110200_create_jurusans_table.php',
         'database/migrations/2024_05_04_110240_create_mapels_table.php',
     ], '--no-interaction' => true])->assertExitCode(0);
-});
-
-afterEach(function () {
-    DB::purge('sqlite');
 });
 
 it('creates a general subject with no department and displays all departments', function () {

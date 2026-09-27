@@ -8,46 +8,14 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Exceptions;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 uses(Tests\TestCase::class);
 
 beforeEach(function () {
-    $this->personTestDatabase = null;
-    if (getenv('PERSON_TEST_MYSQL') === '1') {
-        $connection = DB::connection('mysql')->getConfig();
-        $this->personTestDatabase = 'person_test_'.bin2hex(random_bytes(8));
-        config(['database.connections.person_test_admin' => array_replace($connection, ['name' => 'person_test_admin', 'database' => null, 'url' => null])]);
-        DB::purge('person_test_admin');
-        DB::connection('person_test_admin')->getSchemaBuilder()->createDatabase($this->personTestDatabase);
-        config([
-            'database.default' => 'person_test',
-            'database.connections.person_test' => array_replace($connection, ['name' => 'person_test', 'database' => $this->personTestDatabase, 'url' => null]),
-        ]);
-        DB::purge('person_test');
-        Schema::clearResolvedInstance('db.schema');
-        $this->assertSame($this->personTestDatabase, Schema::getConnection()->getDatabaseName());
-    } else {
-        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null, 'database.connections.sqlite.foreign_key_constraints' => true]);
-        DB::purge('sqlite');
-    }
     $this->withoutVite();
-    $paths = array_values(array_filter(glob(database_path('migrations/*.php')), fn (string $path): bool => ! str_contains($path, 'alter_absensis_status')));
+    $paths = glob(database_path('migrations/*.php'));
     $this->artisan('migrate', ['--database' => config('database.default'), '--path' => $paths, '--realpath' => true, '--no-interaction' => true])->assertExitCode(0);
-});
-
-afterEach(function () {
-    if ($this->personTestDatabase !== null) {
-        DB::purge('person_test');
-        if (! preg_match('/^person_test_[a-f0-9]{16}$/', $this->personTestDatabase)) {
-            throw new LogicException('Refusing to drop a database outside this test run.');
-        }
-        DB::connection('person_test_admin')->getSchemaBuilder()->dropDatabaseIfExists($this->personTestDatabase);
-        DB::purge('person_test_admin');
-    } else {
-        DB::purge('sqlite');
-    }
 });
 
 function studentDeletionHistory(Siswa $student, string $table): int
@@ -194,7 +162,7 @@ it('reports unexpected database errors and rolls back deletion', function (strin
     $person = $model::factory()->create();
     $events = clone $model::getEventDispatcher();
     $model::setEventDispatcher($events);
-    $exception = new QueryException('sqlite', 'delete', [], new PDOException('Private database details'));
+    $exception = new QueryException(config('database.default'), 'delete', [], new PDOException('Private database details'));
     $model::deleted(function () use ($exception): void {
         throw $exception;
     });

@@ -2,12 +2,45 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Pegawai extends Model
 {
     use HasFactory;
+
+    public function scopeGuru(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $teacher): Builder => $teacher
+            ->whereRaw('LOWER(TRIM(jenisptk)) = ?', ['guru'])
+            ->orWhere(fn (Builder $unclassified): Builder => $unclassified
+                ->where(fn (Builder $type): Builder => $type->whereNull('jenisptk')->orWhereRaw("TRIM(jenisptk) = ''"))
+                ->whereHas('user', fn (Builder $user): Builder => $user->where('role', 'guru'))));
+    }
+
+    public function scopeGuruAktif(Builder $query): Builder
+    {
+        return $query->guru()->whereRaw('LOWER(TRIM(aktif)) = ?', ['aktif']);
+    }
+
+    public function scopeWajibHadirPada(Builder $query, string $date): Builder
+    {
+        $tahunId = Tahun::aktif()->value('id');
+        if ($tahunId === null) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        $hari = Carbon::parse($date)->locale('id')->isoFormat('dddd');
+        $schedule = fn (Builder $scheduleQuery): Builder => $scheduleQuery->where('tahun_id', $tahunId)->where('hari', $hari);
+
+        return $query->where(fn (Builder $pegawaiQuery): Builder => $pegawaiQuery
+            ->whereHas('wajibHadirs', $schedule)
+            ->orWhereHas('jadwals', $schedule)
+            ->orWhereHas('jadwalPikets', $schedule));
+    }
 
     public function waliKelas(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -37,6 +70,11 @@ class Pegawai extends Model
     public function jadwals()
     {
         return $this->hasMany(Jadwal::class);
+    }
+
+    public function jadwalPikets(): HasMany
+    {
+        return $this->hasMany(JadwalPiket::class);
     }
 
     public function ruleAllocations()

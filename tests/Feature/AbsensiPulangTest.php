@@ -6,7 +6,6 @@ use App\Models\Absensi;
 use App\Models\Jadwal;
 use App\Models\Jurusan;
 use App\Models\Kelas;
-use App\Models\Logbook;
 use App\Models\Mapel;
 use App\Models\Pegawai;
 use App\Models\Siswa;
@@ -27,6 +26,8 @@ class AbsensiRekapTestClass
 
 class AbsensiPulangTest extends TestCase
 {
+    protected bool $migrateAllTables = true;
+
     public function test_can_store_student_attendance_with_pulang_status_and_count_it_in_rekap()
     {
         // 1. Setup Data
@@ -143,13 +144,5 @@ class AbsensiPulangTest extends TestCase
         $this->assertNotNull($studentRekap);
         $this->assertEquals('Pulang', $studentRekap->daily_status);
         $this->assertEquals(1, $studentRekap->stats['Pulang']);
-
-        // 6. Cleanup
-        Absensi::where('siswa_id', $siswa->id)->delete();
-        Logbook::where('jadwal_id', $jadwal->id)->delete();
-        \DB::table('kelas_siswas')->where('siswa_id', $siswa->id)->delete();
-        $siswa->delete();
-        $jadwal->delete();
-        $pegawai->delete();
     }
 }

@@ -8,8 +8,6 @@ use App\Models\User;
 use App\Models\WaliKelas;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -45,27 +43,6 @@ it('rejects an unknown department filter', function () {
 });
 
 beforeEach(function () {
-    $this->waliTestDatabase = null;
-    if (getenv('WALIKELAS_TEST_MYSQL') === '1') {
-        $connection = DB::connection('mysql')->getConfig();
-        $databaseName = 'walikelas_test_'.bin2hex(random_bytes(8));
-        config(['database.connections.walikelas_test_admin' => array_replace($connection, ['name' => 'walikelas_test_admin', 'database' => null, 'url' => null])]);
-        DB::purge('walikelas_test_admin');
-        DB::connection('walikelas_test_admin')->getSchemaBuilder()->createDatabase($databaseName);
-        $this->waliTestDatabase = $databaseName;
-        config([
-            'database.default' => 'walikelas_test',
-            'database.connections.walikelas_test' => array_replace($connection, ['name' => 'walikelas_test', 'database' => $databaseName, 'url' => null]),
-        ]);
-        DB::purge('walikelas_test');
-        Schema::clearResolvedInstance('db.schema');
-        $this->assertSame($databaseName, DB::connection()->selectOne('SELECT DATABASE() AS name')->name);
-        $this->assertSame($databaseName, Schema::getConnection()->getDatabaseName());
-        $this->assertSame('walikelas_test', Schema::getConnection()->getName());
-    } else {
-        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null]);
-        DB::purge('sqlite');
-    }
     $this->withoutVite();
     View::share('sekolah', new Sekolah);
 
@@ -77,19 +54,6 @@ beforeEach(function () {
         'database/migrations/2024_05_04_110313_create_tahuns_table.php',
         'database/migrations/2026_09_12_113236_create_wali_kelas_table.php',
     ], '--no-interaction' => true])->assertExitCode(0);
-});
-
-afterEach(function () {
-    if ($this->waliTestDatabase !== null) {
-        DB::purge('walikelas_test');
-        if (! preg_match('/^walikelas_test_[a-f0-9]{16}$/', $this->waliTestDatabase)) {
-            throw new LogicException('Refusing to drop a database outside this test run.');
-        }
-        DB::connection('walikelas_test_admin')->getSchemaBuilder()->dropDatabaseIfExists($this->waliTestDatabase);
-        DB::purge('walikelas_test_admin');
-    } else {
-        DB::purge('sqlite');
-    }
 });
 
 it('renders only the active period by default and escapes assignment notes', function () {

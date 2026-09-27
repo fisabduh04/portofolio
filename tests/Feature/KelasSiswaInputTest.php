@@ -5,13 +5,10 @@ use App\Models\KelasSiswa;
 use App\Models\Siswa;
 use App\Models\Tahun;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 uses(Tests\TestCase::class);
 
 beforeEach(function () {
-    config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null]);
-    DB::purge('sqlite');
     $this->withoutVite();
     Illuminate\Support\Facades\View::share('sekolah', new App\Models\Sekolah);
     $this->artisan('migrate', ['--path' => [
@@ -22,10 +19,6 @@ beforeEach(function () {
         'database/migrations/2024_05_04_110313_create_tahuns_table.php',
         'database/migrations/2024_05_12_055121_create_kelas_siswas_table.php',
     ], '--no-interaction' => true])->assertExitCode(0);
-});
-
-afterEach(function () {
-    DB::purge('sqlite');
 });
 
 test('failed class assignments keep every draft and show Indonesian errors below the title', function () {
