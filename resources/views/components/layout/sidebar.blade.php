@@ -215,7 +215,7 @@
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Absensi
                             Harian</a>
                     </li>
-                    @if (auth()->user()->isPiketToday())
+                    @if (auth()->user()->hasPiketSchedule())
                         <li>
                             <a href="{{ route('absensi.piket') }}"
                                 class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Guru

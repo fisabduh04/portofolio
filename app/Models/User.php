@@ -3,11 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Enums\UserRole;
-use App\Models\JadwalPiket;
 
 class User extends Authenticatable
 {
@@ -56,37 +55,72 @@ class User extends Authenticatable
     /**
      * Helper methods untuk pengecekan role yang lebih bersih.
      */
-    public function isAdmin(): bool { return $this->role === UserRole::Admin; }
-    public function isOperator(): bool { return $this->role === UserRole::Operator; }
-    public function isKepala(): bool { return $this->role === UserRole::Kepala; }
-    public function isManagement(): bool { return $this->role?->isManagement() ?? false; }
-    public function canManagePayroll(): bool { return $this->role?->canManagePayroll() ?? false; }
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::Admin;
+    }
+
+    public function isOperator(): bool
+    {
+        return $this->role === UserRole::Operator;
+    }
+
+    public function isKepala(): bool
+    {
+        return $this->role === UserRole::Kepala;
+    }
+
+    public function isManagement(): bool
+    {
+        return $this->role?->isManagement() ?? false;
+    }
+
+    public function canManagePayroll(): bool
+    {
+        return $this->role?->canManagePayroll() ?? false;
+    }
 
     public function pegawai()
     {
         return $this->belongsTo(Pegawai::class);
     }
 
-    public function isPiketToday()
+    public function isPiketToday(): bool
+    {
+        return $this->isPiketOn(now()->toDateString());
+    }
+
+    public function hasPiketSchedule(): bool
+    {
+        if ($this->isManagement()) {
+            return true;
+        }
+
+        if (! $this->pegawai_id) {
+            return false;
+        }
+
+        return JadwalPiket::where('pegawai_id', $this->pegawai_id)
+            ->whereHas('tahun', fn ($query) => $query->aktif())
+            ->exists();
+    }
+
+    public function isPiketOn(string $date): bool
     {
         // Gunakan logika terpusat dari Enum
         if ($this->isManagement()) {
             return true;
         }
 
-        if (!$this->pegawai_id) {
+        if (! $this->pegawai_id) {
             return false;
         }
 
-        // Cek JadwalPiket hari ini
-        $hariIni = \Carbon\Carbon::now()->locale('id')->isoFormat('dddd');
-        $tahunAktif = \App\Models\Tahun::aktif()->first();
-
-        if (!$tahunAktif) return false;
+        $hari = \Carbon\Carbon::parse($date)->locale('id')->isoFormat('dddd');
 
         return JadwalPiket::where('pegawai_id', $this->pegawai_id)
-            ->where('hari', $hariIni)
-            ->where('tahun_id', $tahunAktif->id)
+            ->where('hari', $hari)
+            ->whereHas('tahun', fn ($query) => $query->aktif())
             ->exists();
     }
 }

@@ -4,6 +4,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| app/Http/Controllers/AbsensiController.php | .ai/rules/controllers.md |
 | tests/Feature/WaliKelasTest.php | .ai/rules/feature.md |
 | resources/views/jadwal/** | .ai/rules/jadwal.md |
 | resources/views/kelassiswa/** | .ai/rules/kelassiswa.md |

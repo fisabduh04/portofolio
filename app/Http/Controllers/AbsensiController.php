@@ -10,6 +10,9 @@ use App\Models\Pegawai;
 use App\Models\Siswa;
 use App\Models\Tahun;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -209,10 +212,16 @@ class AbsensiController extends Controller
     }
 
     // --- PRESENSI HARIAN (PIKET) ---
-    public function createHarian(Request $request)
+    public function createHarian(Request $request): View|RedirectResponse
     {
-        if (! auth()->user()->isPiketToday()) {
-            abort(403, 'Akses ditolak. Anda bukan guru piket hari ini.');
+        $request->validate([
+            'date' => 'sometimes|required|date_format:Y-m-d',
+            'type' => 'sometimes|required|in:masuk,pulang',
+        ], ['date.date_format' => 'Tanggal presensi harus berupa tanggal yang valid (YYYY-MM-DD).']);
+        $date = $request->query('date', now()->toDateString());
+
+        if (! $request->user()->isPiketOn($date)) {
+            abort(403, 'Akses ditolak. Anda bukan guru piket pada tanggal yang dipilih.');
         }
 
         $kelasId = $request->query('kelas_id');
@@ -224,16 +233,22 @@ class AbsensiController extends Controller
 
         $kelas = Kelas::findOrFail($kelasId);
 
-        // Cari jadwal untuk dikaitkan (Syarat: jadwal_id tidak boleh null)
-        // Kita ambil jadwal pertama hari ini untuk kelas tersebut
+        $tahunAktifIds = Tahun::aktif()->pluck('id');
+        if ($tahunAktifIds->isEmpty()) {
+            return redirect()->route('absensi.harian.index', ['date' => $date])
+                ->with('error', 'Tidak ada tahun ajaran aktif.');
+        }
+
+        $dayName = Carbon::parse($date)->locale('id')->isoFormat('dddd');
         $jadwal = Jadwal::where('kelas_id', $kelasId)
-            ->where('hari', now()->locale('id')->isoFormat('dddd'))
+            ->whereIn('tahun_id', $tahunAktifIds)
+            ->where('hari', $dayName)
             ->orderBy('mulai')
             ->first();
 
-        // Jika tidak ada jadwal hari ini, kita tidak bisa membuat entri logbook tanpa modifikasi DB
         if (! $jadwal) {
-            return redirect()->back()->with('error', 'Tidak ada jadwal pelajaran untuk kelas ini hari ini ('.now()->locale('id')->isoFormat('dddd').'). Absensi harian membutuhkan minimal 1 jadwal aktif.');
+            return redirect()->route('absensi.harian.index', ['date' => $date])
+                ->with('error', "Tidak ada jadwal pelajaran untuk kelas ini pada $dayName, $date di tahun ajaran aktif. Silakan pilih tanggal lain atau periksa jadwal kelas.");
         }
 
         // Kategori: piket_masuk / piket_pulang
@@ -242,24 +257,31 @@ class AbsensiController extends Controller
         // Cek logbook harian
         $existingLogbook = Logbook::with(['absensis'])
             ->where('kelas_id', $kelasId)
-            ->where('tanggal', now()->toDateString())
+            ->where('tanggal', $date)
             ->where('kategori', $kategori)
             ->first();
 
         // Ambil Siswa Aktif di Kelas
-        $tahunAktif = Tahun::aktif()->first();
-        $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
+        $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $jadwal) {
             $q->where('kelas_id', $kelasId)
-                ->where('tahun_id', $tahunAktif->id);
+                ->where('tahun_id', $jadwal->tahun_id);
         })->orderBy('nama')->get();
 
-        return view('absensi.harian.create', compact('kelas', 'students', 'existingLogbook', 'type', 'kategori', 'jadwal'));
+        return view('absensi.harian.create', compact('kelas', 'students', 'existingLogbook', 'type', 'kategori', 'jadwal', 'date'));
     }
 
-    public function storeHarian(Request $request)
+    public function storeHarian(Request $request): RedirectResponse
     {
-        if (! auth()->user()->isPiketToday()) {
-            abort(403, 'Akses ditolak.');
+        $request->validate([
+            'tanggal' => 'required|date_format:Y-m-d',
+        ], [
+            'tanggal.required' => 'Tanggal presensi wajib diisi.',
+            'tanggal.date_format' => 'Tanggal presensi harus berupa tanggal yang valid (YYYY-MM-DD).',
+        ]);
+        $date = $request->input('tanggal');
+
+        if (! $request->user()->isPiketOn($date)) {
+            abort(403, 'Akses ditolak. Anda bukan guru piket pada tanggal yang dipilih.');
         }
 
         $request->validate([
@@ -283,23 +305,31 @@ class AbsensiController extends Controller
             return redirect()->back()->with('type', 'error')->with('message', 'Akun anda tidak terhubung dengan data pegawai.');
         }
 
+        $tahunAktifIds = Tahun::aktif()->pluck('id');
+        if ($tahunAktifIds->isEmpty()) {
+            return redirect()->route('absensi.harian.index', ['date' => $date])
+                ->with('error', 'Tidak ada tahun ajaran aktif.');
+        }
+
+        $dayName = Carbon::parse($date)->locale('id')->isoFormat('dddd');
+        $jadwal = Jadwal::where('kelas_id', $request->kelas_id)
+            ->whereIn('tahun_id', $tahunAktifIds)
+            ->where('hari', $dayName)
+            ->orderBy('mulai')
+            ->first();
+
+        if (! $jadwal) {
+            return redirect()->route('absensi.harian.index', ['date' => $date])
+                ->with('error', "Tidak ada jadwal pelajaran untuk kelas ini pada $dayName, $date di tahun ajaran aktif. Silakan pilih tanggal lain atau periksa jadwal kelas.");
+        }
+
         try {
             DB::beginTransaction();
-
-            // Cari jadwal untuk dikaitkan
-            $jadwal = Jadwal::where('kelas_id', $request->kelas_id)
-                ->where('hari', now()->locale('id')->isoFormat('dddd'))
-                ->orderBy('mulai')
-                ->first();
-
-            if (! $jadwal) {
-                throw new \Exception('Tidak ada jadwal hari ini untuk dikaitkan.');
-            }
 
             // Cek Logbook
             $logbook = Logbook::with('absensis')
                 ->where('kelas_id', $request->kelas_id)
-                ->where('tanggal', now()->toDateString())
+                ->where('tanggal', $date)
                 ->where('kategori', $request->kategori)
                 ->first();
 
@@ -340,7 +370,7 @@ class AbsensiController extends Controller
                     'jadwal_id' => $jadwal->id,
                     'kelas_id' => $request->kelas_id,
                     'pegawai_id' => $user->pegawai_id,
-                    'tanggal' => now()->toDateString(),
+                    'tanggal' => $date,
                     'materi' => ($request->kategori == 'piket_masuk' ? 'Absensi Masuk' : 'Absensi Pulang'),
                     'catatan' => $request->catatan,
                     'foto' => json_encode($photos),
@@ -362,7 +392,7 @@ class AbsensiController extends Controller
 
             DB::commit();
 
-            return redirect()->route('absensi.harian.index')
+            return redirect()->route('absensi.harian.index', ['date' => $date])
                 ->with('type', 'success')
                 ->with('message', 'Presensi Harian Berhasil Disimpan.');
 
@@ -374,15 +404,20 @@ class AbsensiController extends Controller
         }
     }
 
-    public function indexHarian()
+    public function indexHarian(Request $request): View
     {
-        if (! auth()->user()->isPiketToday()) {
+        if (! $request->user()->hasPiketSchedule()) {
             abort(403, 'Akses ditolak.');
         }
 
-        $kelas = Kelas::orderBy('kelas')->get();
+        $request->validate([
+            'date' => 'sometimes|required|date_format:Y-m-d',
+        ], ['date.date_format' => 'Tanggal presensi harus berupa tanggal yang valid (YYYY-MM-DD).']);
+        $date = $request->query('date', now()->toDateString());
+        $isPiket = $request->user()->isPiketOn($date);
+        $kelas = $isPiket ? Kelas::orderBy('kelas')->get() : collect();
 
-        return view('absensi.harian.index', compact('kelas'));
+        return view('absensi.harian.index', compact('kelas', 'date', 'isPiket'));
     }
 
     /**
@@ -419,8 +454,8 @@ class AbsensiController extends Controller
 
     public function piket()
     {
-        if (! auth()->user()->isPiketToday()) {
-            return redirect()->route('dashboard.index')->with('error', 'Akses ditolak. Anda bukan guru piket hari ini.');
+        if (! auth()->user()->hasPiketSchedule()) {
+            return redirect()->route('dashboard.index')->with('error', 'Akses ditolak. Anda tidak memiliki jadwal piket aktif.');
         }
 
         return view('absensi.piket');

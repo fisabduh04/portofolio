@@ -2,7 +2,7 @@
     <x-breadcrumb :breadcrumbs="[
         ['name' => 'Home', 'href' => route('dashboard.index')],
         ['name' => 'Presensi', 'href' => '#'],
-        ['name' => 'Harian', 'href' => route('absensi.harian.index')],
+        ['name' => 'Harian', 'href' => route('absensi.harian.index', ['date' => $date])],
         ['name' => 'Input ' . ucfirst($type), 'href' => '#'],
     ]" />
 
@@ -10,6 +10,7 @@
         @csrf
         <input type="hidden" name="kelas_id" value="{{ $kelas->id }}">
         <input type="hidden" name="kategori" value="{{ $kategori }}">
+        <input type="hidden" name="tanggal" value="{{ $date }}">
 
         <!-- Validation Errors -->
         @if ($errors->any())
@@ -44,7 +45,7 @@
                             </span>
                             <span class="flex items-center gap-1 text-blue-600 font-medium">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                {{ now()->translatedFormat('d F Y') }}
+                                {{ \Carbon\Carbon::parse($date)->locale('id')->translatedFormat('l, d F Y') }}
                             </span>
                         </div>
                     </div>
@@ -414,4 +415,3 @@
     </div>
 </div>
 </x-layout.layout>
-
