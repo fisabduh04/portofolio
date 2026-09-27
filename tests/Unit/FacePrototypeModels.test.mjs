@@ -5,6 +5,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { motionSignals } from '../../resources/js/face-prototype-challenge.js';
 
 let api;
 const modelDirectory = new URL('../../node_modules/@vladmandic/face-api/model/', import.meta.url);
@@ -81,6 +82,7 @@ test('installed landmark and recognition models produce the expected finite vect
         const descriptor = extracted[0].descriptor;
         assert.equal(descriptor.length, 128);
         assert.ok(Array.from(descriptor).every(Number.isFinite));
+        assert.ok(Object.values(motionSignals(extracted[0].landmarks)).every(Number.isFinite));
         assert.equal(typeof api.DetectAllFaceLandmarksTask, 'function');
         assert.equal(api.version, '1.7.15');
     } finally { frame.dispose(); }
@@ -116,6 +118,9 @@ test('isolated launcher serves local assets and accepts its displayed operator c
         assert.ok(guideOption, 'The alignment guide must be optional.');
         assert.doesNotMatch(guideOption, /\bchecked\b/);
         assert.match(pageHtml, /value="detailed"/);
+        assert.match(pageHtml, /id="challenge" disabled/);
+        assert.match(pageHtml, /id="motion-status"/);
+        assert.match(pageHtml, /Tidak ada bukti liveness terverifikasi server/);
         const versionedScript = pageHtml.match(/src="(\/prototype-assets\/app\.js\?v=[a-f0-9]{64})"/)?.[1];
         assert.ok(versionedScript, 'The camera script must be versioned so updates replace stale browser assets.');
         const scriptResponse = await fetch(`${base}${versionedScript}`);

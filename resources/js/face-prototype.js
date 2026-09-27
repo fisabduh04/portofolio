@@ -1,5 +1,6 @@
 import '../css/face-prototype.css';
 import { metricsCsv } from './face-prototype-export.js';
+import { motionSignals, runMotionChallenge } from './face-prototype-challenge.js';
 import { trialScenario, trialError, failureOutcome, trialWarning, summarizeTrials } from './face-prototype-trials.js';
 import { detectorInputSize, graphicsDiagnostic, initializeFaceBackend } from './face-prototype-performance.js';
 import { facePositionAssessment, faceImageQuality, createPassageGate } from './face-prototype-quality.js';
@@ -31,6 +32,7 @@ function controls() {
     element('stop').disabled = !stream && !busy;
     element('enroll').disabled = !stream || busy || repeating || !permitted;
     element('scan').disabled = !stream || busy || repeating || !references.length || !permitted;
+    element('challenge').disabled = element('scan').disabled;
     element('continuous').disabled = !stream || (!repeating && (busy || !references.length || !permitted));
     element('continuous').textContent = repeating ? 'Hentikan uji berulang' : 'Mulai uji berulang';
     element('alias').disabled = busy || repeating;
@@ -51,6 +53,7 @@ function stop() {
     video.srcObject = null;
     element('position-guide').hidden = true;
     element('position-help').textContent = 'Kamera berhenti. Aktifkan kamera untuk melihat panduan posisi.';
+    element('motion-status').textContent = 'Tantangan tidak aktif. Hasil sebelumnya tidak dapat dipakai untuk pemindaian baru.';
     controls();
 }
 
@@ -149,7 +152,7 @@ async function start() {
     }
 }
 
-async function capture(checkPassage = false, run = generation) {
+async function capture(checkPassage = false, run = generation, measureMotion = false) {
     element('position-help').textContent = 'Memeriksa gambar saat pemindaian...';
     if (video.readyState < 2 || !video.videoWidth) throw trialError('VIDEO_NOT_READY', 'Tunggu gambar kamera siap.');
     const started = performance.now();
@@ -196,11 +199,13 @@ async function capture(checkPassage = false, run = generation) {
         const extracted = await new faceapi.DetectAllFaceLandmarksTask(
             Promise.resolve(detections.map((detection) => ({ detection }))), frame, true,
         ).withFaceDescriptors();
+        if (run !== generation) throw new Error('Pemindaian dibatalkan.');
         const finished = performance.now();
         const descriptor = Array.from(extracted[0].descriptor);
         if (descriptor.length !== 128 || !descriptor.every(Number.isFinite)) throw new Error('Ekstraksi vektor gagal.');
         timing('extract', finished - qualityChecked);
         return { descriptor, started, inputSize, frameWidth: frame.width, frameHeight: frame.height,
+            motion: measureMotion ? motionSignals(extracted[0].landmarks) : undefined,
             detect_ms: detected - started, quality_ms: qualityChecked - detected, extract_ms: finished - qualityChecked };
     } catch (error) {
         if (run === generation) element('position-help').textContent = scanFailureMessage(error);
@@ -242,20 +247,21 @@ const nextPaint = () => new Promise((resolve) => requestAnimationFrame(() => req
 function recordTrial(sample) {
     samples.push({ ...sample, sample: (samples.at(-1)?.sample || 0) + 1 });
     if (samples.length > 500) samples.shift();
-    const summary = summarizeTrials(samples, sample.detector_input, sample.scenario);
+    const summary = summarizeTrials(samples, sample.detector_input, sample.scenario, Boolean(sample.motion_status && sample.motion_status !== 'not_run'));
     const latency = summary.p50 === null ? 'Belum ada waktu pencocokan selesai.'
         : `Waktu pencocokan selesai: p50 ${summary.p50.toFixed(1)} ms, p95 ${summary.p95.toFixed(1)} ms.`;
-    element('statistics').textContent = `${summary.attempts} percobaan untuk skenario/mode ini: ${summary.candidates} kandidat, ${summary.completed - summary.candidates} tidak dikenal/meragukan, ${summary.rejected} penolakan gambar, ${summary.errors} kesalahan. ${latency} CSV berisi ${samples.length} percobaan terakhir (maksimal 500), bukan jumlah orang.`;
+    element('statistics').textContent = `${summary.attempts} percobaan untuk skenario/mode ini (${sample.motion_status && sample.motion_status !== 'not_run' ? 'dengan tantangan' : 'tanpa tantangan'}): ${summary.candidates} kandidat, ${summary.completed - summary.candidates} tidak dikenal/meragukan, ${summary.rejected} penolakan gambar, ${summary.motionRejected} tantangan ditolak, ${summary.errors} kesalahan. ${latency} CSV berisi ${samples.length} percobaan terakhir (maksimal 500), bukan jumlah orang.`;
     element('trial-warning').textContent = trialWarning(sample.scenario, sample.status);
 }
 
-async function scan() {
+async function scan(withMotion = false) {
     if (busy || !stream) return;
     const run = generation;
     const attempted = performance.now();
     const scenario = trialScenario(element('trial-scenario').value);
     const inputSize = detectorInputSize(element('performance-profile').value);
     let stage = 'capture';
+    let motionResult;
     busy = true;
     element('result').textContent = passage.locked ? 'Sudah diproses — menunggu area kosong' : 'Memproses pemindaian…';
     if (!passage.locked) {
@@ -268,8 +274,15 @@ async function scan() {
     }
     controls();
     try {
-        const captured = await capture(true, run);
+        if (!withMotion) element('motion-status').textContent = 'Pemindaian biasa: keaslian wajah tidak diperiksa.';
+        const captured = withMotion ? await runMotionChallenge({
+            capture: () => capture(true, run, true),
+            active: () => run === generation && !!stream,
+            notify: (message) => { element('motion-status').textContent = message; },
+        }) : await capture(true, run);
         if (run !== generation) return;
+        motionResult = withMotion ? captured : undefined;
+        if (withMotion) element('motion-status').textContent = 'Urutan gerakan selesai. Mencocokkan wajah; ini belum membuktikan orang asli.';
         stage = 'server';
         pendingRequest = new AbortController();
         const timeout = setTimeout(() => pendingRequest?.abort(), 15000);
@@ -316,6 +329,8 @@ async function scan() {
         timing('render', painted - received);
         timing('total', painted - captured.started);
         recordTrial({ scenario, reason_code: '', attempt_ms: painted - attempted, status: result.status, references: result.reference_count,
+            motion_status: withMotion ? 'passed_motion_check' : 'not_run', motion_ms: captured.motion_ms,
+            motion_frames: captured.motion_frames, motion_plan: captured.motion_plan,
             detector_input: captured.inputSize, backend: faceapi.tf.getBackend(), graphics_hint: graphics.category,
             frame_width: captured.frameWidth, frame_height: captured.frameHeight,
             payload_bytes: payloadBytes, detect_ms: captured.detect_ms, quality_ms: captured.quality_ms, extract_ms: captured.extract_ms,
@@ -328,9 +343,13 @@ async function scan() {
             : 'Hasil belum diterima sebagai kandidat. Perbaiki posisi atau minta pemeriksaan operator.');
     } catch (error) {
         if (run === generation) {
+            if (withMotion) element('motion-status').textContent = `Uji tantangan belum selesai sebagai pencocokan: ${scanFailureMessage(error)}`;
             element('position-help').textContent = scanFailureMessage(error);
             const outcome = failureOutcome(error, stage);
             if (outcome) recordTrial({ ...outcome, scenario, attempt_ms: performance.now() - attempted,
+                motion_status: withMotion ? (motionResult ? 'passed_motion_check' : 'incomplete') : 'not_run',
+                motion_ms: motionResult?.motion_ms ?? error.motion_ms, motion_frames: motionResult?.motion_frames ?? error.motion_frames,
+                motion_plan: motionResult?.motion_plan ?? error.motion_plan,
                 detector_input: inputSize, backend: faceapi.tf.getBackend(), graphics_hint: graphics.category,
                 references: references.length, total_ms: null });
             if (error.code === 'PASSAGE_WAIT' || error.code === 'PASSAGE_READY') {
@@ -357,7 +376,8 @@ element('show-position-guide').addEventListener('change', () => {
 });
 element('stop').addEventListener('click', () => { stop(); status('Kamera dihentikan.'); });
 element('enroll').addEventListener('click', enroll);
-element('scan').addEventListener('click', scan);
+element('scan').addEventListener('click', () => scan());
+element('challenge').addEventListener('click', () => scan(true));
 element('reset').addEventListener('click', clearResults);
 element('continuous').addEventListener('click', () => {
     repeating = !repeating;

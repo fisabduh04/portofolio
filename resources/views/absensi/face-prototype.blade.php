@@ -98,10 +98,18 @@
             <p class="text-sm">Mode 416 menguji deteksi dengan masukan lebih detail. Batas deteksi, kualitas gambar, dan pencocokan tetap sama; keberhasilan dan akurasinya perlu dibandingkan. Gunakan referensi yang sama saat berganti mode.</p>
             <p id="performance-info" role="status" class="text-sm">Informasi pemrosesan muncul setelah kamera aktif. Tidak ada pengaturan Chrome yang diubah otomatis.</p>
             <p class="text-sm">Hadapkan satu wajah ke kamera. Peserta yang tidak terdaftar juga perlu diuji untuk mengukur penolakan.</p>
+            <div class="flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+                <p class="font-semibold">Uji tantangan gerakan (eksperimental)</p>
+                <p class="text-sm">Urutan menutup–membuka mata dan menoleh dipilih acak. Awali dengan mata terbuka dan wajah lurus. Saat diminta, tutup mata sebentar lalu buka, bukan hanya berkedip sangat cepat. Ikuti petunjuk arah pada gambar kamera.</p>
+                <p class="text-sm">Batas waktu 25 detik. Wajah hilang, lebih dari satu wajah, atau konsistensi wajah berubah akan menghentikan percobaan. Ini bukan model anti-spoofing: foto bergerak, video, dan manipulasi browser masih perlu diuji. Tidak ada bukti liveness terverifikasi server.</p>
+                <button id="challenge" disabled class="rounded-lg bg-teal-700 px-4 py-3 font-semibold text-white">Uji gerakan acak lalu cocokkan</button>
+                <p id="motion-status" role="status" aria-live="polite" class="text-sm font-semibold">Belum ada uji gerakan.</p>
+            </div>
             <div class="flex flex-wrap gap-3">
                 <button id="scan" disabled class="rounded-lg bg-teal-700 px-4 py-3 font-semibold text-white">Pindai sekali</button>
                 <button id="continuous" disabled class="rounded-lg border border-slate-400 px-4 py-3">Mulai uji berulang</button>
             </div>
+            <p class="text-sm">Pindai sekali dan Mulai uji berulang tetap mode pembanding tanpa tantangan gerakan.</p>
             <div class="rounded-xl bg-slate-100 p-4 dark:bg-slate-800">
                 <p id="result" class="text-lg font-semibold" aria-live="polite">Belum ada hasil</p>
                 <p id="candidate" class="mt-2 text-sm">Kandidat akan ditampilkan dengan alias peserta.</p>
@@ -125,6 +133,7 @@
             <p id="payload" class="text-sm"></p>
             <p class="text-sm">Rincian server sudah termasuk waktu server dan RTT; jangan dijumlahkan lagi. Pengukuran berakhir sebelum pengiriman respons selesai.</p>
             <p id="statistics" class="text-sm">Belum ada sampel. Pengukuran pertama biasanya lebih lambat.</p>
+            <p class="text-sm">Pada uji gerakan, total waktu mencakup rangkaian tantangan; deteksi, kualitas, dan ekstraksi menampilkan frame terakhir saja. CSV menambahkan motion_status, motion_ms, motion_frames, dan motion_plan. passed_motion_check hanya berarti gerakan teramati, bukan jaminan keaslian. Jangan membandingkan total waktunya langsung dengan pemindaian biasa.</p>
             <p id="trial-warning" role="status" class="text-sm font-semibold"></p>
             <button id="download" disabled class="self-start rounded-lg border border-slate-400 px-4 py-2">Unduh metrik CSV</button>
             <p id="download-status" role="status" class="text-sm"></p>

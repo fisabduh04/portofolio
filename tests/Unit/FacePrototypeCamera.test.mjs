@@ -3,6 +3,125 @@ import { test } from 'node:test';
 import { metricsCsv } from '../../resources/js/face-prototype-export.js';
 import { trialScenario, trialError, failureOutcome, trialWarning, summarizeTrials } from '../../resources/js/face-prototype-trials.js';
 import { detectorInputSize, rendererCategory, graphicsDiagnostic, initializeFaceBackend } from '../../resources/js/face-prototype-performance.js';
+import { motionSignals, randomMotionPlan, createMotionChallenge, runMotionChallenge } from '../../resources/js/face-prototype-challenge.js';
+
+const motionSample = (values = {}) => ({ leftEar: 0.3, rightEar: 0.3, yaw: 0, descriptor: Array(128).fill(0), ...values });
+const closedEyes = () => motionSample({ leftEar: 0.1, rightEar: 0.1 });
+
+test('motion plans vary both action order and image direction', () => {
+    for (const a of [0, 1]) for (const b of [0, 1]) {
+        const plan = randomMotionPlan({ getRandomValues: (bytes) => { bytes.set([a, b]); return bytes; } });
+        assert.deepEqual(plan.actions, a ? ['turn', 'blink'] : ['blink', 'turn']);
+        assert.equal(plan.direction, b ? 1 : -1);
+    }
+});
+
+test('motion signals use eye openness and nose projection independent of image scale and translation', () => {
+    const eye = [{ x: 0, y: 0 }, { x: 1, y: -0.6 }, { x: 3, y: -0.6 },
+        { x: 4, y: 0 }, { x: 3, y: 0.6 }, { x: 1, y: 0.6 }];
+    for (const scale of [1, 10]) {
+        const transform = (p) => ({ x: p.x * scale + 70, y: p.y * scale + 30 });
+        const signals = motionSignals({ getLeftEye: () => eye.map(transform),
+            getRightEye: () => eye.map((p) => transform({ x: p.x + 10, y: p.y })),
+            getNose: () => [null, null, null, transform({ x: 9, y: 4 })] });
+        assert.ok(Math.abs(signals.leftEar - 0.3) < 0.00001);
+        assert.ok(Math.abs(signals.rightEar - 0.3) < 0.00001);
+        assert.ok(Math.abs(signals.yaw - 0.2) < 0.00001);
+    }
+});
+
+test('motion check requires both ordered actions and a return to open eyes facing forward', () => {
+    for (const actions of [['blink', 'turn'], ['turn', 'blink']]) for (const direction of [-1, 1]) {
+        const challenge = createMotionChallenge({ actions, direction }, 0);
+        let at = 0;
+        const observe = (sample) => challenge.observe(sample, at += 100);
+        assert.equal(observe(motionSample()).done, false);
+        assert.equal(observe(motionSample()).done, false);
+        for (const [index, action] of actions.entries()) {
+            if (action === 'blink') {
+                assert.equal(observe(motionSample({ leftEar: 0.1 })).done, false);
+                assert.equal(observe(closedEyes()).done, false);
+            } else {
+                assert.equal(observe(motionSample({ yaw: -direction * 0.25 })).done, false);
+                assert.equal(observe(motionSample({ yaw: direction * 0.25 })).done, false);
+                assert.equal(observe(motionSample({ yaw: direction * 0.25 })).done, false);
+            }
+            assert.equal(observe(motionSample()).done, false);
+            assert.equal(observe(motionSample()).done, index === 1);
+        }
+    }
+});
+
+test('static observations time out and changed faces or gaps fail closed', () => {
+    const plan = { actions: ['blink', 'turn'], direction: 1 };
+    const still = createMotionChallenge(plan, 0, 1000);
+    for (let at = 100; at <= 1000; at += 100) assert.equal(still.observe(motionSample(), at).done, false);
+    assert.equal(still.observe(motionSample(), 1100).failed, 'MOTION_TIMEOUT');
+    assert.equal(still.observe(closedEyes(), 1200).failed, 'MOTION_TIMEOUT');
+
+    const changed = createMotionChallenge(plan, 0);
+    changed.observe(motionSample(), 100);
+    changed.observe(motionSample(), 200);
+    assert.equal(changed.observe(motionSample({ descriptor: Array(128).fill(1) }), 300).failed, 'MOTION_FACE_CHANGED');
+    assert.equal(createMotionChallenge(plan, 0).observe(motionSample(), 2600).failed, 'MOTION_INTERRUPTED');
+    assert.equal(createMotionChallenge(plan, 0).observe(motionSample({ yaw: NaN }), 100).failed, 'MOTION_INVALID');
+    assert.equal(createMotionChallenge(plan, 0).observe(motionSample({ descriptor: [] }), 100).failed, 'MOTION_INVALID');
+    assert.throws(() => createMotionChallenge({ actions: ['blink', 'blink'], direction: 1 }, 0), /Invalid/);
+});
+
+test('motion runner returns only after the full sequence and exports no biometric measurements', async () => {
+    const sequence = [motionSample(), motionSample(), closedEyes(), motionSample(), motionSample(),
+        motionSample({ yaw: 0.25 }), motionSample({ yaw: 0.25 }), motionSample(), motionSample()];
+    let at = 0;
+    let count = 0;
+    const result = await runMotionChallenge({ plan: { actions: ['blink', 'turn'], direction: 1 },
+        now: () => at, active: () => true, notify: () => {}, pause: async () => {},
+        capture: async () => {
+            at += 100;
+            const sample = sequence[count++];
+            return { started: at, descriptor: sample.descriptor, motion: sample };
+        },
+    });
+    assert.equal(count, 9);
+    assert.equal(result.started, 100);
+    assert.equal(result.motion_ms, 900);
+    assert.equal(result.motion_frames, 9);
+    assert.equal(result.motion_plan, 'blink_turn_right');
+    const csv = metricsCsv([{ ...result, motion_status: 'passed_motion_check' }]);
+    assert.match(csv, /passed_motion_check,900,9,blink_turn_right/);
+    assert.doesNotMatch(csv, /descriptor|leftEar|rightEar|yaw/);
+});
+
+test('motion runner aborts on lost faces and cancellation without completing a match', async () => {
+    const base = { plan: { actions: ['blink', 'turn'], direction: 1 }, now: () => 100,
+        active: () => true, notify: () => {}, pause: async () => {} };
+    await assert.rejects(runMotionChallenge({ ...base,
+        capture: async () => { throw trialError('NO_FACE', 'Wajah hilang'); },
+    }), (error) => error.code === 'NO_FACE' && error.motion_frames === 0);
+    await assert.rejects(runMotionChallenge({ ...base, active: () => false,
+        capture: async () => assert.fail('Cancelled sessions must not capture'),
+    }), (error) => error.code === 'MOTION_CANCELLED');
+    let active = true;
+    await assert.rejects(runMotionChallenge({ ...base, active: () => active,
+        capture: async () => { active = false; return {}; },
+    }), (error) => error.code === 'MOTION_CANCELLED');
+});
+
+test('motion failures and latency summaries remain separate from ordinary scans', () => {
+    assert.deepEqual(failureOutcome(trialError('MOTION_TIMEOUT', 'timeout'), 'capture'), {
+        status: 'motion_rejected', reason_code: 'MOTION_TIMEOUT',
+    });
+    const samples = [
+        { status: 'candidate', detector_input: 320, scenario: 'photo', total_ms: 200, motion_status: 'not_run' },
+        { status: 'candidate', detector_input: 320, scenario: 'photo', total_ms: 5000, motion_status: 'passed_motion_check' },
+        { status: 'motion_rejected', detector_input: 320, scenario: 'photo', total_ms: null, motion_status: 'incomplete' },
+    ];
+    assert.equal(summarizeTrials(samples, 320, 'photo').p50, 200);
+    const summary = summarizeTrials(samples, 320, 'photo', true);
+    assert.equal(summary.attempts, 2);
+    assert.equal(summary.p50, 5000);
+    assert.equal(summary.motionRejected, 1);
+});
 
 test('trial scenarios accept declared conditions and reject inherited or unknown keys', () => {
     for (const scenario of ['frontal', 'turned', 'lighting', 'photo', 'replay', 'empty']) {
@@ -30,7 +149,7 @@ test('trial summary counts failed attempts without treating missing durations as
         sample('capture_rejected', null), sample('error', null), sample('candidate', 1, 'photo'), sample('candidate', 2, 'frontal', 224)];
 
     assert.deepEqual(summarizeTrials(samples, 320, 'frontal'), {
-        attempts: 5, completed: 3, candidates: 1, rejected: 1, errors: 1, p50: 200, p95: 300,
+        attempts: 5, completed: 3, candidates: 1, rejected: 1, motionRejected: 0, errors: 1, p50: 200, p95: 300,
     });
     assert.equal(summarizeTrials([sample('error', null)], 320, 'frontal').p50, null);
     assert.equal(summarizeTrials([], 320, 'frontal').p95, null);

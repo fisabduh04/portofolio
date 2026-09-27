@@ -19,6 +19,9 @@ export function trialError(code, message) {
 
 export function failureOutcome(error, stage) {
     if (['PASSAGE_WAIT', 'PASSAGE_READY'].includes(error.code)) return null;
+    if (['MOTION_TIMEOUT', 'MOTION_INTERRUPTED', 'MOTION_INVALID', 'MOTION_FACE_CHANGED', 'MOTION_CANCELLED'].includes(error.code)) {
+        return { status: 'motion_rejected', reason_code: error.code };
+    }
     const captureCodes = ['NO_FACE', 'MULTIPLE_FACES', 'POSITION', 'POSITION_INVALID', 'FACE_TOO_SMALL', 'FACE_NEAR_EDGE', 'IMAGE_QUALITY', 'VIDEO_NOT_READY'];
     if (captureCodes.includes(error.code)) return { status: 'capture_rejected', reason_code: error.code };
     return { status: 'error', reason_code: stage === 'server' ? 'SERVER_OR_NETWORK' : 'PROCESSING_ERROR' };
@@ -34,14 +37,16 @@ export function trialWarning(scenario, outcome) {
     return '';
 }
 
-export function summarizeTrials(samples, inputSize, scenario) {
-    const selected = samples.filter((item) => item.detector_input === inputSize && item.scenario === scenario);
+export function summarizeTrials(samples, inputSize, scenario, withMotion = false) {
+    const selected = samples.filter((item) => item.detector_input === inputSize && item.scenario === scenario
+        && Boolean(item.motion_status && item.motion_status !== 'not_run') === withMotion);
     const completed = selected.filter((item) => ['candidate', 'unknown', 'ambiguous'].includes(item.status));
     const times = completed.map((item) => item.total_ms).filter(Number.isFinite).sort((a, b) => a - b);
     const percentile = (p) => times.length ? times[Math.ceil(p * times.length) - 1] : null;
     return { attempts: selected.length, completed: completed.length,
         candidates: selected.filter((item) => item.status === 'candidate').length,
         rejected: selected.filter((item) => item.status === 'capture_rejected').length,
+        motionRejected: selected.filter((item) => item.status === 'motion_rejected').length,
         errors: selected.filter((item) => item.status === 'error').length,
         p50: percentile(0.5), p95: percentile(0.95) };
 }
