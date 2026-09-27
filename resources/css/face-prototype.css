@@ -1,0 +1,6 @@
+@import 'tailwindcss' source(none);
+@source '../views/absensi/face-prototype.blade.php';
+
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button:not(:disabled), summary { cursor: pointer; }
+:focus-visible { outline: 3px solid #0d9488; outline-offset: 3px; }

@@ -4,10 +4,14 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "face:build": "vite build --config vite.face-prototype.config.js",
+        "face:start": "npm run face:build && php scripts/face-prototype.php serve",
+        "face:test": "npm run face:build && php scripts/face-prototype.php test && node --test tests/Unit/FacePrototypeModels.test.mjs tests/Unit/FacePrototypeCamera.test.mjs"
     },
     "devDependencies": {
         "@prettier/plugin-php": "^0.24.0",
+        "@vladmandic/face-api": "1.7.15",
         "axios": "^1.6.4",
         "laravel-vite-plugin": "^1.0",
         "prettier": "^3.6.2",
