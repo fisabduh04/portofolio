@@ -299,6 +299,9 @@
             @elseif($viewMode == 'detail_harian')
                 {{-- Detail Harian (Sesi Count) View --}}
                 <div class="relative overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg border border-gray-200 dark:border-gray-700">
+                    <p class="border-b border-gray-200 px-4 py-3 text-xs leading-5 text-gray-600 dark:border-gray-700 dark:text-gray-300">
+                        Angka pada badge menunjukkan jumlah sesi. H: Hadir, S: Sakit, I: Izin, A: Alpha, P: Pulang, T: Telat. L: Libur.
+                    </p>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-center text-gray-500 dark:text-gray-400 border-collapse">
                             <thead class="text-xs text-center text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400 sticky top-0 z-20 shadow-sm">
@@ -331,17 +334,29 @@
                                             $isLibur = $dayData['is_libur'];
                                             $hasData = array_sum($counts) > 0;
                                         @endphp
-                                        <td class="px-1 py-2 text-center text-[10px] sm:text-xs border-r border-gray-100 dark:border-gray-700 {{ $isLibur ? 'bg-gray-100 dark:bg-gray-700' : '' }}">
+                                        <td class="px-2 py-2 align-middle text-center text-xs border-r border-gray-100 dark:border-gray-700 {{ $isLibur ? 'bg-gray-100 dark:bg-gray-700' : '' }}">
                                             @if($isLibur && !$hasData)
                                                 <span class="text-gray-400 font-bold">L</span>
                                             @elseif($hasData)
-                                                <div class="flex flex-col items-center gap-0.5 leading-none">
-                                                    @if($counts['H'] > 0) <span class="text-blue-600 font-bold whitespace-nowrap">{{ $counts['H'] }}H</span> @endif
-                                                    @if($counts['A'] > 0) <span class="text-red-600 font-bold whitespace-nowrap">{{ $counts['A'] }}A</span> @endif
-                                                    @if(($counts['S'] ?? 0) > 0) <span class="text-orange-600 font-bold whitespace-nowrap">{{ $counts['S'] }}S</span> @endif
-                                                    @if(($counts['I'] ?? 0) > 0) <span class="text-yellow-600 font-bold whitespace-nowrap">{{ $counts['I'] }}I</span> @endif
-                                                    @if(($counts['P'] ?? 0) > 0) <span class="text-purple-600 font-bold whitespace-nowrap">{{ $counts['P'] }}P</span> @endif
-                                                    @if(($counts['T'] ?? 0) > 0) <span class="text-indigo-600 font-bold whitespace-nowrap">{{ $counts['T'] }}T</span> @endif
+                                                <div class="grid grid-cols-1 justify-items-center gap-1.5">
+                                                    @if(($counts['H'] ?? 0) > 0)
+                                                        <span title="Hadir: {{ $counts['H'] }} sesi" aria-label="Hadir: {{ $counts['H'] }} sesi" class="inline-flex min-h-6 min-w-10 items-center justify-center rounded-md bg-blue-100 px-2 py-0.5 font-semibold leading-5 whitespace-nowrap tabular-nums text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ $counts['H'] }} H</span>
+                                                    @endif
+                                                    @if(($counts['A'] ?? 0) > 0)
+                                                        <span title="Alpha: {{ $counts['A'] }} sesi" aria-label="Alpha: {{ $counts['A'] }} sesi" class="inline-flex min-h-6 min-w-10 items-center justify-center rounded-md bg-red-100 px-2 py-0.5 font-semibold leading-5 whitespace-nowrap tabular-nums text-red-800 dark:bg-red-900 dark:text-red-200">{{ $counts['A'] }} A</span>
+                                                    @endif
+                                                    @if(($counts['S'] ?? 0) > 0)
+                                                        <span title="Sakit: {{ $counts['S'] }} sesi" aria-label="Sakit: {{ $counts['S'] }} sesi" class="inline-flex min-h-6 min-w-10 items-center justify-center rounded-md bg-orange-100 px-2 py-0.5 font-semibold leading-5 whitespace-nowrap tabular-nums text-orange-800 dark:bg-orange-900 dark:text-orange-200">{{ $counts['S'] }} S</span>
+                                                    @endif
+                                                    @if(($counts['I'] ?? 0) > 0)
+                                                        <span title="Izin: {{ $counts['I'] }} sesi" aria-label="Izin: {{ $counts['I'] }} sesi" class="inline-flex min-h-6 min-w-10 items-center justify-center rounded-md bg-yellow-100 px-2 py-0.5 font-semibold leading-5 whitespace-nowrap tabular-nums text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">{{ $counts['I'] }} I</span>
+                                                    @endif
+                                                    @if(($counts['P'] ?? 0) > 0)
+                                                        <span title="Pulang: {{ $counts['P'] }} sesi" aria-label="Pulang: {{ $counts['P'] }} sesi" class="inline-flex min-h-6 min-w-10 items-center justify-center rounded-md bg-purple-100 px-2 py-0.5 font-semibold leading-5 whitespace-nowrap tabular-nums text-purple-800 dark:bg-purple-900 dark:text-purple-200">{{ $counts['P'] }} P</span>
+                                                    @endif
+                                                    @if(($counts['T'] ?? 0) > 0)
+                                                        <span title="Telat: {{ $counts['T'] }} sesi" aria-label="Telat: {{ $counts['T'] }} sesi" class="inline-flex min-h-6 min-w-10 items-center justify-center rounded-md bg-indigo-100 px-2 py-0.5 font-semibold leading-5 whitespace-nowrap tabular-nums text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">{{ $counts['T'] }} T</span>
+                                                    @endif
                                                 </div>
                                             @else
                                                 <span class="text-gray-300">-</span>
