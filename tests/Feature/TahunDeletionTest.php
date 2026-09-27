@@ -9,31 +9,11 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 
 uses(Tests\TestCase::class);
 
 beforeEach(function () {
-    $this->tahunTestDatabase = null;
-    if (getenv('TAHUN_TEST_MYSQL') === '1') {
-        $connection = DB::connection('mysql')->getConfig();
-        $this->tahunTestDatabase = 'tahun_test_'.bin2hex(random_bytes(8));
-        config(['database.connections.tahun_test_admin' => array_replace($connection, ['name' => 'tahun_test_admin', 'database' => null, 'url' => null])]);
-        DB::purge('tahun_test_admin');
-        DB::connection('tahun_test_admin')->getSchemaBuilder()->createDatabase($this->tahunTestDatabase);
-        config([
-            'database.default' => 'tahun_test',
-            'database.connections.tahun_test' => array_replace($connection, ['name' => 'tahun_test', 'database' => $this->tahunTestDatabase, 'url' => null]),
-        ]);
-        DB::purge('tahun_test');
-        Schema::clearResolvedInstance('db.schema');
-        $this->assertSame($this->tahunTestDatabase, Schema::getConnection()->getDatabaseName());
-        $this->assertSame('tahun_test', Schema::getConnection()->getName());
-    } else {
-        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null, 'database.connections.sqlite.foreign_key_constraints' => true]);
-        DB::purge('sqlite');
-    }
     $this->withoutVite();
 
     $this->artisan('migrate', ['--database' => config('database.default'), '--path' => [
@@ -55,19 +35,6 @@ beforeEach(function () {
         'database/migrations/2026_09_12_113236_create_wali_kelas_table.php',
         'database/migrations/2026_09_16_075041_restrict_tahun_deletion_on_related_tables.php',
     ], '--no-interaction' => true])->assertExitCode(0);
-});
-
-afterEach(function () {
-    if ($this->tahunTestDatabase !== null) {
-        DB::purge('tahun_test');
-        if (! preg_match('/^tahun_test_[a-f0-9]{16}$/', $this->tahunTestDatabase)) {
-            throw new LogicException('Refusing to drop a database outside this test run.');
-        }
-        DB::connection('tahun_test_admin')->getSchemaBuilder()->dropDatabaseIfExists($this->tahunTestDatabase);
-        DB::purge('tahun_test_admin');
-    } else {
-        DB::purge('sqlite');
-    }
 });
 
 dataset('tahun dependencies', [

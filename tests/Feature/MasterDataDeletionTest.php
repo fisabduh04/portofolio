@@ -13,30 +13,11 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Exceptions;
-use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 
 uses(Tests\TestCase::class);
 
 beforeEach(function () {
-    $this->masterTestDatabase = null;
-    if (getenv('MASTER_TEST_MYSQL') === '1') {
-        $connection = DB::connection('mysql')->getConfig();
-        $this->masterTestDatabase = 'master_test_'.bin2hex(random_bytes(8));
-        config(['database.connections.master_test_admin' => array_replace($connection, ['name' => 'master_test_admin', 'database' => null, 'url' => null])]);
-        DB::purge('master_test_admin');
-        DB::connection('master_test_admin')->getSchemaBuilder()->createDatabase($this->masterTestDatabase);
-        config([
-            'database.default' => 'master_test',
-            'database.connections.master_test' => array_replace($connection, ['name' => 'master_test', 'database' => $this->masterTestDatabase, 'url' => null]),
-        ]);
-        DB::purge('master_test');
-        Schema::clearResolvedInstance('db.schema');
-        $this->assertSame($this->masterTestDatabase, Schema::getConnection()->getDatabaseName());
-    } else {
-        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null, 'database.connections.sqlite.foreign_key_constraints' => true]);
-        DB::purge('sqlite');
-    }
     $this->withoutVite();
     $paths = array_values(array_filter(glob(database_path('migrations/*.php')), fn (string $path): bool => in_array(basename($path), [
         '0001_01_01_000000_create_users_table.php',
@@ -54,19 +35,6 @@ beforeEach(function () {
         '2026_09_17_034304_restrict_kelas_jurusan_and_mapel_deletion.php',
     ], true)));
     $this->artisan('migrate', ['--database' => config('database.default'), '--path' => $paths, '--realpath' => true, '--no-interaction' => true])->assertExitCode(0);
-});
-
-afterEach(function () {
-    if ($this->masterTestDatabase !== null) {
-        DB::purge('master_test');
-        if (! preg_match('/^master_test_[a-f0-9]{16}$/', $this->masterTestDatabase)) {
-            throw new LogicException('Refusing to drop a database outside this test run.');
-        }
-        DB::connection('master_test_admin')->getSchemaBuilder()->dropDatabaseIfExists($this->masterTestDatabase);
-        DB::purge('master_test_admin');
-    } else {
-        DB::purge('sqlite');
-    }
 });
 
 /** @return array{parent: \Illuminate\Database\Eloquent\Model, table: string, id: int} */

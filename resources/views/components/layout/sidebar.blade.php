@@ -136,6 +136,14 @@
                 </button>
                 <ul id="dropdown-kepegawaian" class="{{ request()->routeIs('attendance.*') ? '' : 'hidden' }} py-2 space-y-2">
                     <li>
+                        <a href="{{ route('attendance.create') }}"
+                            class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand {{ request()->routeIs('attendance.create') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body' }}">Presensi Manual Guru</a>
+                    </li>
+                    <li>
+                        <a href="{{ route('attendance.rekap-guru') }}"
+                            class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand {{ request()->routeIs('attendance.rekap-guru*') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body' }}">Rekap Presensi Guru</a>
+                    </li>
+                    <li>
                         <a href="{{ route('attendance.rules.index') }}"
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Aturan
                             Kehadiran</a>

@@ -119,20 +119,25 @@ test('accepts native disabled options through the slot', function () {
     expect($html->query('//select/optgroup[@disabled]/option[@value="9"]')->length)->toBe(1);
 });
 
-test('renders the searchable employee field in the manual attendance form', function () {
+test('renders an attendance row for each teacher with an explicit status choice', function () {
     $this->actingAs(User::factory()->make(['role' => UserRole::Admin]));
     $this->withoutVite();
     View::share('sekolah', (object) ['logo_url' => '/logo.png', 'nama_sekolah' => 'Sekolah']);
 
     $view = $this->view('attendance.create', [
         'pegawais' => collect([(object) ['id' => 7, 'name' => 'Siti Aminah']]),
+        'date' => '2026-09-27',
+        'attendance' => collect(),
+        'statuses' => \App\Models\PegawaiAbsensi::MANUAL_STATUSES,
     ]);
 
     $html = searchableSelectXpath((string) $view);
 
-    expect($html->query('//form//div[@data-searchable-select]/select[@name="pegawai_id" and @required]')->length)->toBe(1);
-    expect($html->evaluate('string(//select[@name="pegawai_id"]/option[@value="7"])'))->toBe('Siti Aminah');
-    expect($html->evaluate('string(//form[.//select[@name="pegawai_id"]]/@action)'))->toBe(route('attendance.store'));
+    expect($html->evaluate('string(//input[@name="attendance[7][pegawai_id]"]/@value)'))->toBe('7');
+    expect($html->query('//input[@name="attendance[7][status]" and @type="radio" and @required]')->length)->toBe(6);
+    expect($html->query('//input[@name="attendance[7][status]" and @checked]')->length)->toBe(0);
+    expect($html->evaluate('string(//form[@id="guru-attendance-form"]/@action)'))->toBe(route('attendance.store'));
+    $view->assertSee('Siti Aminah');
 });
 
 test('bounds the number of rendered search results', function (int $requested, string $expected) {

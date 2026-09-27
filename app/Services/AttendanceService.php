@@ -3,15 +3,16 @@
 namespace App\Services;
 
 use App\Models\AttendanceLog;
-use App\Models\PegawaiAbsensi;
-use App\Models\AttendanceRule;
-use App\Models\SpecialEvent;
-use App\Models\PegawaiScheduleOverride;
 use App\Models\Jadwal;
 use App\Models\JadwalPiket;
+use App\Models\Pegawai;
+use App\Models\PegawaiAbsensi;
 use App\Models\PegawaiIzin;
+use App\Models\PegawaiScheduleOverride;
+use App\Models\SpecialEvent;
 use App\Models\Tahun;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -23,52 +24,100 @@ class AttendanceService
 {
     /**
      * Hitung dan simpan absensi harian untuk satu pegawai pada tanggal tertentu.
-     * 
-     * @param \App\Models\Pegawai $pegawai
-     * @param string $date (format: Y-m-d)
-     * @return \App\Models\PegawaiAbsensi|null
+     *
+     * @param  string  $date  (format: Y-m-d)
      */
-    public function calculateDailyAttendance($pegawai, $date)
+    public function calculateDailyAttendance(Pegawai $pegawai, string $date): ?PegawaiAbsensi
     {
-        Log::info("--- Menghitung Absensi: {$pegawai->name} pada {$date} ---");
+        return DB::transaction(function () use ($pegawai, $date): ?PegawaiAbsensi {
+            Pegawai::whereKey($pegawai->id)->lockForUpdate()->firstOrFail();
 
-        // 1. Ambil data pendukung
-        $logs = AttendanceLog::where('pegawai_id', $pegawai->id)
-            ->whereDate('scan_time', $date)
-            ->orderBy('scan_time')
-            ->get();
+            $manual = PegawaiAbsensi::where('pegawai_id', $pegawai->id)
+                ->whereDate('tanggal', $date)->where('is_manual', true)->first();
 
-        // 2. PRIORITAS 1: Cek Izin/Sakit/Cuti
-        $izin = PegawaiIzin::where('pegawai_id', $pegawai->id)
-            ->where('tanggal_mulai', '<=', $date)
-            ->where('tanggal_akhir', '>=', $date)
-            ->where('status_approval', 'Approved')
-            ->first();
+            if ($manual) {
+                return $manual;
+            }
 
-        if ($izin) {
-            Log::info("Pegawai {$pegawai->name} memiliki Izin: {$izin->jenis_izin}");
-            return $this->processIzinStatus($pegawai, $date, $izin);
-        }
+            Log::info("--- Menghitung Absensi: {$pegawai->name} pada {$date} ---");
 
-        // 3. PRIORITAS 2: Cek Log Fingerprint
-        if ($logs->isNotEmpty()) {
-            Log::info("Fingerprint ditemukan untuk {$pegawai->name}");
-            return $this->processHadirFromLogs($pegawai, $date, $logs);
-        }
+            // 1. Ambil data pendukung
+            $logs = AttendanceLog::where('pegawai_id', $pegawai->id)
+                ->whereDate('scan_time', $date)
+                ->orderBy('scan_time')
+                ->get();
 
-        // 4. PRIORITAS 3: Cek Schedule (Event, Override, Piket, Mengajar, Wajib Hadir)
+            // 2. PRIORITAS 1: Cek Izin/Sakit/Cuti
+            $izin = PegawaiIzin::where('pegawai_id', $pegawai->id)
+                ->where('tanggal_mulai', '<=', $date)
+                ->where('tanggal_akhir', '>=', $date)
+                ->where('status_approval', 'Approved')
+                ->first();
+
+            if ($izin) {
+                Log::info("Pegawai {$pegawai->name} memiliki Izin: {$izin->jenis_izin}");
+
+                return $this->processIzinStatus($pegawai, $date, $izin);
+            }
+
+            // 3. PRIORITAS 2: Cek Log Fingerprint
+            if ($logs->isNotEmpty()) {
+                Log::info("Fingerprint ditemukan untuk {$pegawai->name}");
+
+                return $this->processHadirFromLogs($pegawai, $date, $logs);
+            }
+
+            // 4. PRIORITAS 3: Cek Schedule (Event, Override, Piket, Mengajar, Wajib Hadir)
+            $schedule = $this->getDailySchedule($pegawai, $date);
+
+            if ($schedule['is_working_day']) {
+                return $this->markAsAlpha($pegawai, $date, $schedule);
+            }
+
+            // 5. Bukan Hari Kerja & Tidak Ada Log -> Hapus rekaman jika ada
+            PegawaiAbsensi::where('pegawai_id', $pegawai->id)
+                ->whereDate('tanggal', $date)
+                ->delete();
+
+            return null;
+        });
+    }
+
+    public function recordManualAttendance(Pegawai $pegawai, string $date, string $status, ?string $note, int $userId): PegawaiAbsensi
+    {
         $schedule = $this->getDailySchedule($pegawai, $date);
+        $present = in_array($status, ['Hadir', 'Telat', 'Pulang'], true);
+        $gaji = $present && $schedule['is_working_day'] ? ($schedule['gaji_harian'] ?? 0) : 0;
+        $makan = $present && $schedule['is_working_day'] ? ($schedule['bantuan_makan'] ?? 0) : 0;
+        $potongan = $status === 'Telat' && $schedule['is_working_day'] ? ($schedule['denda_telat'] ?? 0) : 0;
 
-        if ($schedule['is_working_day']) {
-            return $this->markAsAlpha($pegawai, $date, $schedule);
+        if ($status === 'Sakit') {
+            $tahun = Tahun::where('tanggalmulai', '<=', $date)->where('tanggalakhir', '>=', $date)->first() ?? Tahun::aktif()->first();
+            $allocation = $pegawai->ruleAllocations()->where('tahun_id', $tahun?->id)->with('attendanceRule')->first();
+            $gaji = $allocation?->attendanceRule?->gaji_harian ?? 0;
         }
 
-        // 5. Bukan Hari Kerja & Tidak Ada Log -> Hapus rekaman jika ada
-        PegawaiAbsensi::where('pegawai_id', $pegawai->id)
-            ->whereDate('tanggal', $date)
-            ->delete();
-            
-        return null;
+        $attendance = PegawaiAbsensi::where('pegawai_id', $pegawai->id)->whereDate('tanggal', $date)->first()
+            ?? new PegawaiAbsensi(['pegawai_id' => $pegawai->id, 'tanggal' => $date]);
+        if (! $attendance->exists) {
+            $attendance->created_by = $userId;
+        }
+
+        $attendance->fill([
+            'status' => $status,
+            'attendance_source' => 'Manual',
+            'is_manual' => true,
+            'keterangan' => $note,
+            'updated_by' => $userId,
+            'jam_masuk' => $present ? $attendance->jam_masuk : null,
+            'jam_pulang' => $present ? $attendance->jam_pulang : null,
+            'durasi_kerja' => $present ? $attendance->durasi_kerja : null,
+            'nominal_gaji' => $gaji,
+            'nominal_makan' => $makan,
+            'total_honor' => max(0, $gaji + $makan - $potongan),
+        ])->save();
+
+        return $attendance;
     }
 
     private function processIzinStatus($pegawai, $date, $izin)
@@ -79,7 +128,7 @@ class AttendanceService
 
         $allocation = $pegawai->ruleAllocations()->where('tahun_id', $tahun?->id)->with('attendanceRule')->first();
         $rule = $allocation?->attendanceRule;
-        
+
         $gaji = 0;
         $makan = 0;
 
@@ -96,8 +145,8 @@ class AttendanceService
         return PegawaiAbsensi::updateOrCreate(
             ['pegawai_id' => $pegawai->id, 'tanggal' => $date],
             [
-                'jam_masuk' => null, 
-                'jam_pulang' => null, 
+                'jam_masuk' => null,
+                'jam_pulang' => null,
                 'durasi_kerja' => null,
                 'status' => $izin->jenis_izin,
                 'nominal_gaji' => $gaji,
@@ -111,19 +160,19 @@ class AttendanceService
     private function processHadirFromLogs($pegawai, $date, $logs)
     {
         $schedule = $this->getDailySchedule($pegawai, $date);
-        
+
         $firstLog = $logs->first();
         $lastLog = $logs->last();
         $jamMasuk = Carbon::parse($firstLog->scan_time);
         $jamPulang = Carbon::parse($lastLog->scan_time);
-        
+
         $status = $schedule['status_label'] ?? 'Hadir';
         $honorHarian = $schedule['gaji_harian'] ?? 0;
         $uangMakan = $schedule['bantuan_makan'] ?? 0;
         $potongan = 0;
 
-        if (!empty($schedule['jam_masuk'])) {
-            $expectedIn = Carbon::parse($date . ' ' . $schedule['jam_masuk']);
+        if (! empty($schedule['jam_masuk'])) {
+            $expectedIn = Carbon::parse($date.' '.$schedule['jam_masuk']);
             $toleransi = $schedule['toleransi_telat'] ?? 0;
             $lateThreshold = $expectedIn->copy()->addMinutes($toleransi);
 
@@ -133,7 +182,7 @@ class AttendanceService
             }
         }
 
-        if (!$schedule['is_working_day']) {
+        if (! $schedule['is_working_day']) {
             $status = 'Diluar Jadwal';
             $honorHarian = 0;
             $uangMakan = 0;
@@ -144,9 +193,13 @@ class AttendanceService
 
         $source = 'Fingerprint';
         foreach ($logs as $log) {
-            if ($log->machine_id === 'MANUAL') $source = 'Manual';
+            if ($log->machine_id === 'MANUAL') {
+                $source = 'Manual';
+            }
         }
-        if ($status === 'Hadir (Event)') $source = 'Event';
+        if ($status === 'Hadir (Event)') {
+            $source = 'Event';
+        }
 
         return PegawaiAbsensi::updateOrCreate(
             ['pegawai_id' => $pegawai->id, 'tanggal' => $date],
@@ -188,16 +241,16 @@ class AttendanceService
     public function getDailySchedule($pegawai, $date)
     {
         $carbonDate = Carbon::parse($date);
-        
+
         $days = [
-            'Mon' => 'Senin', 'Tue' => 'Selasa', 'Wed' => 'Rabu', 
-            'Thu' => 'Kamis', 'Fri' => 'Jumat', 'Sat' => 'Sabtu', 'Sun' => 'Minggu'
+            'Mon' => 'Senin', 'Tue' => 'Selasa', 'Wed' => 'Rabu',
+            'Thu' => 'Kamis', 'Fri' => 'Jumat', 'Sat' => 'Sabtu', 'Sun' => 'Minggu',
         ];
         $dayName = $days[$carbonDate->format('D')] ?? '';
 
         // 1. Special Event
         $event = SpecialEvent::where('date', $date)
-            ->whereHas('participants', function($q) use ($pegawai) {
+            ->whereHas('participants', function ($q) use ($pegawai) {
                 $q->where('pegawai_id', $pegawai->id);
             })
             ->first();
@@ -208,8 +261,8 @@ class AttendanceService
                 'jam_masuk' => $event->start_time,
                 'jam_pulang' => $event->end_time,
                 'toleransi_telat' => 0,
-                'gaji_harian' => $event->bantuan_hadir, 
-                'bantuan_makan' => 0, 
+                'gaji_harian' => $event->bantuan_hadir,
+                'bantuan_makan' => 0,
                 'denda_telat' => 0,
                 'status_label' => 'Hadir (Event)',
             ];
@@ -223,6 +276,7 @@ class AttendanceService
 
         if ($override) {
             $rule = $override->attendanceRule;
+
             return [
                 'is_working_day' => true,
                 'jam_masuk' => $rule->jam_masuk,
@@ -265,13 +319,13 @@ class AttendanceService
             ->exists();
 
         if ($mengajar) {
-             $tahun = Tahun::where('tanggalmulai', '<=', $date)
+            $tahun = Tahun::where('tanggalmulai', '<=', $date)
                 ->where('tanggalakhir', '>=', $date)
                 ->first() ?? Tahun::aktif()->first();
-             $allocation = $pegawai->ruleAllocations()->where('tahun_id', $tahun?->id)->with('attendanceRule')->first();
-             $rule = $allocation?->attendanceRule;
+            $allocation = $pegawai->ruleAllocations()->where('tahun_id', $tahun?->id)->with('attendanceRule')->first();
+            $rule = $allocation?->attendanceRule;
 
-             return [
+            return [
                 'is_working_day' => true,
                 'jam_masuk' => $rule ? $rule->jam_masuk : '07:00:00',
                 'jam_pulang' => $rule ? $rule->jam_pulang : '14:00:00',
@@ -294,8 +348,8 @@ class AttendanceService
             ->first();
 
         $rule = $allocation?->attendanceRule;
-        
-        if (!$rule) {
+
+        if (! $rule) {
             return [
                 'is_working_day' => false,
                 'jam_masuk' => null,
@@ -311,7 +365,7 @@ class AttendanceService
             ->exists();
 
         if ($isMandatory) {
-             return [
+            return [
                 'is_working_day' => true,
                 'jam_masuk' => $rule->jam_masuk,
                 'jam_pulang' => $rule->jam_pulang,
@@ -330,6 +384,7 @@ class AttendanceService
             'status_label' => 'Libur',
         ];
     }
+
     /**
      * Get aggregated monthly attendance statistics for all employees.
      */

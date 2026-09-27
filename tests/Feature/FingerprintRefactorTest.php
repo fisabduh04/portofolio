@@ -2,22 +2,15 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use App\Models\Pegawai;
-use App\Models\FingerprintMachine;
-use App\Models\FingerprintEnrollment;
 use App\Models\AttendanceLog;
-use App\Models\AttendanceRule;
-use App\Models\Tahun;
-use App\Models\PegawaiRuleAllocation;
-use Carbon\Carbon;
+use App\Models\FingerprintEnrollment;
+use App\Models\FingerprintMachine;
+use App\Models\Pegawai;
+use Tests\TestCase;
 
 class FingerprintRefactorTest extends TestCase
 {
-    // use RefreshDatabase; // Use manually if needed, but be careful with existing data. 
-    // Since we are testing critical migration logic, maybe just use transactions or rely on cleanup.
+    protected bool $migrateAllTables = true;
 
     public function test_fingerprint_enrollment_flow()
     {
@@ -28,24 +21,24 @@ class FingerprintRefactorTest extends TestCase
         );
 
         $pegawai = Pegawai::create([
-            'name' => 'Refactor Test Pegawai', 
+            'name' => 'Refactor Test Pegawai',
             'aktif' => 'Aktif',
-            'status' => 'PNS' // Assuming status needed
+            'status' => 'PNS', // Assuming status needed
         ]);
 
         // 2. Enroll (Simulate Controller Logic)
         $enrollment = FingerprintEnrollment::create([
             'pegawai_id' => $pegawai->id,
             'fingerprint_machine_id' => $machine->id,
-            'fingerprint_user_id' => '99999'
+            'fingerprint_user_id' => '99999',
         ]);
 
         // 3. Simulate API Push (Simulate FingerprintApiController Logic)
         // Logic: Find Enrollment -> Get Pegawai -> Create Log
         $foundEnrollment = FingerprintEnrollment::where('fingerprint_user_id', '99999')
-            ->where(function($q) use ($machine) {
+            ->where(function ($q) use ($machine) {
                 $q->where('fingerprint_machine_id', $machine->id)
-                  ->orWhereNull('fingerprint_machine_id');
+                    ->orWhereNull('fingerprint_machine_id');
             })
             ->with('pegawai')
             ->first();
@@ -58,22 +51,16 @@ class FingerprintRefactorTest extends TestCase
         AttendanceLog::create([
             'pegawai_id' => $foundEnrollment->pegawai->id,
             'scan_time' => $logTime,
-            'machine_id' => $machine->name
+            'machine_id' => $machine->name,
         ]);
 
         // 5. Verify Log Exists
         $this->assertDatabaseHas('attendance_logs', [
             'pegawai_id' => $pegawai->id,
-            'machine_id' => $machine->name
+            'machine_id' => $machine->name,
         ]);
 
         // 6. Test Accessor
         $this->assertEquals('99999', $pegawai->fingerprint_id, 'Accessor failed');
-
-        // Cleanup
-        $pegawai->delete(); // Cascades logs and enrollments? Check model
-        // Enrollment has cascade on delete pegawai
-        // Log has cascade on delete pegawai
-        // Machine keep it.
     }
 }

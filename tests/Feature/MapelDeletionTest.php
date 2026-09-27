@@ -1,7 +1,7 @@
 <?php
 
-test('example', function () {
-    $response = $this->get('/');
+uses(Tests\TestCase::class);
 
-    $response->assertStatus(200);
+test('guests cannot delete a subject', function () {
+    $this->delete(route('mapel.destroy', 1))->assertRedirect(route('login'));
 });

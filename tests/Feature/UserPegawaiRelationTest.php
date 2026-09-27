@@ -3,51 +3,17 @@
 use App\Models\Pegawai;
 use App\Models\User;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 
 uses(Tests\TestCase::class);
 
 beforeEach(function () {
-    $this->userRelationDatabase = null;
-    if (getenv('USER_RELATION_TEST_MYSQL') === '1') {
-        $connection = DB::connection('mysql')->getConfig();
-        $this->userRelationDatabase = 'user_relation_test_'.bin2hex(random_bytes(8));
-        config(['database.connections.user_relation_admin' => array_replace($connection, ['name' => 'user_relation_admin', 'database' => null, 'url' => null])]);
-        DB::purge('user_relation_admin');
-        DB::connection('user_relation_admin')->getSchemaBuilder()->createDatabase($this->userRelationDatabase);
-        config([
-            'database.default' => 'user_relation_test',
-            'database.connections.user_relation_test' => array_replace($connection, ['name' => 'user_relation_test', 'database' => $this->userRelationDatabase, 'url' => null]),
-        ]);
-        DB::purge('user_relation_test');
-    } else {
-        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null, 'database.connections.sqlite.foreign_key_constraints' => true]);
-        DB::purge('sqlite');
-    }
-    Schema::clearResolvedInstance('db.schema');
-    $this->assertSame($this->userRelationDatabase ?? ':memory:', Schema::getConnection()->getDatabaseName());
-    $this->assertSame(config('database.default'), Schema::getConnection()->getName());
     $this->withoutVite();
     $this->artisan('migrate', ['--database' => config('database.default'), '--path' => [
         'database/migrations/0001_01_01_000000_create_users_table.php',
         'database/migrations/2024_05_04_110159_create_pegawais_table.php',
     ], '--no-interaction' => true])->assertExitCode(0);
     $this->relationMigration = require database_path('migrations/2026_09_18_032252_add_pegawai_foreign_key_to_users_table.php');
-});
-
-afterEach(function () {
-    if ($this->userRelationDatabase !== null) {
-        DB::purge('user_relation_test');
-        if (! preg_match('/^user_relation_test_[a-f0-9]{16}$/', $this->userRelationDatabase)) {
-            throw new LogicException('Refusing to drop a database outside this test run.');
-        }
-        DB::connection('user_relation_admin')->getSchemaBuilder()->dropDatabaseIfExists($this->userRelationDatabase);
-        DB::purge('user_relation_admin');
-    } else {
-        DB::purge('sqlite');
-    }
 });
 
 it('repairs only orphan links while preserving account credentials and valid links', function () {

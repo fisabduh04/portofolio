@@ -17,8 +17,6 @@ use Illuminate\Support\Facades\View;
 uses(Tests\TestCase::class);
 
 beforeEach(function () {
-    config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null]);
-    DB::purge('sqlite');
     $this->withoutVite();
     View::share('sekolah', new Sekolah);
     $this->travelTo(Carbon::parse('2026-09-27 10:00:00'));
@@ -40,7 +38,6 @@ beforeEach(function () {
 
 afterEach(function () {
     $this->travelBack();
-    DB::purge('sqlite');
 });
 
 /** @return array{user: User, jadwal: Jadwal, student: Siswa} */

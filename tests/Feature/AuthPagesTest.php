@@ -6,6 +6,8 @@ use Tests\TestCase;
 
 class AuthPagesTest extends TestCase
 {
+    protected bool $migrateAllTables = true;
+
     public function test_login_page_loads(): void
     {
         $this->get('/login')->assertSuccessful();

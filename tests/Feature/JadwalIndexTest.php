@@ -7,19 +7,11 @@ use App\Models\Pegawai;
 use App\Models\Tahun;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
 uses(Tests\TestCase::class);
 
 beforeEach(function () {
-    config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'database.connections.sqlite.url' => null]);
-    DB::purge('sqlite');
-    DB::connection()->getPdo()->sqliteCreateFunction('FIELD', function ($value, ...$values) {
-        $position = array_search($value, $values, true);
-
-        return $position === false ? 0 : $position + 1;
-    });
     $this->withoutVite();
     \Illuminate\Support\Facades\View::share('sekolah', new \App\Models\Sekolah);
     $this->artisan('migrate', ['--path' => [
@@ -33,10 +25,6 @@ beforeEach(function () {
         'database/migrations/2024_05_04_110407_create_logbooks_table.php',
         'database/migrations/2026_01_28_031755_create_jadwal_pikets_table.php',
     ], '--no-interaction' => true])->assertExitCode(0);
-});
-
-afterEach(function () {
-    DB::purge('sqlite');
 });
 
 test('teachers cannot access attendance actions from the schedule list', function () {
