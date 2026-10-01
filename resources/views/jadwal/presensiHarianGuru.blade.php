@@ -189,6 +189,9 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                     @can('input-presensi', [$jadwal, 'mapel'])
+                                    @if($date === now()->toDateString())
+                                        <a href="{{ route('face-attendance.index', ['mode' => 'mapel', 'jadwal_id' => $jadwal->id]) }}" class="me-2 inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Absensi Wajah</a>
+                                    @endif
                                     @if($jadwal->status_presensi == 'sudah')
                                         <a href="{{ route('absensi.create', ['jadwal_id' => $jadwal->id, 'date' => $date]) }}"
                                            class="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-all duration-200 shadow-sm">

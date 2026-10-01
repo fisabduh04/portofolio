@@ -123,6 +123,8 @@ class AbsensiController extends Controller
         try {
             DB::beginTransaction();
 
+            Kelas::whereKey($jadwal->kelas_id)->lockForUpdate()->firstOrFail();
+
             $date = $request->input('tanggal', now()->toDateString());
 
             // Cek Logbook yang sudah ada (Mode Edit/Update) berdasarkan Kategori dan Tanggal
@@ -325,6 +327,8 @@ class AbsensiController extends Controller
 
         try {
             DB::beginTransaction();
+
+            Kelas::whereKey($request->kelas_id)->lockForUpdate()->firstOrFail();
 
             // Cek Logbook
             $logbook = Logbook::with('absensis')

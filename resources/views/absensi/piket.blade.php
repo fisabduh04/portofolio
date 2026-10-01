@@ -6,6 +6,12 @@
     ]" />
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+            <a href="{{ route('face-attendance.index', ['mode' => 'piket']) }}" class="rounded-2xl border border-blue-200 bg-white p-6 shadow-sm transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+                <span class="inline-block rounded-lg bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Kamera · Semua kelas</span>
+                <h3 class="mb-2 mt-4 text-xl font-bold text-gray-900 dark:text-white">Absensi Wajah</h3>
+                <p class="mb-4 text-sm leading-6 text-gray-500 dark:text-gray-400">Pindai siswa lintas kelas. Presensi masuk atau pulang langsung tercatat di logbook harian.</p>
+                <span class="text-sm font-semibold text-blue-700 dark:text-blue-400">Buka kamera absensi →</span>
+            </a>
             <!-- Card 1: Absensi Mapel (Substitute Mode) -->
             <a href="{{ route('jadwal.presensiHarian', ['view_mode' => 'all']) }}" class="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-all">
                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">

@@ -38,6 +38,7 @@ test('active teachers can open student reports and see the rekapitulasi menu', f
 
     $this->get(route($routeName))->assertOk()
         ->assertSee('id="dropdown-rekap"', false)
+        ->assertSee('data-live-recap', false)->assertSee('data-enabled="0"', false)
         ->assertSee(route('absensi.rekap-harian'), false)
         ->assertSee(route('absensi.rekap-bulanan'), false)
         ->assertSee(route('absensi.rekap-tahunan'), false)

@@ -56,6 +56,7 @@
     </div>
 
     {{-- Detail Table (Flowbite Standard) --}}
+    <x-attendance-live-recap>
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg mb-10">
         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -141,6 +142,7 @@
     @endif
 
     <!-- Global Lightbox Modal -->
+    </x-attendance-live-recap>
     <div id="globalLightbox" class="fixed inset-0 z-[9999] hidden flex-col items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300 opacity-0" onclick="closeGlobalLightbox()">
         <div class="absolute top-4 right-4 flex items-center gap-3">
             <button onclick="closeGlobalLightbox()" class="text-white hover:text-gray-300 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors focus:outline-none cursor-pointer" aria-label="Close Lightbox">

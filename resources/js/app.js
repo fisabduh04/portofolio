@@ -1,4 +1,17 @@
 import './bootstrap';
+import { initializeFaceEnrollment } from './siswa-face-enrollment';
+import { initializeFaceAttendance } from './face-attendance';
+import { initializeAttendanceLiveRecap } from './attendance-live-recap';
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => initializeAttendanceLiveRecap(), { once: true });
+    document.addEventListener('DOMContentLoaded', () => initializeFaceEnrollment(), { once: true });
+    document.addEventListener('DOMContentLoaded', () => initializeFaceAttendance(), { once: true });
+} else {
+    initializeAttendanceLiveRecap();
+    initializeFaceEnrollment();
+    initializeFaceAttendance();
+}
 
 async function initializeSearchableSelects(root = document) {
     if (root.matches?.('[data-searchable-select]') || root.querySelector('[data-searchable-select]')) {

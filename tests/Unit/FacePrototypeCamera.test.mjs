@@ -108,6 +108,8 @@ test('motion runner returns only after the full sequence and exports no biometri
     assert.equal(result.motion_ms, 900);
     assert.equal(result.motion_frames, 9);
     assert.equal(result.motion_plan, 'blink_turn_right');
+    assert.equal(result.preparation_ms, 100);
+    assert.equal(result.preparation_no_face_frames, 0);
     const csv = metricsCsv([{ ...result, motion_status: 'passed_motion_check' }]);
     assert.match(csv, /passed_motion_check,900,9,blink_turn_right/);
     assert.doesNotMatch(csv, /descriptor|leftEar|rightEar|yaw/);
@@ -116,9 +118,14 @@ test('motion runner returns only after the full sequence and exports no biometri
 test('motion runner aborts on lost faces and cancellation without completing a match', async () => {
     const base = { plan: { actions: ['blink', 'turn'], direction: 1 }, now: () => 100,
         active: () => true, notify: () => {}, pause: async () => {} };
+    let captures = 0;
     await assert.rejects(runMotionChallenge({ ...base,
-        capture: async () => { throw trialError('NO_FACE', 'Wajah hilang'); },
-    }), (error) => error.code === 'NO_FACE' && error.motion_frames === 0);
+        capture: async () => {
+            if (captures++ === 0) return { started: 100, motion: motionSample(), descriptor: motionSample().descriptor };
+            throw trialError('NO_FACE', 'Wajah hilang');
+        },
+    }), (error) => error.code === 'NO_FACE' && error.motion_frames === 1 && error.preparation_no_face_frames === 0);
+    assert.equal(captures, 2);
     await assert.rejects(runMotionChallenge({ ...base, active: () => false,
         capture: async () => assert.fail('Cancelled sessions must not capture'),
     }), (error) => error.code === 'MOTION_CANCELLED');
@@ -126,6 +133,159 @@ test('motion runner aborts on lost faces and cancellation without completing a m
     await assert.rejects(runMotionChallenge({ ...base, active: () => active,
         capture: async () => { active = false; return {}; },
     }), (error) => error.code === 'MOTION_CANCELLED');
+});
+
+test('preparation retries missing faces and completes the ordered challenge after acquisition', async () => {
+    const sequence = [motionSample(), motionSample(), closedEyes(), motionSample(), motionSample(),
+        motionSample({ yaw: 0.25 }), motionSample({ yaw: 0.25 }), motionSample(), motionSample()];
+    const prompts = [];
+    let at = 0;
+    let captures = 0;
+    const result = await runMotionChallenge({ plan: { actions: ['blink', 'turn'], direction: 1 },
+        now: () => at, active: () => true, notify: (message) => prompts.push(message), pause: async () => {},
+        capture: async () => {
+            if (++captures <= 4) {
+                at += 1000;
+                throw trialError('NO_FACE', 'Wajah belum terdeteksi.');
+            }
+            at += 100;
+            const sample = sequence.shift();
+            return { started: at - 100, motion: sample, descriptor: sample.descriptor };
+        },
+    });
+
+    assert.equal(captures, 13);
+    assert.equal(result.started, 4000);
+    assert.equal(result.motion_frames, 9);
+    assert.equal(result.motion_ms, 4900);
+    assert.equal(result.preparation_ms, 4100);
+    assert.equal(result.preparation_no_face_frames, 4);
+    assert.match(prompts[0], /Persiapan: mencari wajah \(5 detik tersisa\)/);
+    assert.match(prompts[4], /Persiapan: mencari wajah \(1 detik tersisa\)/);
+    assert.match(prompts[5], /hadapkan wajah lurus/);
+    assert.match(prompts[6], /Langkah 1\/2: tutup kedua mata/);
+    const [header, row] = metricsCsv([result]).split('\r\n').map((line) => line.split(','));
+    assert.equal(row[header.indexOf('preparation_ms')], '4100');
+    assert.equal(row[header.indexOf('preparation_no_face_frames')], '4');
+});
+
+test('empty preparation ends after five seconds with a distinct reason and exportable measurements', async () => {
+    let at = 0;
+    let captures = 0;
+    await assert.rejects(runMotionChallenge({ plan: { actions: ['blink', 'turn'], direction: 1 },
+        now: () => at, active: () => true, notify: () => {}, pause: async () => {},
+        capture: async () => {
+            captures++;
+            at += 1000;
+            throw trialError('NO_FACE', 'Wajah belum terdeteksi.');
+        },
+    }), (error) => {
+        assert.equal(error.code, 'MOTION_PREPARATION_TIMEOUT');
+        assert.equal(error.motion_ms, 5000);
+        assert.equal(error.motion_frames, 0);
+        assert.equal(error.preparation_ms, 5000);
+        assert.equal(error.preparation_no_face_frames, 5);
+        assert.match(motionFailureInstruction(error), /Petunjuk terakhir: Persiapan: mencari wajah/);
+        assert.match(motionFailureInstruction(error), /Wajah belum ditemukan dalam 5 detik/);
+        const outcome = failureOutcome(error, 'capture');
+        assert.deepEqual(outcome, { status: 'motion_rejected', reason_code: 'MOTION_PREPARATION_TIMEOUT' });
+        const [header, row] = metricsCsv([{ ...error, ...outcome }]).split('\r\n').map((line) => line.split(','));
+        assert.equal(row[header.indexOf('preparation_ms')], '5000');
+        assert.equal(row[header.indexOf('preparation_no_face_frames')], '5');
+        assert.equal(row[header.indexOf('total_ms')], '');
+        return true;
+    });
+    assert.equal(captures, 5);
+});
+
+test('a face acquired at or after the preparation deadline cannot start the challenge', async () => {
+    for (const elapsed of [5000, 5100]) {
+        let at = 0;
+        await assert.rejects(runMotionChallenge({ plan: { actions: ['blink', 'turn'], direction: 1 },
+            now: () => at, active: () => true, notify: () => {},
+            pause: async () => assert.fail('Expired preparation must not continue'),
+            capture: async () => {
+                at = elapsed;
+                return { started: 0, motion: motionSample(), descriptor: motionSample().descriptor };
+            },
+        }), (error) => error.code === 'MOTION_PREPARATION_TIMEOUT' && error.motion_frames === 0);
+    }
+});
+
+test('preparation checks its deadline before capturing another frame after a pause', async () => {
+    let at = 0;
+    let captures = 0;
+    await assert.rejects(runMotionChallenge({ plan: { actions: ['blink', 'turn'], direction: 1 },
+        now: () => at, active: () => true, notify: () => {}, pause: async () => { at = 5000; },
+        capture: async () => {
+            captures++;
+            assert.equal(captures, 1);
+            throw trialError('NO_FACE', 'Wajah belum terdeteksi.');
+        },
+    }), (error) => error.code === 'MOTION_PREPARATION_TIMEOUT' && error.preparation_no_face_frames === 1);
+});
+
+test('preparation preserves rejections for multiple faces, quality, passage gates and processing errors', async () => {
+    for (const code of ['MULTIPLE_FACES', 'FACE_TOO_SMALL', 'FACE_NEAR_EDGE', 'POSITION_INVALID', 'IMAGE_QUALITY',
+        'VIDEO_NOT_READY', 'PASSAGE_WAIT', 'PASSAGE_READY', undefined]) {
+        const failure = trialError(code, 'Gambar ditolak');
+        await assert.rejects(runMotionChallenge({ plan: { actions: ['blink', 'turn'], direction: 1 },
+            now: () => 0, active: () => true, notify: () => {},
+            pause: async () => assert.fail('Only NO_FACE may be retried during preparation'),
+            capture: async () => { throw failure; },
+        }), (error) => error === failure && error.motion_frames === 0 && error.preparation_no_face_frames === 0);
+    }
+});
+
+test('cancelling preparation during a failed capture or retry pause stops without another capture', async () => {
+    for (const cancelDuring of ['capture', 'pause']) {
+        let active = true;
+        let captures = 0;
+        await assert.rejects(runMotionChallenge({ plan: { actions: ['blink', 'turn'], direction: 1 },
+            now: () => 100, active: () => active, notify: () => {}, pause: async () => { active = false; },
+            capture: async () => {
+                captures++;
+                if (cancelDuring === 'capture') active = false;
+                throw trialError('NO_FACE', 'Wajah belum terdeteksi.');
+            },
+        }), (error) => error.code === 'MOTION_CANCELLED' && error.motion_frames === 0);
+        assert.equal(captures, 1);
+    }
+});
+
+test('face consistency starts with the first acquired face before neutral pose preparation completes', async () => {
+    const sequence = [motionSample({ yaw: 0.3 }), motionSample({ descriptor: Array(128).fill(1) })];
+    let at = 0;
+    await assert.rejects(runMotionChallenge({ plan: { actions: ['blink', 'turn'], direction: 1 },
+        now: () => at, active: () => true, notify: () => {}, pause: async () => {},
+        capture: async () => {
+            at += 100;
+            const sample = sequence.shift();
+            return { started: at, motion: sample, descriptor: sample.descriptor };
+        },
+    }), (error) => error.code === 'MOTION_FACE_CHANGED' && error.motion_frames === 2);
+});
+
+test('the twenty five second challenge limit starts after face acquisition and still rejects a static face', async () => {
+    let at = 0;
+    let captures = 0;
+    await assert.rejects(runMotionChallenge({ plan: { actions: ['blink', 'turn'], direction: 1 },
+        now: () => at, active: () => true, notify: () => {}, pause: async () => {},
+        capture: async () => {
+            if (++captures <= 4) {
+                at += 1000;
+                throw trialError('NO_FACE', 'Wajah belum terdeteksi.');
+            }
+            at += captures === 5 ? 100 : 2000;
+            return { started: at, motion: motionSample(), descriptor: motionSample().descriptor };
+        },
+    }), (error) => {
+        assert.equal(error.code, 'MOTION_TIMEOUT');
+        assert.equal(error.preparation_ms, 4100);
+        assert.equal(error.motion_ms, 30100);
+        assert.equal(error.motion_frames, 14);
+        return true;
+    });
 });
 
 test('motion failures and latency summaries remain separate from ordinary scans', () => {
@@ -335,7 +495,49 @@ test('CSV gives an actionable error for empty samples and escapes cell contents'
     assert.ok(metricsCsv([{ status: 'a,"b"\nc' }]).includes('"a,""b""\nc"'));
     assert.ok(metricsCsv([{ status: '=1+1' }]).includes("'=1+1"));
 });
-import { cameraPrerequisiteMessage, cameraActivationIssue, pauseHiddenCamera, faceRequestError, scanFailureMessage, operatorCodeFromLink, verifyOperatorCode } from '../../resources/js/face-prototype-camera.js';
+import { cameraPrerequisiteMessage, cameraActivationIssue, pauseHiddenCamera, faceRequestError, scanFailureMessage, operatorCodeFromLink, createOperatorCodeSource, verifyOperatorCode } from '../../resources/js/face-prototype-camera.js';
+
+test('operator access uses the link code even if browser autofill changes the displayed input', async () => {
+    const input = { value: 'previous-code', readOnly: false };
+    const source = createOperatorCodeSource(input);
+    const code = 'a'.repeat(48);
+    assert.equal(source.applyLink(`#code=${code}`), true);
+    assert.equal(input.value, code);
+    assert.equal(input.readOnly, true);
+    assert.equal(source.fromLink, true);
+    input.value = 'autofilled-old-code';
+
+    await verifyOperatorCode('/access', source.value, undefined, async (url, options) => {
+        assert.equal(options.headers.Authorization, `Bearer ${code}`);
+        return { ok: true, json: async () => ({ authorized: true }) };
+    });
+});
+
+test('applying another link in the same page replaces the code without accepting malformed fragments', () => {
+    const input = { value: '', readOnly: false };
+    const source = createOperatorCodeSource(input);
+    source.applyLink(`#code=${'a'.repeat(48)}`);
+
+    assert.equal(source.applyLink(`#code=${'b'.repeat(48)}`), true);
+    assert.equal(source.value, 'b'.repeat(48));
+    assert.equal(input.value, 'b'.repeat(48));
+    for (const fragment of ['', '#code=wrong']) {
+        assert.equal(source.applyLink(fragment), false);
+        assert.equal(source.value, 'b'.repeat(48));
+    }
+});
+
+test('without a valid link the operator can enter and update the code manually', () => {
+    const input = { value: ' manual-code ', readOnly: false };
+    const source = createOperatorCodeSource(input);
+
+    assert.equal(source.applyLink('#code=wrong'), false);
+    assert.equal(source.fromLink, false);
+    assert.equal(source.value, 'manual-code');
+    assert.equal(input.readOnly, false);
+    input.value = ' replacement-code ';
+    assert.equal(source.value, 'replacement-code');
+});
 
 test('activation explains the missing field instead of silently blocking the button', () => {
     assert.equal(cameraActivationIssue('', true).field, 'token');

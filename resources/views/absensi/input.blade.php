@@ -6,6 +6,12 @@
         ['name' => 'Input Presensi', 'href' => '#'],
     ]" />
 
+    @if ($kategori === 'mapel' && $date === now()->toDateString())
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+            <p class="text-sm text-blue-800 dark:text-blue-200">Gunakan kamera untuk mencatat siswa ke logbook kelas ini.</p>
+            <a href="{{ route('face-attendance.index', ['mode' => 'mapel', 'jadwal_id' => $jadwal->id]) }}" class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">Absensi Wajah</a>
+        </div>
+    @endif
     <form action="{{ route('absensi.store') }}" method="POST" enctype="multipart/form-data" id="absensiForm">
         @csrf
         <input type="hidden" name="jadwal_id" value="{{ $jadwal->id }}">

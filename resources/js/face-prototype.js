@@ -4,10 +4,11 @@ import { motionSignals, runMotionChallenge, motionFailureInstruction } from './f
 import { trialScenario, trialError, failureOutcome, trialWarning, summarizeTrials } from './face-prototype-trials.js';
 import { detectorInputSize, graphicsDiagnostic, initializeFaceBackend } from './face-prototype-performance.js';
 import { facePositionAssessment, faceImageQuality, createPassageGate } from './face-prototype-quality.js';
-import { cameraPrerequisiteMessage, cameraActivationIssue, pauseHiddenCamera, faceRequestError, scanFailureMessage, operatorCodeFromLink, verifyOperatorCode } from './face-prototype-camera.js';
+import { cameraPrerequisiteMessage, cameraActivationIssue, pauseHiddenCamera, faceRequestError, scanFailureMessage, createOperatorCodeSource, verifyOperatorCode } from './face-prototype-camera.js';
 
 const root = document.getElementById('prototype');
 const element = (id) => document.getElementById(id);
+const operatorCode = createOperatorCodeSource(element('token'));
 const video = element('video');
 const status = (message) => { element('status').textContent = message; };
 const timing = (key, value) => { element(`timing-${key}`).textContent = `${value.toFixed(1)} ms`; };
@@ -24,8 +25,9 @@ let pendingRequest;
 let graphics = { category: 'unknown', label: '' };
 
 function controls() {
-    const permitted = element('consent').checked && element('token').value.trim().length >= 32;
-    element('camera-help').textContent = cameraPrerequisiteMessage(element('token').value, element('consent').checked);
+    if (operatorCode.fromLink) element('token').value = operatorCode.value;
+    const permitted = element('consent').checked && operatorCode.value.length >= 32;
+    element('camera-help').textContent = cameraPrerequisiteMessage(operatorCode.value, element('consent').checked);
     element('camera-help').hidden = busy || !!stream;
     element('start').disabled = busy || !!stream;
     element('start').textContent = stream ? 'Kamera sudah aktif' : busy ? 'Sedang memproses…' : 'Aktifkan kamera';
@@ -80,7 +82,7 @@ function clearResults() {
 
 async function start() {
     if (busy || stream) return;
-    const issue = cameraActivationIssue(element('token').value, element('consent').checked);
+    const issue = cameraActivationIssue(operatorCode.value, element('consent').checked);
     if (issue) {
         element('camera-setup').open = true;
         status(issue.message);
@@ -99,7 +101,7 @@ async function start() {
         const accessRequest = pendingRequest;
         const timeout = setTimeout(() => accessRequest.abort(), 10000);
         try {
-            await verifyOperatorCode(root.dataset.accessEndpoint, element('token').value, accessRequest.signal);
+            await verifyOperatorCode(root.dataset.accessEndpoint, operatorCode.value, accessRequest.signal);
         } finally { clearTimeout(timeout); pendingRequest = null; }
         if (run !== generation) return;
         element('operator-status').textContent = 'Kode operator diterima server.';
@@ -298,7 +300,7 @@ async function scan(withMotion = false) {
         let result;
         try {
             response = await fetch(root.dataset.endpoint, { method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${element('token').value.trim()}` },
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${operatorCode.value}` },
                 credentials: 'omit', cache: 'no-store', body, signal: pendingRequest.signal,
             });
             result = await response.json();
@@ -336,6 +338,7 @@ async function scan(withMotion = false) {
         recordTrial({ scenario, reason_code: '', attempt_ms: painted - attempted, status: result.status, references: result.reference_count,
             motion_status: withMotion ? 'passed_motion_check' : 'not_run', motion_ms: captured.motion_ms,
             motion_frames: captured.motion_frames, motion_plan: captured.motion_plan,
+            preparation_ms: captured.preparation_ms, preparation_no_face_frames: captured.preparation_no_face_frames,
             detector_input: captured.inputSize, backend: faceapi.tf.getBackend(), graphics_hint: graphics.category,
             frame_width: captured.frameWidth, frame_height: captured.frameHeight,
             payload_bytes: payloadBytes, detect_ms: captured.detect_ms, quality_ms: captured.quality_ms, extract_ms: captured.extract_ms,
@@ -355,6 +358,8 @@ async function scan(withMotion = false) {
                 motion_status: withMotion ? (motionResult ? 'passed_motion_check' : 'incomplete') : 'not_run',
                 motion_ms: motionResult?.motion_ms ?? error.motion_ms, motion_frames: motionResult?.motion_frames ?? error.motion_frames,
                 motion_plan: motionResult?.motion_plan ?? error.motion_plan,
+                preparation_ms: motionResult?.preparation_ms ?? error.preparation_ms,
+                preparation_no_face_frames: motionResult?.preparation_no_face_frames ?? error.preparation_no_face_frames,
                 detector_input: inputSize, backend: faceapi.tf.getBackend(), graphics_hint: graphics.category,
                 references: references.length, total_ms: null });
             if (error.code === 'PASSAGE_WAIT' || error.code === 'PASSAGE_READY') {
@@ -402,6 +407,7 @@ element('trial-scenario').addEventListener('change', () => {
     controls();
 });
 element('token').addEventListener('input', () => {
+    if (operatorCode.fromLink) { controls(); return; }
     element('operator-status').textContent = 'Kode berubah; akan diperiksa saat kamera diaktifkan atau saat pemindaian.';
     controls();
 });
@@ -436,10 +442,13 @@ element('select-csv').addEventListener('click', () => {
     element('csv-preview').select();
 });
 element('today').textContent = new Intl.DateTimeFormat('id-ID', { dateStyle: 'full', timeZone: 'Asia/Jakarta' }).format(new Date());
-const linkedCode = operatorCodeFromLink(window.location.hash);
-if (linkedCode) {
-    element('token').value = linkedCode;
-    element('operator-status').textContent = 'Kode terisi dari tautan terminal. Centang persetujuan lalu aktifkan kamera.';
+function useOperatorLink() {
+    if (!operatorCode.applyLink(window.location.hash)) return;
+    if (stream || busy) stop();
+    element('operator-status').textContent = 'Kode dari tautan digunakan otomatis dan dikunci agar tidak tertimpa isian Chrome. Centang persetujuan lalu aktifkan kamera.';
     history.replaceState(null, '', window.location.pathname + window.location.search);
+    controls();
 }
+window.addEventListener('hashchange', useOperatorLink);
+useOperatorLink();
 controls();

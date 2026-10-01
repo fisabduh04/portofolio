@@ -19,7 +19,7 @@ export function trialError(code, message) {
 
 export function failureOutcome(error, stage) {
     if (['PASSAGE_WAIT', 'PASSAGE_READY'].includes(error.code)) return null;
-    if (['MOTION_TIMEOUT', 'MOTION_INTERRUPTED', 'MOTION_INVALID', 'MOTION_FACE_CHANGED', 'MOTION_CANCELLED'].includes(error.code)) {
+    if (['MOTION_PREPARATION_TIMEOUT', 'MOTION_TIMEOUT', 'MOTION_INTERRUPTED', 'MOTION_INVALID', 'MOTION_FACE_CHANGED', 'MOTION_CANCELLED'].includes(error.code)) {
         return { status: 'motion_rejected', reason_code: error.code };
     }
     const captureCodes = ['NO_FACE', 'MULTIPLE_FACES', 'POSITION', 'POSITION_INVALID', 'FACE_TOO_SMALL', 'FACE_NEAR_EDGE', 'IMAGE_QUALITY', 'VIDEO_NOT_READY'];

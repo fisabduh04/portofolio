@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\SiswaExport;
 use App\Imports\SiswaImport;
+use App\Models\FaceSample;
 use App\Models\Siswa;
 use App\Models\Tahun;
 use Illuminate\Database\QueryException;
@@ -266,7 +267,9 @@ class SiswaController extends Controller
             }
         }
 
-        return view('siswa.show', compact('siswa', 'summaryStats', 'chartData', 'recentLogs', 'kelasAktif', 'year', 'history', 'prediction'));
+        $faceSampleCount = FaceSample::where('siswa_id', $siswa->id)->where('is_active', true)->count();
+
+        return view('siswa.show', compact('siswa', 'summaryStats', 'chartData', 'recentLogs', 'kelasAktif', 'year', 'history', 'prediction', 'faceSampleCount'));
     }
 
     /**

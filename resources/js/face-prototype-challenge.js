@@ -92,37 +92,65 @@ export function createMotionChallenge(plan, started, duration = 25000) {
 export async function runMotionChallenge({ capture, active, notify, now = () => performance.now(),
     pause = () => new Promise((resolve) => setTimeout(resolve, 60)), plan = randomMotionPlan() }) {
     const started = now();
-    const challenge = createMotionChallenge(plan, started);
+    const preparationDuration = 5000;
+    let challenge;
+    let preparedAt;
+    let preparationNoFaceFrames = 0;
     let firstStarted;
     let frames = 0;
-    let lastPrompt = challenge.prompt;
+    let lastPrompt = 'Persiapan: mencari wajah. Hadapkan wajah lurus, buka kedua mata, dan hindari cahaya silau.';
     const error = (code, message) => Object.assign(new Error(message), { code });
     const messages = {
+        MOTION_PREPARATION_TIMEOUT: 'Wajah belum ditemukan dalam 5 detik persiapan. Perbaiki posisi dan pencahayaan, lalu mulai ulang.',
         MOTION_TIMEOUT: 'Waktu tantangan habis. Coba lagi dengan cahaya merata dan wajah terlihat jelas.',
         MOTION_INTERRUPTED: 'Rangkaian gambar terputus atau pemrosesan terlalu lambat. Ulangi tantangan.',
         MOTION_INVALID: 'Gerakan mata atau kepala belum dapat diukur. Ulangi tantangan.',
         MOTION_FACE_CHANGED: 'Konsistensi wajah berubah selama tantangan. Ulangi dengan satu orang yang sama.',
     };
+    const checkPreparationTime = () => {
+        if (!challenge && now() - started >= preparationDuration) {
+            throw error('MOTION_PREPARATION_TIMEOUT', messages.MOTION_PREPARATION_TIMEOUT);
+        }
+    };
+    const measurements = () => {
+        const finished = now();
+        return { motion_ms: finished - started, motion_frames: frames,
+            motion_plan: `${plan.actions.join('_')}_${plan.direction === 1 ? 'right' : 'left'}`,
+            preparation_ms: (preparedAt ?? finished) - started, preparation_no_face_frames: preparationNoFaceFrames };
+    };
     try {
         while (active()) {
-            lastPrompt = challenge.prompt;
+            checkPreparationTime();
+            lastPrompt = challenge?.prompt ?? `Persiapan: mencari wajah (${Math.ceil((preparationDuration - (now() - started)) / 1000)} detik tersisa). Hadapkan wajah lurus, buka kedua mata, dan hindari cahaya silau.`;
             notify(lastPrompt);
-            const frame = await capture();
+            let frame;
+            try {
+                frame = await capture();
+            } catch (failure) {
+                if (!active()) throw error('MOTION_CANCELLED', 'Tantangan dibatalkan.');
+                if (challenge || failure.code !== 'NO_FACE') throw failure;
+                preparationNoFaceFrames++;
+                checkPreparationTime();
+                await pause();
+                continue;
+            }
             if (!active()) throw error('MOTION_CANCELLED', 'Tantangan dibatalkan.');
+            checkPreparationTime();
+            if (!challenge) {
+                preparedAt = now();
+                challenge = createMotionChallenge(plan, preparedAt);
+            }
             firstStarted ??= frame.started;
             frames++;
             const result = challenge.observe({ ...frame.motion, descriptor: frame.descriptor }, now());
             if (result.failed) throw error(result.failed, messages[result.failed]);
-            if (result.done) return { ...frame, started: firstStarted, motion_ms: now() - started, motion_frames: frames,
-                motion_plan: `${plan.actions.join('_')}_${plan.direction === 1 ? 'right' : 'left'}` };
+            if (result.done) return { ...frame, started: firstStarted, ...measurements() };
             await pause();
         }
         throw error('MOTION_CANCELLED', 'Tantangan dibatalkan.');
     } catch (failure) {
         failure.motion_prompt = lastPrompt;
-        failure.motion_ms = now() - started;
-        failure.motion_frames = frames;
-        failure.motion_plan = `${plan.actions.join('_')}_${plan.direction === 1 ? 'right' : 'left'}`;
+        Object.assign(failure, measurements());
         throw failure;
     }
 }

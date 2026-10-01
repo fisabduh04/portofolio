@@ -122,6 +122,7 @@
             </form>
         </div>
 
+        <x-attendance-live-recap :enabled="(bool) $selectedKelas">
         @if($selectedKelas)
             {{-- Statistik Cards (Modern Design) --}}
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -549,8 +550,8 @@
             @endif
             </div>
         @endif
+        </x-attendance-live-recap>
     </div>
-
     <script>
         function openSessionDetailModal(encodedFoto) {
              const gallery = document.getElementById('modalFotoGallery');

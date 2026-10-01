@@ -4,9 +4,12 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| resources/js/attendance-live-recap.js, resources/views/absensi/rekap*.blade.php | .ai/rules/absensi.md |
+| app/**/FaceAttendance* | .ai/rules/app.md |
 | app/Http/Controllers/AbsensiController.php, app/Http/Controllers/GuruAbsensiController.php, app/Http/Controllers/PegawaiWajibHadirController.php | .ai/rules/controllers.md |
 | tests/Feature/WaliKelasTest.php | .ai/rules/feature.md |
 | resources/views/jadwal/** | .ai/rules/jadwal.md |
+| resources/js/face-attendance.js | .ai/rules/js.md |
 | resources/views/kelassiswa/** | .ai/rules/kelassiswa.md |
 | database/migrations/** | .ai/rules/migrations.md |
 | app/Livewire/Tahun/** | .ai/rules/tahun.md |

@@ -38,6 +38,22 @@ export function operatorCodeFromLink(fragment) {
     return /^[a-f0-9]{48}$/.test(code) ? code : '';
 }
 
+export function createOperatorCodeSource(input) {
+    let linkedCode = '';
+    return {
+        get value() { return linkedCode || input.value.trim(); },
+        get fromLink() { return Boolean(linkedCode); },
+        applyLink(fragment) {
+            const code = operatorCodeFromLink(fragment);
+            if (!code) return false;
+            linkedCode = code;
+            input.value = code;
+            input.readOnly = true;
+            return true;
+        },
+    };
+}
+
 export async function verifyOperatorCode(endpoint, token, signal, request = fetch) {
     const response = await request(endpoint, {
         method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token.trim()}` },

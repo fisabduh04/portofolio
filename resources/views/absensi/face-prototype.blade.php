@@ -104,7 +104,7 @@
                 </label>
             </div>
             <button id="challenge" disabled class="rounded-lg bg-teal-700 px-3 py-3 font-semibold text-white">Uji gerakan acak lalu cocokkan</button>
-            <p class="text-sm text-slate-600 dark:text-slate-300">Ikuti petunjuk di bawah kamera. Batas 25 detik. Gerakan belum menjamin keaslian wajah.</p>
+            <p class="text-sm text-slate-600 dark:text-slate-300">Ikuti petunjuk di bawah kamera. Pencarian wajah maksimal 5 detik, lalu tantangan maksimal 25 detik. Gerakan belum menjamin keaslian wajah.</p>
             <div class="flex flex-wrap gap-2">
                 <button id="scan" disabled class="rounded-lg border border-slate-400 px-3 py-2 text-sm">Pindai sekali</button>
                 <button id="continuous" disabled class="rounded-lg border border-slate-400 px-3 py-2 text-sm">Mulai uji berulang</button>
@@ -160,12 +160,12 @@
         <div class="mt-3 flex flex-col gap-3">
             <p>Setelah kandidat ditemukan, keluar dari gambar hingga dua pemeriksaan melihat area kosong. Gunakan Pindai sekali dua kali saat area kosong, atau uji berulang agar pemeriksaan berjalan otomatis. Mengganti skenario tidak membuka kunci.</p>
             <p>Skenario merupakan catatan operator. Saat uji foto/video, gunakan milik peserta yang bersedia dan hindari wajah langsung ikut terlihat. Jangan mengambil referensi dari foto/video. Orang yang tidak terdaftar juga perlu diuji.</p>
-            <p>Tantangan mengacak urutan menutup–membuka mata dan menoleh. Awali dengan mata terbuka dan wajah lurus. Tutup mata sebentar, lalu buka; kedipan sangat cepat dapat terlewat. Wajah hilang, lebih dari satu wajah, atau konsistensi wajah berubah akan menghentikan percobaan.</p>
+            <p>Persiapan mencari wajah selama maksimal 5 detik; wajah yang belum terdeteksi akan dicoba lagi selama waktu ini. Setelah wajah pertama berhasil diproses, tantangan mengacak urutan menutup–membuka mata dan menoleh dengan batas 25 detik. Awali dengan mata terbuka dan wajah lurus. Tutup mata sebentar, lalu buka; kedipan sangat cepat dapat terlewat. Setelah wajah ditemukan, wajah hilang atau konsistensi wajah berubah akan menghentikan percobaan. Lebih dari satu wajah atau gambar yang tidak memenuhi syarat tetap menghentikan percobaan, termasuk saat persiapan.</p>
             <p>Ini bukan model anti-spoofing: foto bergerak, video, dan manipulasi browser masih perlu diuji. Tidak ada bukti liveness terverifikasi server. Peserta yang sulit mengikuti gerakan perlu pemeriksaan manual.</p>
             <p>Bingkai hanya panduan, bukan batas deteksi. Petunjuk diperbarui saat mengambil referensi atau memindai, bukan setiap gerakan. Mode 224 memakai masukan deteksi lebih kecil; 416 lebih detail dan mungkin lebih lambat. Referensi selalu diambil dengan 320. Gunakan jarak, cahaya, dan referensi yang sama untuk membandingkan mode.</p>
             <p>Kandidat bukan keputusan kehadiran. Jarak bukan persentase keyakinan. Ambang {{ config('face-prototype.threshold') }} dan selisih antarpeserta {{ config('face-prototype.minimum_gap') }} masih perlu kalibrasi. Referensi dengan alias sama dikelompokkan; batas 50 referensi hanya membatasi beban uji.</p>
             <p>Referensi ada di memori tab, dikirim ke server uji setiap pencocokan, dan hilang saat halaman dimuat ulang. Foto tidak diunggah. Tidak ada penyimpanan absensi atau antrean offline. Jeda peserta hanya berlaku di tab ini; wajah gagal terdeteksi bisa dianggap area kosong.</p>
-            <p>CSV tidak memuat alias, foto, atau vektor. attempt_ms adalah durasi percobaan; total_ms hanya diisi pada pencocokan selesai. Pemeriksaan jeda, pendaftaran, dan pembatalan tidak dihitung. motion_status, motion_ms, motion_frames, dan motion_plan mencatat uji gerakan; passed_motion_check bukan jaminan keaslian. Angka percobaan bukan akurasi atau jumlah siswa.</p>
+            <p>CSV tidak memuat alias, foto, atau vektor. attempt_ms adalah durasi percobaan; total_ms hanya diisi pada pencocokan selesai dan dihitung dari frame wajah pertama yang berhasil diproses. Pemeriksaan jeda, pendaftaran, dan pembatalan tidak dihitung. motion_status, motion_ms, motion_frames, dan motion_plan mencatat uji gerakan; motion_ms termasuk persiapan. preparation_ms mencatat durasi pencarian wajah, dan preparation_no_face_frames menghitung gambar tanpa wajah selama persiapan. passed_motion_check bukan jaminan keaslian. Angka percobaan bukan akurasi atau jumlah siswa.</p>
         </div>
     </details>
 </main>

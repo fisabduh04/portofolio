@@ -1,15 +1,29 @@
 {
+  "node_modules/@vladmandic/face-api/model/face_landmark_68_tiny_model.bin": {
+    "file": "assets/face_landmark_68_tiny_model-DPIjmK7S.bin",
+    "src": "node_modules/@vladmandic/face-api/model/face_landmark_68_tiny_model.bin"
+  },
+  "node_modules/@vladmandic/face-api/model/face_recognition_model.bin": {
+    "file": "assets/face_recognition_model-Qs_P-Wn5.bin",
+    "src": "node_modules/@vladmandic/face-api/model/face_recognition_model.bin"
+  },
+  "node_modules/@vladmandic/face-api/model/tiny_face_detector_model.bin": {
+    "file": "assets/tiny_face_detector_model-C4Zmc5xe.bin",
+    "src": "node_modules/@vladmandic/face-api/model/tiny_face_detector_model.bin"
+  },
   "resources/css/app.css": {
-    "file": "assets/app-CCKpxOQT.css",
+    "file": "assets/app-Dnjk1ESK.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BJ5mtEh3.js",
+    "file": "assets/app-DqF91uHK.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
+      "resources/js/siswa-face-models.js",
+      "resources/js/siswa-face-models.js",
       "resources/js/searchable-select.js"
     ]
   },
@@ -18,5 +32,19 @@
     "name": "searchable-select",
     "src": "resources/js/searchable-select.js",
     "isDynamicEntry": true
+  },
+  "resources/js/siswa-face-models.js": {
+    "file": "assets/siswa-face-models-BBTm5QLp.js",
+    "name": "siswa-face-models",
+    "src": "resources/js/siswa-face-models.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "assets": [
+      "assets/tiny_face_detector_model-C4Zmc5xe.bin",
+      "assets/face_landmark_68_tiny_model-DPIjmK7S.bin",
+      "assets/face_recognition_model-Qs_P-Wn5.bin"
+    ]
   }
 }

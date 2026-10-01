@@ -107,6 +107,7 @@
             </form>
         </div>
 
+        <x-attendance-live-recap :enabled="(bool) $selectedKelas">
         @if($selectedKelas)
             {{-- Stats Cards --}}
              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
@@ -307,5 +308,6 @@
                 </div>
             @endif
         @endif
+    </x-attendance-live-recap>
     </div>
 </x-layout.layout>

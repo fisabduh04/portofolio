@@ -7,6 +7,7 @@ use App\Http\Controllers\AbsensiReportController;
 use App\Http\Controllers\AttendanceRuleController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FaceAttendanceController;
 use App\Http\Controllers\FingerprintMachineController;
 use App\Http\Controllers\GuruAbsensiController;
 use App\Http\Controllers\HariLiburController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\PegawaiIzinController;
 use App\Http\Controllers\PegawaiWajibHadirController;
 use App\Http\Controllers\SekolahController;
 use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\SiswaFaceController;
 use App\Http\Controllers\SpecialEventController;
 use App\Http\Controllers\TahunController;
 use Illuminate\Support\Facades\Route;
@@ -152,6 +154,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/absensi/harian', [AbsensiController::class, 'storeHarian'])->name('absensi.harian.store');
 
         Route::resource('absensi', AbsensiController::class);
+        Route::get('/presensi-wajah', [FaceAttendanceController::class, 'index'])->name('face-attendance.index');
+        Route::post('/presensi-wajah', [FaceAttendanceController::class, 'store'])->middleware('throttle:120,1,face-attendance:')->name('face-attendance.store');
     });
 
     // 4. AKSES KHUSUS ADMIN & OPERATOR (Manajemen Data Master)
@@ -172,6 +176,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('exportsiswa', [SiswaController::class, 'export'])->name('exportsiswa');
         Route::post('importsiswa', [SiswaController::class, 'import'])->name('importsiswa');
         Route::resource('siswa', SiswaController::class);
+        Route::post('siswa/{siswa}/wajah', [SiswaFaceController::class, 'store'])->middleware('throttle:10,1')->name('siswa.face.store');
         Route::resource('kelassiswa', KelasSiswaController::class);
         // Jadwal Specific Routes (Must be before resource to avoid ID conflict)
         Route::get('/jadwal/data', [JadwalController::class, 'getJadwalJson']);

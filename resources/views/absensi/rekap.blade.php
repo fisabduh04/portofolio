@@ -71,6 +71,7 @@
     </div>
 
     {{-- Main Dashboard Layout --}}
+    <x-attendance-live-recap>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {{-- Trend Chart Card --}}
         <div class="lg:col-span-2 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
@@ -83,7 +84,7 @@
                     </div>
                 </div>
             </div>
-            <div id="rekap-chart-main" class="min-h-[350px]"></div>
+            <div id="rekap-chart-main" data-series="{{ json_encode($dailyTrend->pluck('total')) }}" data-categories="{{ json_encode($dailyTrend->pluck('tanggal')) }}" class="min-h-[350px]"></div>
         </div>
 
         {{-- Status Breakdown --}}
@@ -204,9 +205,14 @@
     </div>
 
     {{-- ApexCharts Library --}}
+    </x-attendance-live-recap>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        let attendanceChart;
+        function renderAttendanceChart() {
+            const chartElement = document.querySelector('#rekap-chart-main');
+            if (!chartElement || !window.ApexCharts) return;
+            attendanceChart?.destroy();
             const options = {
                 chart: { 
                     height: 350, 
@@ -216,7 +222,7 @@
                 },
                 series: [{ 
                     name: 'Kehadiran (%)', 
-                    data: @json($dailyTrend->pluck('total')) 
+                    data: JSON.parse(chartElement.dataset.series)
                 }],
                 fill: { 
                     type: 'gradient', 
@@ -238,7 +244,7 @@
                     strokeDashArray: 4
                 },
                 xaxis: { 
-                    categories: @json($dailyTrend->pluck('tanggal')),
+                    categories: JSON.parse(chartElement.dataset.categories),
                     labels: { 
                         style: { colors: '#9ca3af', fontSize: '10px' },
                         formatter: function(val) {
@@ -256,7 +262,14 @@
                 colors: ['#1d4ed8'],
                 tooltip: { theme: 'light' }
             };
-            new ApexCharts(document.querySelector("#rekap-chart-main"), options).render();
+            attendanceChart = new ApexCharts(chartElement, options);
+            attendanceChart.render();
+        }
+        document.addEventListener('DOMContentLoaded', renderAttendanceChart);
+        document.addEventListener('attendance:recap-updating', () => {
+            attendanceChart?.destroy();
+            attendanceChart = null;
         });
+        document.addEventListener('attendance:recap-updated', renderAttendanceChart);
     </script>
 </x-layout.layout>

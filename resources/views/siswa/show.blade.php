@@ -58,12 +58,18 @@
                     <li class="me-2" role="presentation">
                         <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="attendance-tab" data-tabs-target="#attendance" type="button" role="tab" aria-controls="attendance" aria-selected="false">Laporan Kehadiran</button>
                     </li>
+                    <li class="me-2" role="presentation">
+                        <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="face-tab" data-tabs-target="#face-enrollment" type="button" role="tab" aria-controls="face-enrollment" aria-selected="false">Wajah Siswa</button>
+                    </li>
                 </ul>
             </div>
         </div>
 
         {{-- Tab Contents --}}
         <div id="default-tab-content">
+            <div class="hidden" id="face-enrollment" role="tabpanel" aria-labelledby="face-tab">
+                @include('siswa.face-enrollment')
+            </div>
             {{-- Tab 1: Identitas --}}
             <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="profile" role="tabpanel" aria-labelledby="profile-tab">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

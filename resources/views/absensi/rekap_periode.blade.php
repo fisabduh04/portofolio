@@ -82,6 +82,7 @@
     </div>
 
     {{-- Content --}}
+    <x-attendance-live-recap :enabled="(bool) $kelasId">
     <div class="p-4">
         @if(!$kelasId)
             <div class="flex items-center p-4 mb-4 text-sm text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800" role="alert">
@@ -417,4 +418,5 @@
              @endif
         @endif
     </div>
+    </x-attendance-live-recap>
 </x-layout.layout>
