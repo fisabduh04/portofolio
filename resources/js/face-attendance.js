@@ -27,6 +27,12 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         : 'Pengukuran menuju server halaman ini; bandingkan saat jam sibuk.');
     const message = text => { get('message').textContent = text; };
     const autoMessage = text => { get('auto-status').textContent = text; };
+    function feedback(state, label, identity, detail) {
+        get('feedback').dataset.state = state;
+        get('result-label').textContent = label;
+        get('identity').textContent = identity;
+        get('result-detail').textContent = detail;
+    }
     const cameraReady = () => !busy && !submitting && stream && extract && video.readyState >= 2 && video.videoWidth && video.videoHeight;
     function pauseAutomatic() {
         automatic = false;
@@ -71,7 +77,10 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         pauseAutomatic();
         waitingForClear = false;
         emptyFrames = 0;
-        if (busy && !submitting) metric('status', 'Gagal / dibatalkan');
+        if (busy && !submitting) {
+            metric('status', 'Gagal / dibatalkan');
+            feedback('ready', 'Pemindaian dihentikan', 'Kamera nonaktif', 'Aktifkan kembali kamera untuk melanjutkan.');
+        }
         generation++;
         stream?.getTracks().forEach(track => track.stop());
         stream = null;
@@ -84,6 +93,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         if (busy || submitting || stream) return;
         if (!environment.isSecureContext || !environment.navigator.mediaDevices?.getUserMedia) {
             message('Kamera memerlukan HTTPS atau localhost.');
+            feedback('error', 'Kamera belum tersedia', 'Periksa akses kamera', 'Kamera memerlukan HTTPS atau localhost.');
             return;
         }
         const run = ++generation;
@@ -94,6 +104,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         busy = true;
         render();
         message('Menunggu izin kamera. Pilih Izinkan pada browser.');
+        feedback('processing', 'Menyiapkan kamera', 'Tunggu sebentar…', 'Izinkan akses kamera jika diminta oleh browser.');
         try {
             const facingMode = get('facing').value || 'user';
             const acquired = await requestFaceCamera(environment.navigator.mediaDevices, 30000, facingMode);
@@ -129,6 +140,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
                 : model.backend === 'cpu' ? 'CPU' : model.backend || 'Tidak tersedia');
             busy = false;
             message('Kamera siap. Hadapkan satu siswa lalu klik Pindai & catat absensi.');
+            feedback('ready', 'Kamera siap', 'Silakan maju', 'Satu siswa di depan kamera. Mulai otomatis atau tekan Pindai & catat.');
             render();
         } catch (error) {
             if (run !== generation) return;
@@ -136,7 +148,9 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
             metric('backend', 'Persiapan gagal');
             metric('camera', 'Tidak selesai / lihat pesan kamera');
             metric('model', 'Tidak selesai');
-            message(error.name === 'NotAllowedError' ? 'Izin kamera ditolak. Izinkan kamera melalui pengaturan situs.' : error.message);
+            const detail = error.name === 'NotAllowedError' ? 'Izin kamera ditolak. Izinkan kamera melalui pengaturan situs.' : error.message;
+            message(detail);
+            feedback('error', 'Kamera belum siap', 'Periksa kamera', detail);
         }
     }
     async function scan(isAutomatic = false) {
@@ -165,7 +179,10 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         if (!isAutomatic) beginMeasurement();
         busy = true;
         render();
-        if (!isAutomatic) message('Memeriksa wajah…');
+        if (!isAutomatic) {
+            message('Memeriksa wajah…');
+            feedback('processing', 'Sedang memindai', 'Memeriksa wajah…', 'Tetap menghadap kamera sampai hasil muncul.');
+        }
         try {
             const canvas = documentRoot.createElement('canvas');
             canvas.width = Math.min(video.videoWidth, 960);
@@ -188,6 +205,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
             submitting = true;
             render();
             message('Mencocokkan dan mencatat presensi…');
+            feedback('processing', 'Wajah terdeteksi', 'Mencocokkan siswa…', 'Tunggu konfirmasi pencatatan sebelum meninggalkan kamera.');
             requestStarted = clock();
             const response = await environment.fetch(root.dataset.endpoint, {
                 method: 'POST', credentials: 'same-origin', signal: AbortSignal.timeout(30000),
@@ -219,13 +237,13 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
             success = true;
             waitingForClear = true;
             emptyFrames = 0;
-            get('identity').textContent = `${result.student} · ${result.kelas} · ${result.status}${result.already_recorded ? ' · Sudah tercatat' : ' · Berhasil dicatat'}`;
+            feedback('success', result.already_recorded ? 'Sudah tercatat' : 'Berhasil dicatat', result.student,
+                `${result.kelas} · ${result.status} · ${result.time}. ${result.already_recorded ? 'Status sebelumnya tetap dipertahankan.' : 'Silakan keluar dari bingkai kamera.'}`);
             if (isAutomatic && automatic) autoMessage('Berhasil. Siswa keluar dari bingkai; berikutnya maju setelah tanda siap.');
             get('count').textContent = `${count} presensi baru`;
             const item = documentRoot.createElement('li');
-            item.className = 'py-3 text-sm text-gray-700 dark:text-gray-200';
-            item.textContent = `${result.time} · ${result.student} · ${result.kelas} · ${result.status} — ${result.message}`;
-            item.textContent += ` | Deteksi ${duration(detectionMs)} · Respons ${duration(responseMs)} · Total ${duration(clock() - scanStarted)}`;
+            item.className = 'whitespace-pre-line break-words py-3 text-sm leading-6 text-gray-700 dark:text-gray-200';
+            item.textContent = `${result.student}\n${result.kelas} · ${result.status} · ${result.time}\n${result.already_recorded ? 'Sudah tercatat' : 'Berhasil dicatat'}`;
             get('results').prepend(item);
             while (get('results').children.length > 20) get('results').lastElementChild.remove();
             get('empty').classList.add('hidden');
@@ -237,16 +255,21 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
                     emptyFrames++;
                     if (emptyFrames >= 2) waitingForClear = false;
                     autoMessage(waitingForClear ? 'Tunggu sebentar, memastikan bingkai kosong…' : 'Siap. Siswa berikutnya silakan maju.');
+                    if (!waitingForClear) feedback('ready', 'Siap memindai', 'Silakan maju', 'Belum ada wajah terdeteksi. Satu siswa masuk ke bingkai kamera.');
                 } else {
                     emptyFrames = 0;
                     autoMessage('Lebih dari satu wajah. Siswa lain mundur dari bingkai kamera.');
+                    feedback('error', 'Pemindaian tertunda', 'Lebih dari satu wajah', 'Pastikan hanya satu siswa berada di depan kamera.');
                 }
                 return;
             }
             if (isAutomatic && run === generation && autoRun === automaticGeneration && !rejectedFace) pauseAutomatic();
             if (run === generation || submitting) {
-                message(error.name === 'TimeoutError' || error instanceof TypeError
-                    ? 'Koneksi terputus atau waktu habis. Periksa logbook atau pindai ulang; presensi ganda dicegah.' : error.message);
+                const uncertain = error.name === 'TimeoutError' || error instanceof TypeError;
+                const detail = uncertain ? 'Koneksi terputus atau waktu habis. Periksa logbook atau pindai ulang; presensi ganda dicegah.' : error.message;
+                message(detail);
+                feedback('error', uncertain ? 'Periksa hasil di logbook' : 'Pemindaian belum berhasil',
+                    error.code === 'no_face' ? 'Wajah belum terdeteksi' : error.code === 'multiple_faces' ? 'Lebih dari satu wajah' : 'Perlu diperiksa', detail);
             }
         } finally {
             if (measured && (run === generation || submitting)) {

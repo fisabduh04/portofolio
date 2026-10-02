@@ -9,8 +9,8 @@
             <p class="text-sm leading-6 text-gray-500 dark:text-gray-400">{{ $mode === 'mapel' ? $jadwal->kelas->kelas.' · '.$jadwal->mapel->mapel : 'Semua kelas · '.($type === 'masuk' ? 'Presensi masuk' : 'Presensi pulang') }}</p>
             <span class="w-fit rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{{ now()->locale('id')->translatedFormat('l, d F Y') }} · {{ config('app.timezone') }}</span>
         </div>
-        <div class="grid gap-5 lg:grid-cols-3">
-            <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:col-span-2">
+        <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <div class="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
                     <h2 class="text-base font-semibold text-gray-900 dark:text-white">Pindai siswa</h2>
                     <span data-scan-count class="text-xs text-gray-500 dark:text-gray-400">0 presensi baru</span>
@@ -39,12 +39,30 @@
                     <p data-scan-message role="status" aria-live="polite" class="text-sm leading-5 text-gray-600 dark:text-gray-300">Satu siswa setiap pemindaian. Hasil yang cocok langsung dicatat ke logbook.</p>
                     <div class="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/30 sm:p-4" role="status" aria-live="polite">
                         <p data-scan-auto-status class="text-sm font-medium text-blue-800 dark:text-blue-200">Untuk antrean: aktifkan kamera, lalu mulai pemindaian otomatis sekali.</p>
-                        <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">Hasil terakhir</p>
-                        <p data-scan-identity class="mt-1 break-words text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">Belum ada hasil</p>
                     </div>
                 </div>
             </div>
-            <aside class="space-y-5">
+            <aside aria-labelledby="scan-results-heading" class="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:sticky lg:top-20">
+                <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+                    <h2 id="scan-results-heading" class="text-base font-semibold text-gray-900 dark:text-white">Hasil sesi ini</h2>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Cocokkan nama dengan siswa di depan kamera.</p>
+                </div>
+                <div class="p-4 sm:p-5">
+                    <div data-scan-feedback data-state="ready" role="status" aria-live="polite" aria-atomic="true" class="rounded-xl border border-gray-200 bg-gray-50 p-5 data-[state=success]:border-emerald-300 data-[state=success]:bg-emerald-50 data-[state=error]:border-red-300 data-[state=error]:bg-red-50 data-[state=processing]:border-blue-300 data-[state=processing]:bg-blue-50 dark:border-gray-600 dark:bg-gray-900 dark:data-[state=success]:border-emerald-700 dark:data-[state=success]:bg-emerald-950 dark:data-[state=error]:border-red-700 dark:data-[state=error]:bg-red-950 dark:data-[state=processing]:border-blue-700 dark:data-[state=processing]:bg-blue-950">
+                        <p data-scan-result-label class="text-sm font-semibold text-gray-700 dark:text-gray-200">Menunggu pemindaian</p>
+                        <p data-scan-identity class="mt-3 break-words text-2xl font-bold leading-tight text-gray-900 dark:text-white xl:text-3xl">Belum ada hasil</p>
+                        <p data-scan-result-detail class="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">Aktifkan kamera, lalu mulai pemindaian.</p>
+                    </div>
+                    <div class="mt-5 flex items-center justify-between gap-3">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Riwayat pemindaian</h3>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">20 hasil terakhir</span>
+                    </div>
+                    <p data-scan-empty class="mt-3 text-sm text-gray-500 dark:text-gray-400">Belum ada siswa dipindai.</p>
+                    <ul data-scan-results aria-label="Riwayat hasil pemindaian sesi ini" class="mt-3 max-h-72 overflow-y-auto overscroll-contain divide-y divide-gray-200 dark:divide-gray-700 lg:max-h-80"></ul>
+                </div>
+            </aside>
+        </div>
+        <div class="grid gap-5 lg:grid-cols-2">
                 <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                     <h2 class="text-base font-semibold text-gray-900 dark:text-white">Sesi presensi</h2>
                     @if ($jadwal)
@@ -64,8 +82,8 @@
                         <a href="{{ route('absensi.harian.index', ['date' => $date]) }}" class="mt-4 inline-block text-sm font-medium text-blue-700 hover:underline dark:text-blue-400">Lihat presensi harian →</a>
                     @endif
                 </div>
-                <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">Panduan pemindaian</h2>
+                <details class="self-start rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+                    <summary class="cursor-pointer text-base font-semibold text-gray-900 dark:text-white">Panduan pemindaian</summary>
                     <ul class="mt-3 space-y-3 text-sm leading-6 text-gray-500 dark:text-gray-400">
                         <li>Hadapkan satu wajah ke kamera dengan cahaya yang cukup.</li>
                         <li>Mode otomatis: tunggu nama dan status muncul, lalu siswa keluar dari bingkai. Siswa berikutnya maju setelah tulisan Siap muncul. Siswa yang mengantre harus berada di luar bingkai.</li>
@@ -73,10 +91,9 @@
                         <li>Pastikan nama hasil pemindaian sesuai dengan siswa di depan guru.</li>
                         <li>Status yang sudah tercatat tetap dipertahankan. Koreksi dilakukan melalui presensi manual.</li>
                     </ul>
-                </div>
-            </aside>
+                </details>
         </div>
-        <details open class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <details class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <summary class="cursor-pointer text-base font-semibold text-gray-900 dark:text-white">Performa absensi wajah</summary>
             <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Server: <span data-scan-perf-host class="font-medium"></span>. <span data-scan-perf-environment></span></p>
             <dl class="mt-4 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
@@ -110,10 +127,5 @@
                 </ul>
             </details>
         </details>
-        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Hasil sesi ini</h2>
-            <p data-scan-empty class="mt-3 text-sm text-gray-500 dark:text-gray-400">Belum ada siswa dipindai.</p>
-            <ul data-scan-results class="mt-3 divide-y divide-gray-200 dark:divide-gray-700" aria-live="polite"></ul>
-        </div>
     </section>
 </x-layout.layout>

@@ -31,27 +31,35 @@ class AppServiceProvider extends ServiceProvider
 
         // --- Definisi Akses Menu (Gates) ---
         Gate::define('view-kepegawaian', function (User $user): bool {
-            return $user->role === UserRole::Admin;
+            return $user->is_active && $user->role->canViewKepegawaian();
         });
 
-        Gate::define('view-rekapitulasi', function (User $user) {
-            return in_array($user->role->value, ['kepala', 'admin', 'operator', 'staff', 'guru']);
+        Gate::define('access-school-modules', function (User $user): bool {
+            return $user->is_active && ! $user->role->isPayrollOnly();
         });
 
-        Gate::define('manage-jadwal', function (User $user) {
-            return in_array($user->role->value, ['admin', 'operator']);
+        Gate::define('manage-payroll', function (User $user): bool {
+            return $user->canManagePayroll();
         });
 
-        Gate::define('manage-data-master', function (User $user) {
-            return in_array($user->role->value, ['admin', 'operator']);
+        Gate::define('view-rekapitulasi', function (User $user): bool {
+            return $user->is_active && $user->role->canViewRekapitulasi();
         });
 
-        Gate::define('manage-sekolah', function (User $user) {
-            return in_array($user->role->value, ['admin', 'kepala', 'operator']);
+        Gate::define('manage-jadwal', function (User $user): bool {
+            return $user->is_active && $user->isManagement();
         });
 
-        Gate::define('is-guru', function (User $user) {
-            return $user->role->value === 'guru';
+        Gate::define('manage-data-master', function (User $user): bool {
+            return $user->is_active && $user->isManagement();
+        });
+
+        Gate::define('manage-sekolah', function (User $user): bool {
+            return $user->is_active && $user->isManagement();
+        });
+
+        Gate::define('is-guru', function (User $user): bool {
+            return $user->is_active && $user->role === UserRole::Guru;
         });
 
         Gate::define('input-presensi', function (User $user, Jadwal $jadwal, string $kategori): bool {
@@ -59,7 +67,7 @@ class AppServiceProvider extends ServiceProvider
                 return false;
             }
 
-            if (in_array($user->role, [UserRole::Admin, UserRole::Operator, UserRole::Kepala], true)) {
+            if ($user->isManagement()) {
                 return true;
             }
 
@@ -80,6 +88,7 @@ class AppServiceProvider extends ServiceProvider
         // 2. Optimasi: Hanya jalankan query jika aplikasi TIDAK sedang berjalan di terminal (CLI/Migration)
         // Ini mencegah error saat Anda menjalankan 'php artisan migrate' di server baru
         if (! $this->app->runningInConsole()) {
+
 
             // 3. Gunakan Cache agar tidak membebani database di SETIAP refresh halaman
             $sekolah = Cache::remember('global_sekolah_data', now()->addHours(4), function () {

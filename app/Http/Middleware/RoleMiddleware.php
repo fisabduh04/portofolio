@@ -30,7 +30,7 @@ class RoleMiddleware
         );
 
         // 4. Cek apakah role user termasuk yang diizinkan
-        if (! in_array($userRole, $allowedRoles, true)) {
+        if (! $user->isKepala() && ! in_array($userRole, $allowedRoles, true)) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 

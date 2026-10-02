@@ -77,7 +77,7 @@ class User extends Authenticatable
 
     public function canManagePayroll(): bool
     {
-        return $this->role?->canManagePayroll() ?? false;
+        return (bool) $this->is_active && ($this->role?->canManagePayroll() ?? false);
     }
 
     public function pegawai()
@@ -92,6 +92,10 @@ class User extends Authenticatable
 
     public function hasPiketSchedule(): bool
     {
+        if (! $this->is_active || $this->role->isPayrollOnly()) {
+            return false;
+        }
+
         if ($this->isManagement()) {
             return true;
         }
@@ -107,6 +111,10 @@ class User extends Authenticatable
 
     public function isPiketOn(string $date): bool
     {
+        if (! $this->is_active || $this->role->isPayrollOnly()) {
+            return false;
+        }
+
         // Gunakan logika terpusat dari Enum
         if ($this->isManagement()) {
             return true;

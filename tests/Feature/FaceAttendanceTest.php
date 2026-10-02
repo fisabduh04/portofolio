@@ -272,6 +272,9 @@ it('renders the scanner without exposing stored face descriptors', function () {
     $this->actingAs($actor)->get(route('face-attendance.index', ['mode' => 'mapel', 'jadwal_id' => $schedule->id]))
         ->assertOk()->assertSee('Pindai & catat', false)->assertSee('Performa absensi wajah')
         ->assertSee('Mulai otomatis')->assertSee('data-scan-identity', false)
+        ->assertSee('aria-labelledby="scan-results-heading"', false)
+        ->assertSee('data-scan-feedback', false)->assertSee('Riwayat pemindaian')
+        ->assertSeeInOrder(['Hasil sesi ini', 'Riwayat pemindaian', 'Sesi presensi', 'Performa absensi wajah'])
         ->assertSee('data-scan-perf-server', false)->assertDontSee(json_encode($payload['descriptor']), false);
 });
 

@@ -2,24 +2,25 @@
 
 namespace App\Http\Controllers\Operator;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use App\Enums\UserRole;
-use Illuminate\Support\Facades\Log;
 
 class UserProvisioningController extends Controller
 {
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', User::class);
         $q = trim((string) $request->query('q', ''));
 
         $pegawais = Pegawai::query()
-            ->with('user')
+            ->with(['user', 'waliKelas' => fn ($query) => $query->where('is_active', true)->whereHas('tahun', fn ($year) => $year->aktif())->with('kelas'), 'jadwalPikets' => fn ($query) => $query->whereHas('tahun', fn ($year) => $year->aktif())])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($qq) use ($q) {
                     $qq->where('name', 'like', "%{$q}%")
@@ -28,10 +29,10 @@ class UserProvisioningController extends Controller
                 });
             })
             ->when($request->filter_role, function ($query) use ($request) {
-                 $query->whereHas('user', function ($q) use ($request) {
-                     $q->where('role', $request->filter_role);
-                 });
-             })
+                $query->whereHas('user', function ($q) use ($request) {
+                    $q->where('role', $request->filter_role);
+                });
+            })
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();
@@ -44,19 +45,20 @@ class UserProvisioningController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('viewAny', User::class);
         $data = $request->validate([
             'pegawai_id' => ['required', 'integer', 'exists:pegawais,id'],
-            'email'      => ['required', 'email', 'max:255', 'unique:users,email'],
-            'role'       => ['required', 'in:' . implode(',', array_column(UserRole::cases(), 'value'))],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'role' => ['required', 'in:'.implode(',', array_column(UserRole::cases(), 'value'))],
         ]);
 
         // CEK WEWENANG (Authorization)
         $targetRole = UserRole::from($data['role']);
-        $myRole     = $request->user()->role;
+        $myRole = $request->user()->role;
 
         // Jika Rank saya lebih kecil dari Rank yang mau dibuat, TOLAK.
-        if ($myRole->rank() < $targetRole->rank() && !$request->user()->isKepala()) {
-             return back()->with('error', 'Anda tidak memiliki wewenang untuk membuat user dengan role lebih tinggi dari Anda.');
+        if (! $myRole->canAssign($targetRole)) {
+            return back()->with('error', 'Anda tidak memiliki wewenang untuk membuat user dengan role lebih tinggi dari Anda.');
         }
 
         // Cek apakah pegawai ini sudah punya akun sebelumnya?
@@ -71,18 +73,18 @@ class UserProvisioningController extends Controller
         // Buat User Baru
         $user = User::create([
             'pegawai_id' => $pegawai->id,
-            'name'       => $pegawai->name ?? 'Pegawai',
-            'email'      => strtolower(trim($data['email'])),
-            'password'   => bcrypt(Str::random(40)), 
-            'role'       => $data['role'],
-            'is_active'  => 0, 
+            'name' => $pegawai->name ?? 'Pegawai',
+            'email' => strtolower(trim($data['email'])),
+            'password' => bcrypt(Str::random(40)),
+            'role' => $data['role'],
+            'is_active' => 0,
         ]);
 
         // Log aktivitas pembuatan user
-        Log::info("User Provisioning - Akun baru dibuat oleh ID: " . auth()->id(), [
+        Log::info('User Provisioning - Akun baru dibuat oleh ID: '.auth()->id(), [
             'target_user_id' => $user->id,
             'role' => $user->role->value,
-            'email' => $user->email
+            'email' => $user->email,
         ]);
 
         return redirect()
@@ -97,7 +99,7 @@ class UserProvisioningController extends Controller
     {
         // 1. Cek Policy: Apakah saya boleh mengelola user ini?
         if (Gate::denies('toggleStatus', $user)) {
-             return back()->with('error', 'Tindakan Ditolak: Anda tidak memiliki akses untuk mengubah status pengguna ini.');
+            return back()->with('error', 'Tindakan Ditolak: Anda tidak memiliki akses untuk mengubah status pengguna ini.');
         }
 
         // Simpan status lama untuk pengecekan
@@ -112,21 +114,23 @@ class UserProvisioningController extends Controller
         if ($wasInactive && (int) $user->is_active === 1) {
             try {
                 $status = Password::sendResetLink(['email' => $user->email]);
-                
+
                 if ($status !== Password::RESET_LINK_SENT) {
                     return back()->with('success', 'Akun aktif, namun gagal mengirim email reset password. Silakan coba fitur "Resend Reset".');
                 }
+
                 return back()->with('success', 'Akun diaktifkan! Link atur password telah dikirim ke email pegawai.');
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Aktivasi User - Gagal mengirim email: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Aktivasi User - Gagal mengirim email: '.$e->getMessage());
+
                 return back()->with('warning', 'Akun berhasil diaktifkan, namun sistem gagal mengirim email reset password. Pastikan konfigurasi SMTP email (.env) sudah benar.');
             }
         }
 
         // Log perubahan status
-        Log::info("User Provisioning - Status user diperbarui oleh ID: " . auth()->id(), [
+        Log::info('User Provisioning - Status user diperbarui oleh ID: '.auth()->id(), [
             'target_user_id' => $user->id,
-            'is_active' => $user->is_active
+            'is_active' => $user->is_active,
         ]);
 
         return back()->with('success', 'Status akun berhasil diperbarui.');
@@ -138,20 +142,20 @@ class UserProvisioningController extends Controller
     public function updateRole(Request $request, User $user)
     {
         $data = $request->validate([
-            'role' => ['required', 'in:' . implode(',', array_column(UserRole::cases(), 'value'))],
+            'role' => ['required', 'in:'.implode(',', array_column(UserRole::cases(), 'value'))],
         ]);
 
         // 1. Cek Policy Dasar: Boleh gak saya edit user ini?
         if (Gate::denies('updateRole', $user)) {
-             return back()->with('error', 'Tindakan Ditolak: Anda tidak bisa mengubah role pengguna ini.');
+            return back()->with('error', 'Tindakan Ditolak: Anda tidak bisa mengubah role pengguna ini.');
         }
 
         // 2. Cek Policy Lanjutan: Boleh gak saya mengangkat dia ke role baru ini?
         $newRole = UserRole::from($data['role']);
-        $myRole  = $request->user()->role;
+        $myRole = $request->user()->role;
 
-        if (!$request->user()->isKepala() && $myRole->rank() < $newRole->rank()) {
-             return back()->with('error', 'Tindakan Ditolak: Anda tidak bisa menaikkan role ke tingkat yang lebih tinggi dari Anda.');
+        if (! $myRole->canAssign($newRole)) {
+            return back()->with('error', 'Tindakan Ditolak: Anda tidak bisa menaikkan role ke tingkat yang lebih tinggi dari Anda.');
         }
 
         $user->update(['role' => $data['role']]);
@@ -172,7 +176,7 @@ class UserProvisioningController extends Controller
 
         // Security Check
         if (Gate::denies('manage', $user)) {
-             return back()->with('error', 'Anda tidak berwenang mengelola pengguna ini.');
+            return back()->with('error', 'Anda tidak berwenang mengelola pengguna ini.');
         }
 
         // Pastikan akun aktif dulu

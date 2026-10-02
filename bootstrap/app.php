@@ -13,9 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
+            'treasurer-access' => \App\Http\Middleware\RestrictTreasurerAccess::class,
             'active' => \App\Http\Middleware\EnsureUserIsActive::class,
-            'role'   => \App\Http\Middleware\RoleMiddleware::class,
-            '2fa'    => \App\Http\Middleware\RequireTwoFactor::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            '2fa' => \App\Http\Middleware\RequireTwoFactor::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

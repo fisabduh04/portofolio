@@ -19,14 +19,14 @@ beforeEach(function () {
     ], '--no-interaction' => true])->assertExitCode(0);
 });
 
-test('only administrators have permission to access kepegawaian', function (string $role, bool $allowed) {
+test('administrators and principals have permission to access kepegawaian', function (string $role, bool $allowed) {
     $user = User::factory()->make(['role' => $role, 'is_active' => true]);
 
     expect(Gate::forUser($user)->allows('view-kepegawaian'))->toBe($allowed);
 })->with([
     'admin' => ['admin', true],
     'operator' => ['operator', false],
-    'kepala' => ['kepala', false],
+    'kepala' => ['kepala', true],
     'staff' => ['staff', false],
     'bendahara' => ['bendahara', false],
     'guru' => ['guru', false],

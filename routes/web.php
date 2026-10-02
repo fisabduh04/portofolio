@@ -41,7 +41,7 @@ Route::get('/', function () {
 });
 
 // Grup Keamanan
-Route::middleware(['auth', 'active'])->group(function () {
+Route::middleware(['auth', 'active', 'treasurer-access'])->group(function () {
 
     Route::resource('tahun', TahunController::class);
     Route::resource('dashboard', DashboardController::class);
@@ -100,7 +100,12 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/jadwal/rekap', [JadwalController::class, 'rekap'])->name('jadwal.rekap');
     });
 
-    // Kepegawaian hanya dapat diakses administrator.
+    Route::middleware(['can:manage-payroll'])->prefix('attendance')->name('attendance.')->group(function () {
+        Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
+        Route::get('payroll/{id}/slip', [PayrollController::class, 'slip'])->name('payroll.slip');
+    });
+
+    // Pengaturan kepegawaian khusus kepala sekolah dan administrator.
     Route::middleware(['can:view-kepegawaian'])->prefix('attendance')->name('attendance.')->group(function () {
         Route::resource('overrides', \App\Http\Controllers\ScheduleOverrideController::class);
         Route::get('mandatory', [\App\Http\Controllers\MandatoryScheduleController::class, 'index'])->name('mandatory.index');
@@ -126,10 +131,6 @@ Route::middleware(['auth', 'active'])->group(function () {
         // Wajib Hadir Routes
         Route::get('wajib-hadir', [PegawaiWajibHadirController::class, 'index'])->name('wajib-hadir.index');
         Route::post('wajib-hadir', [PegawaiWajibHadirController::class, 'store'])->name('wajib-hadir.store');
-
-        // Payroll dan slip gaji.
-        Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
-        Route::get('payroll/{id}/slip', [PayrollController::class, 'slip'])->name('payroll.slip');
 
         // Special Events
         Route::resource('events', SpecialEventController::class);
@@ -159,7 +160,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
 
     // 4. AKSES KHUSUS ADMIN & OPERATOR (Manajemen Data Master)
-    Route::middleware(['role:admin,operator'])->group(function () {
+    Route::middleware(['role:admin,operator', 'can:manage-data-master'])->group(function () {
         Route::get('/walikelas/export', [\App\Http\Controllers\WaliKelasController::class, 'export'])->name('walikelas.export');
         Route::post('/walikelas/import', [\App\Http\Controllers\WaliKelasController::class, 'import'])->name('walikelas.import');
         Route::delete('/walikelas/bulk-delete', [\App\Http\Controllers\WaliKelasController::class, 'destroy'])->name('walikelas.bulkDelete');

@@ -95,7 +95,7 @@ it('deletes an unused inactive year and records its identity and actor', functio
     Log::shouldHaveReceived('info')->once()->with('Tahun ajaran dihapus', [
         'user_id' => $user->id, 'tahun_id' => $tahun->id, 'tahun' => $tahun->tahun, 'semester' => $tahun->semester,
     ]);
-})->with(['admin', 'operator']);
+})->with(['admin', 'operator', 'kepala']);
 
 it('refuses an active year even when unused', function () {
     $tahun = Tahun::factory()->create(['isActive' => true]);
@@ -129,14 +129,14 @@ it('prevents direct database deletion of every referenced year', function (strin
     $this->assertDatabaseHas($table, ['id' => $childId, 'tahun_id' => $tahun->id]);
 })->with('tahun dependencies');
 
-it('refuses roles other than admin and operator', function (string $role) {
+it('refuses roles outside school account management', function (string $role) {
     $tahun = Tahun::factory()->create();
 
     Livewire::actingAs(User::factory()->create(['role' => $role, 'is_active' => true]))->test(Data::class)
         ->call('del', $tahun->id)->assertForbidden();
 
     $this->assertModelExists($tahun);
-})->with(['guru', 'siswa', 'kepala', 'staff', 'bendahara']);
+})->with(['guru', 'siswa', 'staff', 'bendahara']);
 
 it('refuses inactive administrators', function () {
     $tahun = Tahun::factory()->create();

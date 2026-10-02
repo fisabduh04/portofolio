@@ -3,7 +3,6 @@
 namespace App\Policies;
 
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class UserPolicy
 {
@@ -12,7 +11,7 @@ class UserPolicy
      */
     public function viewAny(User $actor): bool
     {
-        return $actor->isManagement();
+        return (bool) $actor->is_active && $actor->isManagement();
     }
 
     /**
@@ -21,26 +20,26 @@ class UserPolicy
     public function manage(User $actor, User $target): bool
     {
         // 1. Self-immunity: Cannot manage self
-        if ($actor->id === $target->id) {
+        if (! $this->viewAny($actor) || $actor->id === $target->id) {
             return false;
         }
 
         // 2. ATURAN KHUSUS KEPALA:
         // Hanya Kepala yang boleh menyentuh akun Kepala lain (termasuk mempromosikan orang jadi Kepala)
-        if ($target->isKepala() && !$actor->isKepala()) {
+        if ($target->isKepala() && ! $actor->isKepala()) {
             return false;
         }
 
         // 3. General Rule: Actor must have Higher OR Equal rank than Target
-        return $actor->role->rank() >= $target->role->rank();
+        return $actor->role->canAssign($target->role);
     }
-    
+
     // Alias for updating role
     public function updateRole(User $actor, User $target): bool
     {
         return $this->manage($actor, $target);
     }
-    
+
     // Alias for toggling status
     public function toggleStatus(User $actor, User $target): bool
     {

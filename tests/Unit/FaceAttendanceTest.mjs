@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { initializeFaceAttendance } from '../../resources/js/face-attendance.js';
 
 function scanner(mode = 'piket') {
-    const control = () => ({ handlers: {}, disabled: false, textContent: '', value: '', children: [], classList: { toggle() {}, add() {} },
+    const control = () => ({ dataset: {}, handlers: {}, disabled: false, textContent: '', value: '', children: [], classList: { toggle() {}, add() {} },
         addEventListener(name, handler) { this.handlers[name] = handler; }, focus() {},
         prepend(item) { item.remove = () => { this.children = this.children.filter(child => child !== item); }; this.children.unshift(item); },
         get lastElementChild() { return this.children.at(-1); } });
@@ -61,6 +61,9 @@ test('a scan submits the descriptor and renders server identity as plain text', 
     assert.equal(page.get('count').textContent, '1 presensi baru');
     assert.match(page.get('results').children[0].textContent, /<script>test<\/script>/);
     assert.equal(page.get('capture').disabled, false);
+    assert.equal(page.get('feedback').dataset.state, 'success');
+    assert.equal(page.get('identity').textContent, '<script>test</script>');
+    assert.equal(page.get('result-label').textContent, 'Berhasil dicatat');
 });
 
 test('rear camera selection supports scanning and can be changed after stopping', async () => {
@@ -163,6 +166,8 @@ test('a rejected match displays the server error without adding a success result
 
     assert.equal(page.get('results').children.length, 0);
     assert.equal(page.get('message').textContent, 'Wajah tidak dikenali');
+    assert.equal(page.get('feedback').dataset.state, 'error');
+    assert.equal(page.get('result-detail').textContent, 'Wajah tidak dikenali');
     assert.equal(page.get('capture').disabled, false);
 });
 
@@ -174,6 +179,35 @@ test('repeat clicks during matching only send one attendance request', async () 
     assert.equal(page.calls.length, 1);
 });
 
+test('a new scan clears the previous identity while matching and shows an uncertain network result', async () => {
+    const page = scanner();
+    await page.click('start');
+    await page.click('capture');
+    let reject;
+    page.environment.fetch = () => new Promise((resolve, fail) => { reject = fail; });
+    const pending = page.click('capture');
+    while (!reject) await Promise.resolve();
+    assert.equal(page.get('feedback').dataset.state, 'processing');
+    assert.equal(page.get('identity').textContent, 'Mencocokkan siswa…');
+    reject(new TypeError('offline'));
+    await pending;
+    assert.equal(page.get('feedback').dataset.state, 'error');
+    assert.equal(page.get('result-label').textContent, 'Periksa hasil di logbook');
+    assert.doesNotMatch(page.get('identity').textContent, /<script>/);
+    assert.equal(page.get('results').children.length, 1);
+});
+
+test('manual scanning without a face shows clear feedback instead of a previous students name', async () => {
+    const page = scanner();
+    await page.click('start');
+    await page.click('capture');
+    page.setFaceError('no_face');
+    await page.click('capture');
+    assert.equal(page.get('identity').textContent, 'Wajah belum terdeteksi');
+    assert.equal(page.get('feedback').dataset.state, 'error');
+    assert.equal(page.calls.length, 1);
+});
+
 test('an already recorded student does not increase the new attendance count', async () => {
     const page = scanner();
     page.environment.fetch = async () => ({ ok: true, json: async () => ({ student: 'Siswa', kelas: 'X', status: 'Izin', message: 'Sudah tercatat', time: '10:00', already_recorded: true }) });
@@ -182,6 +216,8 @@ test('an already recorded student does not increase the new attendance count', a
 
     assert.equal(page.get('count').textContent, '0 presensi baru');
     assert.match(page.get('results').children[0].textContent, /Izin/);
+    assert.equal(page.get('result-label').textContent, 'Sudah tercatat');
+    assert.match(page.get('result-detail').textContent, /Izin/);
 });
 
 test('performance separates preparation, device detection and server round trip', async () => {
@@ -200,7 +236,7 @@ test('performance separates preparation, device detection and server round trip'
     assert.equal(page.get('perf-overhead').textContent, '180 ms');
     assert.equal(page.get('perf-total').textContent, '700 ms');
     assert.equal(page.get('perf-average').textContent, '700 ms · 1 pindai berhasil terakhir');
-    assert.match(page.get('results').children[0].textContent, /Deteksi 400 ms · Respons 300 ms · Total 700 ms/);
+    assert.doesNotMatch(page.get('results').children[0].textContent, /Deteksi|Respons|Total/);
 });
 
 test('failed network attempts clear old server metrics and do not enter the success average', async () => {
@@ -273,6 +309,8 @@ test('cancelling detection does not leave performance marked as scanning', async
 
     assert.equal(page.get('perf-status').textContent, 'Gagal / dibatalkan');
     assert.equal(page.calls.length, 0);
+    assert.equal(page.get('feedback').dataset.state, 'ready');
+    assert.equal(page.get('identity').textContent, 'Kamera nonaktif');
 });
 
 test('automatic scanning waits for two empty frames before recording the next student', async () => {
@@ -283,7 +321,7 @@ test('automatic scanning waits for two empty frames before recording the next st
     assert.equal(page.calls.length, 1);
     assert.equal(page.get('capture').disabled, true);
     assert.equal(page.get('perf-status').textContent, 'Selesai');
-    assert.match(page.get('identity').textContent, /Berhasil dicatat/);
+    assert.equal(page.get('result-label').textContent, 'Berhasil dicatat');
 
     page.setFaceError('no_face');
     await page.tick();
@@ -295,6 +333,8 @@ test('automatic scanning waits for two empty frames before recording the next st
     await page.tick();
     await page.tick();
     assert.match(page.get('auto-status').textContent, /Siap/);
+    assert.equal(page.get('identity').textContent, 'Silakan maju');
+    assert.equal(page.get('feedback').dataset.state, 'ready');
     page.setFaceError(null);
     await page.tick();
     assert.equal(page.calls.length, 2);
@@ -360,7 +400,7 @@ test('automatic matching has only one pending request and pause lets that reques
     await pending;
 
     assert.equal(page.timers.size, 0);
-    assert.match(page.get('identity').textContent, /Berhasil dicatat/);
+    assert.equal(page.get('result-label').textContent, 'Berhasil dicatat');
 });
 
 test('unknown faces wait for departure rather than repeatedly querying the server', async () => {

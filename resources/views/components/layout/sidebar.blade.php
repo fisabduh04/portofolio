@@ -20,6 +20,7 @@
             </button>
         </div>
         <ul class="space-y-2 font-medium">
+            @can('access-school-modules')
             <li>
                 <a href="{{ route('dashboard.index') }}"
                     class="flex items-center px-2 py-1.5 text-body rounded-base hover:bg-neutral-tertiary hover:text-fg-brand group">
@@ -111,14 +112,16 @@
             </li>
             @endcan
 
+
+
             @can('view-kepegawaian')
             <!-- Menu Kepegawaian Baru -->
             <li>
                 <button type="button"
-                    class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base group {{ request()->routeIs('attendance.*') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}"
+                    class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base group {{ (request()->routeIs('attendance.*') && !request()->routeIs('attendance.payroll.*')) ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}"
                     aria-controls="dropdown-kepegawaian" data-collapse-toggle="dropdown-kepegawaian"
-                    aria-expanded="{{ request()->routeIs('attendance.*') ? 'true' : 'false' }}">
-                    <svg class="w-5 h-5 transition duration-75 {{ request()->routeIs('attendance.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
+                    aria-expanded="{{ (request()->routeIs('attendance.*') && !request()->routeIs('attendance.payroll.*')) ? 'true' : 'false' }}">
+                    <svg class="w-5 h-5 transition duration-75 {{ (request()->routeIs('attendance.*') && !request()->routeIs('attendance.payroll.*')) ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
@@ -128,13 +131,13 @@
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
                     <span class="flex-1 text-left ms-3 rtl:text-right whitespace-nowrap">Kepegawaian</span>
-                    <svg class="w-3 h-3 {{ request()->routeIs('attendance.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
+                    <svg class="w-3 h-3 {{ (request()->routeIs('attendance.*') && !request()->routeIs('attendance.payroll.*')) ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}" aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m1 1 4 4 4-4" />
                     </svg>
                 </button>
-                <ul id="dropdown-kepegawaian" class="{{ request()->routeIs('attendance.*') ? '' : 'hidden' }} py-2 space-y-2">
+                <ul id="dropdown-kepegawaian" class="{{ (request()->routeIs('attendance.*') && !request()->routeIs('attendance.payroll.*')) ? '' : 'hidden' }} py-2 space-y-2">
                     <li>
                         <a href="{{ route('attendance.create') }}"
                             class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand {{ request()->routeIs('attendance.create') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body' }}">Presensi Manual Guru</a>
@@ -153,13 +156,6 @@
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Dashboard
                             Absensi</a>
                     </li>
-                    @if(auth()->user()->canManagePayroll())
-                    <li>
-                        <a href="{{ route('attendance.payroll.index') }}"
-                            class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Payroll
-                            & Gaji</a>
-                    </li>
-                    @endif
                     <li>
                         <a href="{{ route('attendance.report') }}"
                             class="flex items-center w-full px-2 py-1.5 text-body transition duration-75 rounded-base pl-11 group hover:bg-neutral-tertiary hover:text-fg-brand">Laporan
@@ -318,6 +314,38 @@
                 </ul>
             </li>
             @endcan
+            @endcan
+
+            @can('manage-payroll')
+            <li>
+                <button type="button"
+                    class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base group {{ request()->routeIs('attendance.payroll.*') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}"
+                    aria-controls="dropdown-payroll" data-collapse-toggle="dropdown-payroll"
+                    aria-expanded="{{ request()->routeIs('attendance.payroll.*') ? 'true' : 'false' }}">
+                    <svg class="w-5 h-5 transition duration-75 {{ request()->routeIs('attendance.payroll.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}"
+                        aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="5" width="18" height="14" rx="2" />
+                        <path d="M3 9h18M16 14h2" />
+                    </svg>
+                    <span class="flex-1 text-left ms-3 rtl:text-right whitespace-nowrap">Payroll &amp; Gaji</span>
+                    <svg class="w-3 h-3 {{ request()->routeIs('attendance.payroll.*') ? 'text-fg-brand' : 'group-hover:text-fg-brand' }}"
+                        aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="m1 1 4 4 4-4" />
+                    </svg>
+                </button>
+                <ul id="dropdown-payroll" class="{{ request()->routeIs('attendance.payroll.*') ? '' : 'hidden' }} py-2 space-y-2">
+                    <li>
+                        <a href="{{ route('attendance.payroll.index') }}"
+                            @if(request()->routeIs('attendance.payroll.index')) aria-current="page" @endif
+                            class="flex items-center w-full px-2 py-1.5 transition duration-75 rounded-base pl-11 group {{ request()->routeIs('attendance.payroll.*') ? 'bg-neutral-tertiary text-fg-brand' : 'text-body hover:bg-neutral-tertiary hover:text-fg-brand' }}">Rekap Gaji</a>
+                    </li>
+                </ul>
+            </li>
+            @endcan
+
 
 
         </ul>

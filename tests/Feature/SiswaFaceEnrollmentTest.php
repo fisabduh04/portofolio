@@ -31,7 +31,7 @@ it('stores only three encrypted samples when reenrolling and removes previous ve
     expect(DB::table('face_samples')->where('id', $saved->first()->id)->value('descriptor'))->not->toBe(json_encode($samples[0]));
     $this->postJson(route('siswa.face.store', $student), ['samples' => $samples])->assertOk();
     expect(FaceSample::where('siswa_id', $student->id)->count())->toBe(3);
-})->with(['admin', 'operator']);
+})->with(['admin', 'operator', 'kepala']);
 
 it('rejects incomplete or invalid samples without replacing saved data', function (array $samples, string $field, string $message) {
     $operator = User::factory()->create(['role' => 'operator', 'is_active' => 1]);
@@ -58,7 +58,7 @@ it('forbids unauthorized and inactive accounts from enrolling faces', function (
     $this->actingAs($user)->deleteJson(route('siswa.face.destroy', $student), ['confirm_delete' => 1])->assertForbidden();
 
     $this->assertDatabaseCount('face_samples', 0);
-})->with([['guru', 1], ['siswa', 1], ['kepala', 1], ['staff', 1], ['bendahara', 1], ['admin', 0]]);
+})->with([['guru', 1], ['siswa', 1], ['staff', 1], ['bendahara', 1], ['admin', 0]]);
 
 it('requires authentication for face enrollment', function () {
     $this->postJson(route('siswa.face.store', 1), [])->assertUnauthorized();

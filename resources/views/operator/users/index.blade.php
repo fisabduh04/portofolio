@@ -32,6 +32,7 @@
                 ['name' => 'Manajemen Akun', 'href' => '#'],
             ]" />
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Kelola akses, aktivasi akun, dan peran (role) pegawai dalam sistem.</p>
+            <p class="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">Hierarki: Kepala Sekolah → Administrator → Operator → Guru / Staf / Bendahara → Siswa. Penugasan piket dan wali kelas mengikuti jadwal serta periode aktif.</p>
         </div>
     </div>
 
@@ -140,6 +141,12 @@
                                         <div class="ml-4">
                                             <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ $p->name }}</div>
                                             <div class="text-xs text-gray-500 dark:text-gray-400">{{ $p->email ?? 'Belum ada email' }}</div>
+                                            @foreach($p->waliKelas as $assignment)
+                                                <div class="mt-1 text-xs text-blue-700 dark:text-blue-300">Wali kelas {{ $assignment->kelas?->kelas ?? '-' }}</div>
+                                            @endforeach
+                                            @if($p->jadwalPikets->isNotEmpty())
+                                                <div class="mt-1 text-xs text-blue-700 dark:text-blue-300">Piket: {{ $p->jadwalPikets->pluck('hari')->unique()->join(', ') }}</div>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -273,7 +280,7 @@
                                                                 <label for="role-{{ $p->id }}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Role Awal</label>
                                                                 <select name="role" id="role-{{ $p->id }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white">
                                                                     @foreach(\App\Enums\UserRole::cases() as $roleCase)
-                                                                        @if($roleCase->value === 'kepala' && !auth()->user()->isKepala())
+                                                                        @if(!auth()->user()->role->canAssign($roleCase))
                                                                             @continue
                                                                         @endif
                                                                         <option value="{{ $roleCase->value }}">{{ $roleCase->label() }}</option>
@@ -330,7 +337,7 @@
                     @foreach(\App\Enums\UserRole::cases() as $roleCase)
                         @php 
                             $r = $roleCase->value;
-                            if ($r === 'kepala' && !auth()->user()->isKepala()) continue; 
+                            if (!auth()->user()->role->canAssign($roleCase)) continue;
                         @endphp
                         <li>
                             <form action="{{ route('operator.users.update-role', $user->id) }}" method="POST">

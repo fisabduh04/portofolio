@@ -32,7 +32,7 @@
               </div>
               <ul class="p-2 text-sm text-body font-medium" role="none">
                 <li>
-                  <a href="{{ route('dashboard.index') }}" class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded" role="menuitem">Dashboard</a>
+                  <a href="{{ route('dashboard.index') }}" class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded" role="menuitem">{{ auth()->user()->role->isPayrollOnly() ? 'Penggajian' : 'Dashboard' }}</a>
                 </li>
                 <li>
                     <form action="{{ route('logout') }}" method="POST" class="w-full">
