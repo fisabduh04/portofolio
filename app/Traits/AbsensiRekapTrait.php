@@ -6,6 +6,7 @@ use App\Models\Absensi;
 use App\Models\HariLibur;
 use App\Models\Siswa;
 use App\Models\Tahun;
+use App\Services\DutyAttendanceRecap;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 
@@ -14,7 +15,7 @@ trait AbsensiRekapTrait
     /**
      * Get Private Rekap Data for Daily Recap
      */
-    protected function getPrivateRekapData($date, $kelasId, $pegawaiId, $typeGuru)
+    protected function getPrivateRekapData($date, $kelasId, $pegawaiId, $typeGuru, bool $requireDutyPair = false)
     {
         $rekapData = collect([]);
         $summaryStats = ['Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Pulang' => 0, 'Telat' => 0, 'Libur' => 0, 'Total' => 0];
@@ -53,6 +54,10 @@ trait AbsensiRekapTrait
                 })
                 ->get();
 
+            if ($typeGuru === 'piket' && $requireDutyPair) {
+                $absensis = app(DutyAttendanceRecap::class)->summarize($absensis);
+            }
+
             // 3. Proses Data
             $isLibur = HariLibur::isLibur($date, $tahunAktif->id);
 
@@ -84,13 +89,16 @@ trait AbsensiRekapTrait
                     } elseif ($kategori == 'piket_pulang') {
                         $mapel = 'Piket Pulang';
                     }
+                    if ($log->duty_summary ?? false) {
+                        $mapel = 'Piket Masuk / Pulang';
+                    }
 
                     return (object) [
                         'jam_ke' => $log->logbook->jadwal->mulai ?? '-',
                         'mapel' => $mapel,
                         'guru' => $guru,
                         'status' => $log->status,
-                        'catatan' => $log->logbook->catatan,
+                        'catatan' => collect([$log->rekap_note ?? '', $log->keterangan, $log->logbook->catatan])->filter()->implode('; '),
                         'is_piket_sub' => $isPiketSub,
                         'foto' => $log->logbook->foto,
                     ];
@@ -126,6 +134,7 @@ trait AbsensiRekapTrait
                     'id' => $student->id,
                     'nama' => $student->nama,
                     'daily_status' => $dailyStatus,
+                    'keterangan' => $studentLogs->pluck('rekap_note')->filter()->unique()->implode('; '),
                     'stats' => $stats,
                     'stat_details' => $statDetails,
                     'details' => $details,
@@ -139,7 +148,7 @@ trait AbsensiRekapTrait
     /**
      * Get Private Rekap Data for Monthly Recap
      */
-    protected function getPrivateRekapBulananData($month, $year, $kelasId, $typeGuru = 'mapel')
+    protected function getPrivateRekapBulananData($month, $year, $kelasId, $typeGuru = 'mapel', bool $requireDutyPair = false)
     {
         $tahunAktif = Tahun::aktif()->first();
         $daysInMonth = Carbon::createFromDate($year, $month, 1)->daysInMonth;
@@ -167,6 +176,7 @@ trait AbsensiRekapTrait
                 $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
             })
             ->get()
+            ->pipe(fn ($records) => $typeGuru === 'piket' && $requireDutyPair ? app(DutyAttendanceRecap::class)->summarize($records) : $records)
             ->groupBy('siswa_id');
 
         $rekapData = $students->map(function ($student) use ($absensis, $dates, $year, $month, &$summaryStats, $tahunAktif) {
@@ -255,6 +265,7 @@ trait AbsensiRekapTrait
 
                 $dailyStatuses[$day] = [
                     'code' => $code,
+                    'reason' => $logsForDay->pluck('rekap_note')->filter()->implode('; '),
                     'is_libur' => $isLibur,
                     'counts' => $counts,
                 ];
@@ -272,7 +283,7 @@ trait AbsensiRekapTrait
     /**
      * Get Private Rekap Data for Yearly Recap
      */
-    protected function getPrivateRekapTahunanData($year, $kelasId, $typeGuru = 'mapel')
+    protected function getPrivateRekapTahunanData($year, $kelasId, $typeGuru = 'mapel', bool $requireDutyPair = false)
     {
         $tahunAktif = Tahun::aktif()->first();
         $months = range(1, 12);
@@ -299,6 +310,7 @@ trait AbsensiRekapTrait
                 $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
             })
             ->get()
+            ->pipe(fn ($records) => $typeGuru === 'piket' && $requireDutyPair ? app(DutyAttendanceRecap::class)->summarize($records) : $records)
             ->groupBy('siswa_id');
 
         $rekapData = $students->map(function ($student) use ($absensis, $months, &$summaryStats) {
@@ -342,6 +354,7 @@ trait AbsensiRekapTrait
                     'date' => $log->logbook->tanggal,
                     'status' => $log->status,
                     'month' => Carbon::parse($log->logbook->tanggal)->month,
+                    'reason' => $log->rekap_note ?? '',
                 ];
             })->values();
 
@@ -357,7 +370,7 @@ trait AbsensiRekapTrait
     /**
      * Get Private Rekap Data for Periodic Recap
      */
-    protected function getPrivateRekapPeriodeData($startDate, $endDate, $kelasId, $typeGuru = 'mapel')
+    protected function getPrivateRekapPeriodeData($startDate, $endDate, $kelasId, $typeGuru = 'mapel', bool $requireDutyPair = false)
     {
         $tahunAktif = Tahun::aktif()->first();
         $summaryStats = ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Pulang' => 0, 'Telat' => 0];
@@ -376,14 +389,15 @@ trait AbsensiRekapTrait
         }
 
         $absensis = Absensi::with('logbook')
-            ->whereHas('logbook', function ($q) use ($startDate, $endDate) {
+            ->whereHas('logbook', function ($q) use ($startDate, $endDate, $typeGuru) {
                 $q->whereBetween('tanggal', [$startDate, $endDate])
-                    ->whereIn('kategori', ['mapel', 'piket_sub']);
+                    ->whereIn('kategori', $typeGuru === 'piket' ? ['piket_masuk', 'piket_pulang'] : ['mapel', 'piket_sub']);
             })
             ->whereHas('siswa.KelasSiswa', function ($q) use ($kelasId, $tahunAktif) {
                 $q->where('kelas_id', $kelasId)->where('tahun_id', $tahunAktif->id);
             })
             ->get()
+            ->pipe(fn ($records) => $typeGuru === 'piket' && $requireDutyPair ? app(DutyAttendanceRecap::class)->summarize($records) : $records)
             ->groupBy('siswa_id');
 
         $rekapData = $students->map(function ($student) use ($absensis, &$summaryStats, $dates, $tahunAktif) {
@@ -480,6 +494,7 @@ trait AbsensiRekapTrait
 
                 $dailyLogs[$dateStr] = [
                     'code' => $code,
+                    'reason' => $logsForDay->pluck('rekap_note')->filter()->implode('; '),
                     'is_libur' => $isLibur,
                     'counts' => $counts,
                 ];
@@ -513,6 +528,7 @@ trait AbsensiRekapTrait
                     'date' => $log->logbook->tanggal,
                     'status' => $log->status,
                     'mapel' => $mapelName,
+                    'reason' => $log->rekap_note ?? '',
                 ];
             })->sortBy('date')->values();
 

@@ -17,12 +17,12 @@ class AbsensiExportController extends Controller
 
     public function exportHarian(Request $request)
     {
-        return Excel::download(new AbsensiExport($request->all(), 'harian'), 'rekap_harian_' . now()->format('Ymd') . '.xlsx');
+        return Excel::download(new AbsensiExport($request->all(), 'harian'), 'rekap_harian_'.now()->format('Ymd').'.xlsx');
     }
 
     public function exportBulanan(Request $request)
     {
-        return Excel::download(new AbsensiExport($request->all(), 'bulanan'), 'rekap_bulanan_' . now()->format('Ymd') . '.xlsx');
+        return Excel::download(new AbsensiExport($request->all(), 'bulanan'), 'rekap_bulanan_'.now()->format('Ymd').'.xlsx');
     }
 
     public function exportRekapHarian(Request $request)
@@ -33,11 +33,11 @@ class AbsensiExportController extends Controller
         $typeGuru = $request->input('type_guru');
         $format = $request->input('format', 'excel');
 
-        if (!$kelasId) {
+        if (! $kelasId) {
             return back()->with('error', 'Silakan pilih kelas terlebih dahulu.');
         }
 
-        $data = $this->getPrivateRekapData($date, $kelasId, $pegawaiId, $typeGuru);
+        $data = $this->getPrivateRekapData($date, $kelasId, $pegawaiId, $typeGuru, $request->input('view_mode', 'sederhana') === 'sederhana');
         $rekapData = $data['rekapData'];
         $kelas = Kelas::find($kelasId);
         $kelasName = $kelas ? $kelas->kelas : 'Semua Kelas';
@@ -47,11 +47,11 @@ class AbsensiExportController extends Controller
                 'rekapData' => $rekapData,
                 'date' => $date,
                 'kelas' => $kelasName,
-                'typeGuru' => $typeGuru
+                'typeGuru' => $typeGuru,
             ]);
         }
 
-        return Excel::download(new RekapHarianExport($rekapData, $date, $kelasName, $typeGuru), 'rekap_harian_' . $date . '.xlsx');
+        return Excel::download(new RekapHarianExport($rekapData, $date, $kelasName, $typeGuru), 'rekap_harian_'.$date.'.xlsx');
     }
 
     public function exportRekapBulanan(Request $request)
@@ -62,23 +62,25 @@ class AbsensiExportController extends Controller
         $format = $request->input('format', 'excel');
         $typeGuru = $request->input('type_guru', 'mapel');
 
-        if (!$kelasId) return back()->with('error', 'Pilih kelas terlebih dahulu.');
+        if (! $kelasId) {
+            return back()->with('error', 'Pilih kelas terlebih dahulu.');
+        }
 
-        $data = $this->getPrivateRekapBulananData($month, $year, $kelasId, $typeGuru);
+        $data = $this->getPrivateRekapBulananData($month, $year, $kelasId, $typeGuru, $request->input('view_mode', 'sederhana') === 'sederhana');
         $kelas = Kelas::find($kelasId);
         $kelasName = $kelas ? $kelas->kelas : 'Semua Kelas';
 
         if ($format === 'pdf') {
-             return view('absensi.print_rekap_bulanan', [
+            return view('absensi.print_rekap_bulanan', [
                 'rekapData' => $data['rekapData'],
                 'dates' => $data['dates'],
                 'month' => $month,
                 'year' => $year,
-                'kelas' => $kelasName
+                'kelas' => $kelasName,
             ]);
         }
-        
-        return Excel::download(new RekapBulananExport($data['rekapData'], $data['dates'], $month, $year, $kelasName, $typeGuru), 'rekap_bulanan_' . $month . '_' . $year . '.xlsx');
+
+        return Excel::download(new RekapBulananExport($data['rekapData'], $data['dates'], $month, $year, $kelasName, $typeGuru), 'rekap_bulanan_'.$month.'_'.$year.'.xlsx');
     }
 
     public function exportRekapTahunan(Request $request)
@@ -88,21 +90,23 @@ class AbsensiExportController extends Controller
         $format = $request->input('format', 'excel');
         $typeGuru = $request->input('type_guru', 'mapel');
 
-        if (!$kelasId) return back()->with('error', 'Pilih kelas terlebih dahulu.');
+        if (! $kelasId) {
+            return back()->with('error', 'Pilih kelas terlebih dahulu.');
+        }
 
-         $data = $this->getPrivateRekapTahunanData($year, $kelasId, $typeGuru);
-         $kelas = Kelas::find($kelasId);
-         $kelasName = $kelas ? $kelas->kelas : 'Semua Kelas';
+        $data = $this->getPrivateRekapTahunanData($year, $kelasId, $typeGuru, $request->input('view_mode', $typeGuru === 'piket' ? 'sederhana' : 'detail_harian') === 'sederhana');
+        $kelas = Kelas::find($kelasId);
+        $kelasName = $kelas ? $kelas->kelas : 'Semua Kelas';
 
-         if ($format === 'pdf') {
-             return view('absensi.print_rekap_tahunan', [
+        if ($format === 'pdf') {
+            return view('absensi.print_rekap_tahunan', [
                 'rekapData' => $data['rekapData'],
                 'year' => $year,
-                'kelas' => $kelasName
+                'kelas' => $kelasName,
             ]);
         }
 
-        return Excel::download(new RekapTahunanExport($data['rekapData'], $year, $kelasName, $typeGuru), 'rekap_tahunan_' . $year . '.xlsx');
+        return Excel::download(new RekapTahunanExport($data['rekapData'], $year, $kelasName, $typeGuru), 'rekap_tahunan_'.$year.'.xlsx');
     }
 
     public function exportRekapPeriode(Request $request)
@@ -111,12 +115,14 @@ class AbsensiExportController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
         $typeGuru = $request->input('type_guru', 'mapel');
-        
-        if (!$kelasId) return back()->with('error', 'Pilih kelas terlebih dahulu.');
+
+        if (! $kelasId) {
+            return back()->with('error', 'Pilih kelas terlebih dahulu.');
+        }
 
         $kelas = Kelas::find($kelasId);
         $kelasName = $kelas ? $kelas->kelas : 'Semua Kelas';
 
-        return Excel::download(new AbsensiExport(['kelas_id' => $kelasId, 'start_date' => $startDate, 'end_date' => $endDate, 'type_guru' => $typeGuru], 'periode'), 'rekap_periode_' . $startDate . '_to_' . $endDate . '.xlsx');
+        return Excel::download(new AbsensiExport(['kelas_id' => $kelasId, 'start_date' => $startDate, 'end_date' => $endDate, 'type_guru' => $typeGuru, 'view_mode' => $request->input('view_mode', $typeGuru === 'piket' ? 'ringkasan_harian' : 'ringkasan')], 'periode'), 'rekap_periode_'.$startDate.'_to_'.$endDate.'.xlsx');
     }
 }

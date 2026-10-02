@@ -232,6 +232,16 @@
                                 <tr class="bg-white dark:bg-gray-800 hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors">
                                     <th scope="row" class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white sticky left-0 bg-white dark:bg-gray-800 z-20 border-r border-gray-200 dark:border-gray-600 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] group-hover:bg-slate-50 dark:group-hover:bg-gray-700">
                                         {{ $student->nama }}
+                                        @if(collect($student->statuses)->contains(fn ($status) => !empty($status['reason'])))
+                                            <details class="mt-1 max-w-64 whitespace-normal text-xs font-normal text-red-700 dark:text-red-400">
+                                                <summary class="cursor-pointer">Keterangan absensi</summary>
+                                                @foreach($student->statuses as $day => $status)
+                                                    @if(!empty($status['reason']))
+                                                        <p class="mt-1">{{ $day }}/{{ $month }}: {{ $status['reason'] }}</p>
+                                                    @endif
+                                                @endforeach
+                                            </details>
+                                        @endif
                                     </th>
                                     @foreach($dates as $d)
                                         @php
@@ -268,6 +278,9 @@
                                             elseif($status == 'T') {
                                                 $dotClass = 'bg-blue-500 border-blue-500 shadow-sm shadow-blue-200'; 
                                                 $tooltipText = "Tgl $d: Telat (Terhitung Hadir)";
+                                            }
+                                            if (!empty($dayData['reason'])) {
+                                                $tooltipText .= ' — '.$dayData['reason'];
                                             }
                                         @endphp
                                         <td class="px-0.5 py-2 text-center relative group/cell border-r border-gray-50 dark:border-gray-800 {{ $dayData['is_libur'] ? 'bg-gray-50 dark:bg-gray-800/50' : '' }}">

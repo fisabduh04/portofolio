@@ -69,7 +69,7 @@
                         </button>
                         
                         @if($kelasId)
-                        <a href="{{ route('absensi.export-periode', ['kelas_id' => $kelasId, 'start_date' => $startDate, 'end_date' => $endDate, 'type_guru' => $typeGuru ?? 'mapel']) }}" target="_blank" title="Export Excel" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-3 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800 flex items-center justify-center shadow-sm">
+                        <a href="{{ route('absensi.export-periode', ['kelas_id' => $kelasId, 'start_date' => $startDate, 'end_date' => $endDate, 'type_guru' => $typeGuru ?? 'mapel', 'view_mode' => $viewMode]) }}" target="_blank" title="Export Excel" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-3 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800 flex items-center justify-center shadow-sm">
                              <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 15v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2m-8 1V4m0 12-4-4m4 4 4-4"/>
                             </svg>
@@ -169,7 +169,7 @@
                 </div>
             </div>
 
-            @if($viewMode == 'ringkasan' || $viewMode == 'sederhana')
+            @if($viewMode == 'ringkasan')
                 {{-- Mode Ringkasan (Sesi) --}}
                 <div class="relative overflow-hidden bg-white shadow-md dark:bg-gray-800 sm:rounded-lg border border-gray-200 dark:border-gray-700">
                     <div class="px-4 py-3 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
@@ -213,7 +213,7 @@
                     </div>
                 </div>
 
-            @elseif($viewMode == 'ringkasan_harian')
+            @elseif($viewMode == 'ringkasan_harian' || $viewMode == 'sederhana')
                 {{-- Mode Ringkasan (Harian) --}}
                 <div class="relative overflow-hidden bg-white shadow-md dark:bg-gray-800 sm:rounded-lg border border-gray-200 dark:border-gray-700">
                     <div class="px-4 py-3 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
@@ -326,7 +326,7 @@
                                                      }
                                                 }
                                             @endphp
-                                            <td class="px-1 py-2 text-center {{ $cellClass }} {{ $textClass }} border-r border-gray-100 dark:border-gray-700 last:border-0">
+                                            <td title="{{ $log['reason'] ?? '' }}" class="px-1 py-2 text-center {{ $cellClass }} {{ $textClass }} border-r border-gray-100 dark:border-gray-700 last:border-0">
                                                 {{ $content }}
                                             </td>
                                         @endforeach
@@ -416,6 +416,15 @@
                       </div>
                   </div>
              @endif
+        @endif
+        @if(in_array($viewMode, ['sederhana', 'ringkasan_harian', 'detail_harian'], true))
+            @foreach($rekapData as $student)
+                @foreach($student->daily_logs as $date => $day)
+                    @if(!empty($day['reason']))
+                        <p class="mt-2 text-sm text-red-700 dark:text-red-400">{{ $student->nama }} — {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}: {{ $day['reason'] }}</p>
+                    @endif
+                @endforeach
+            @endforeach
         @endif
     </div>
     </x-attendance-live-recap>

@@ -493,6 +493,9 @@
                                     {{-- Ringkasan Text --}}
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex flex-col items-end gap-1.5 text-xs font-medium">
+                                            @if($data->keterangan ?? '')
+                                                <span class="max-w-64 text-left leading-5 text-red-700 dark:text-red-300">{{ $data->keterangan }}</span>
+                                            @endif
                                             @if($data->stats['Alpha'] > 0) 
                                                 <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded border border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900">
                                                     {{ $data->stats['Alpha'] }} Alpha

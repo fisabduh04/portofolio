@@ -81,7 +81,7 @@
                                    @if ($log->status !== 'Hadir')
                                     <span>
                                         <b class="{{ match($log->status) { 'Alpha' => 'text-red-700', 'Sakit' => 'text-yellow-700', 'Izin' => 'text-blue-700', 'Pulang' => 'text-purple-700', 'Telat' => 'text-indigo-700', default => 'text-gray-700' } }}">[{{ strtoupper(substr($log->status, 0, 1)) }}]</b> 
-                                        {{ $log->mapel }} ({{ $log->guru }})
+                                        {{ $log->mapel }} ({{ $log->guru }}) {{ $log->catatan }}
                                     </span>
                                    @endif
                                 @endforeach

@@ -25,7 +25,13 @@
         @foreach($rekapData as $index => $student)
         <tr>
             <td style="border: 1px solid #000000; text-align: center;">{{ $index + 1 }}</td>
-            <td style="border: 1px solid #000000;">{{ $student->nama }}</td>
+            <td style="border: 1px solid #000000;">{{ $student->nama }}
+                @foreach($student->details as $detail)
+                    @if(!empty($detail['reason']))
+                        <br>{{ $detail['date'] }}: {{ $detail['reason'] }}
+                    @endif
+                @endforeach
+            </td>
             @for($m=1; $m<=12; $m++)
                 @php
                     $stats = $student->months[$m];

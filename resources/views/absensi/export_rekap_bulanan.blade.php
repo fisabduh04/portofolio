@@ -25,7 +25,13 @@
         @foreach($rekapData as $index => $student)
         <tr>
             <td style="border: 1px solid #000000; text-align: center;">{{ $index + 1 }}</td>
-            <td style="border: 1px solid #000000;">{{ $student->nama }}</td>
+            <td style="border: 1px solid #000000;">{{ $student->nama }}
+                @foreach($student->statuses as $day => $status)
+                    @if(!empty($status['reason']))
+                        <br>{{ $day }}/{{ $month }}: {{ $status['reason'] }}
+                    @endif
+                @endforeach
+            </td>
             @foreach($dates as $d)
                 @php
                     $dayData = $student->statuses[$d] ?? ['code' => '-', 'is_libur' => false];

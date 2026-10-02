@@ -109,7 +109,112 @@ it('allows a duty teacher to scan another class into the daily manual logbook', 
     $this->assertDatabaseCount('logbooks', 1);
     $this->assertDatabaseHas('absensis', ['logbook_id' => $logbook->id, 'siswa_id' => $student->id, 'status' => $status]);
     expect($logbook->fresh()->catatan)->toBe('Tetap');
-})->with([['masuk', 'Hadir'], ['pulang', 'Pulang']]);
+})->with([['masuk', 'Hadir'], ['pulang', 'Hadir']]);
+
+it('requires both duty scans only in simple recap and explains which scan is missing', function () {
+    [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
+    JadwalPiket::create(['pegawai_id' => $actor->pegawai_id, 'tahun_id' => $schedule->tahun_id, 'hari' => 'Kamis']);
+    $this->actingAs($actor);
+    $scan = ['mode' => 'piket', 'descriptor' => $payload['descriptor']];
+    $filters = ['kelas_id' => $schedule->kelas_id, 'date' => '2026-10-01', 'type_guru' => 'piket', 'view_mode' => 'sederhana'];
+
+    $this->postJson(route('face-attendance.store'), [...$scan, 'type' => 'masuk'])->assertJsonPath('status', 'Hadir');
+    $this->get(route('absensi.rekap-harian', $filters))->assertOk()
+        ->assertViewHas('rekapData', fn ($rows) => $rows->first()->daily_status === 'Alpha')
+        ->assertSee('Hanya absen masuk; belum absen pulang.');
+    $this->get(route('absensi.rekap-harian', [...$filters, 'view_mode' => 'detail']))->assertOk()
+        ->assertViewHas('rekapData', fn ($rows) => $rows->first()->daily_status === 'Hadir');
+    $this->get(route('absensi.rekap-bulanan', [...$filters, 'month' => 10, 'year' => 2026]))->assertOk()
+        ->assertViewHas('rekapData', fn ($rows) => $rows->first()->statuses[1]['code'] === 'A')
+        ->assertSee('Hanya absen masuk; belum absen pulang.');
+    $rangeFilters = [...$filters, 'month' => 10, 'year' => 2026, 'start_date' => '2026-10-01', 'end_date' => '2026-10-01'];
+    foreach (['absensi.rekap-tahunan', 'absensi.rekap-periode'] as $report) {
+        $this->get(route($report, $rangeFilters))->assertOk()
+            ->assertViewHas('summaryStats', fn ($stats) => $stats['Alpha'] === 1 && $stats['Hadir'] === 0)
+            ->assertSee('Hanya absen masuk; belum absen pulang.');
+    }
+    foreach (['absensi.rekap-harian.export', 'absensi.rekap-bulanan.export', 'absensi.rekap-tahunan.export'] as $report) {
+        $this->get(route($report, [...$rangeFilters, 'format' => 'pdf']))->assertOk()
+            ->assertSee('Hanya absen masuk; belum absen pulang.');
+    }
+    $export = new \App\Exports\AbsensiExport($rangeFilters, 'periode');
+    expect($export->collection()->sole()['Status'])->toBe('Alpha');
+    expect($export->collection()->sole()['Keterangan'])->toContain('Hanya absen masuk; belum absen pulang.');
+    $this->get(route('absensi.rekap', [...$rangeFilters, 'kategori' => 'piket', 'from' => '2026-10-01', 'to' => '2026-10-01']))->assertOk()
+        ->assertViewHas('stats', fn ($stats) => $stats['Alpha'] === 1 && $stats['Hadir'] === 0);
+
+    $this->postJson(route('face-attendance.store'), [...$scan, 'type' => 'pulang'])->assertJsonPath('status', 'Hadir');
+    $this->postJson(route('face-attendance.store'), [...$scan, 'type' => 'pulang'])->assertJsonPath('already_recorded', true);
+    $this->get(route('absensi.rekap-harian', $filters))->assertOk()
+        ->assertViewHas('summaryStats', fn ($stats) => $stats['Hadir'] === 1 && $stats['Alpha'] === 0 && $stats['Pulang'] === 0)
+        ->assertDontSee('Hanya absen masuk; belum absen pulang.');
+    $this->assertDatabaseCount('absensis', 2);
+    $this->assertDatabaseMissing('absensis', ['status' => 'Alpha']);
+    foreach (['absensi.rekap-bulanan', 'absensi.rekap-tahunan', 'absensi.rekap-periode'] as $report) {
+        $this->get(route($report, $rangeFilters))->assertOk()
+            ->assertViewHas('summaryStats', fn ($stats) => $stats['Hadir'] === 1 && $stats['Alpha'] === 0 && $stats['Pulang'] === 0);
+    }
+    $this->get(route('absensi.rekap-tahunan', [...$rangeFilters, 'view_mode' => 'detail']))->assertOk()
+        ->assertViewHas('summaryStats', fn ($stats) => $stats['Hadir'] === 2);
+    $this->get(route('absensi.rekap-periode', [...$rangeFilters, 'view_mode' => 'ringkasan']))->assertOk()
+        ->assertViewHas('summaryStats', fn ($stats) => $stats['Hadir'] === 2);
+    expect($export->collection()->sole()['Status'])->toBe('Hadir');
+    $this->get(route('absensi.rekap', [...$rangeFilters, 'kategori' => 'piket', 'from' => '2026-10-01', 'to' => '2026-10-01']))->assertOk()
+        ->assertViewHas('stats', fn ($stats) => $stats['Hadir'] === 1 && $stats['Pulang'] === 0);
+
+    $this->travelTo(\Carbon\Carbon::parse('2026-10-08 10:00:00'));
+    $this->postJson(route('face-attendance.store'), [...$scan, 'type' => 'pulang'])->assertJsonPath('status', 'Hadir');
+    $this->get(route('absensi.rekap-harian', [...$filters, 'date' => '2026-10-08']))->assertOk()
+        ->assertViewHas('rekapData', fn ($rows) => $rows->first()->daily_status === 'Alpha')
+        ->assertSee('Hanya absen pulang; belum absen masuk.');
+    expect($export->collection())->toHaveCount(1);
+    $this->get(route('absensi.rekap-tahunan', $rangeFilters))->assertOk()
+        ->assertViewHas('summaryStats', fn ($stats) => $stats['Hadir'] === 1 && $stats['Alpha'] === 1);
+    $this->get(route('absensi.rekap-periode', $rangeFilters))->assertOk()
+        ->assertViewHas('summaryStats', fn ($stats) => $stats['Hadir'] === 1 && $stats['Alpha'] === 0);
+});
+
+it('preserves a duty absence for going home and does not require checkout for a mapel recap', function () {
+    [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
+    JadwalPiket::create(['pegawai_id' => $actor->pegawai_id, 'tahun_id' => $schedule->tahun_id, 'hari' => 'Kamis']);
+    $logbook = Logbook::create(['jadwal_id' => $schedule->id, 'kelas_id' => $schedule->kelas_id, 'pegawai_id' => $actor->pegawai_id, 'kategori' => 'piket_pulang', 'tanggal' => '2026-10-01']);
+    Absensi::create(['logbook_id' => $logbook->id, 'siswa_id' => $student->id, 'status' => 'Pulang', 'keterangan' => 'Pulang ke rumah dari pesantren']);
+    $filters = ['kelas_id' => $schedule->kelas_id, 'date' => '2026-10-01', 'view_mode' => 'sederhana'];
+
+    $this->actingAs($actor)->postJson(route('face-attendance.store'), ['mode' => 'piket', 'type' => 'pulang', 'descriptor' => $payload['descriptor']])
+        ->assertJsonPath('status', 'Pulang')->assertJsonPath('already_recorded', true);
+    $this->get(route('absensi.rekap-harian', [...$filters, 'type_guru' => 'piket']))->assertOk()
+        ->assertViewHas('rekapData', fn ($rows) => $rows->first()->daily_status === 'Pulang');
+    $this->postJson(route('face-attendance.store'), $payload)->assertJsonPath('status', 'Hadir');
+    $this->get(route('absensi.rekap-harian', [...$filters, 'type_guru' => 'mapel']))->assertOk()
+        ->assertViewHas('rekapData', fn ($rows) => $rows->first()->daily_status === 'Hadir');
+    $this->assertDatabaseHas('absensis', ['logbook_id' => $logbook->id, 'status' => 'Pulang', 'keterangan' => 'Pulang ke rumah dari pesantren']);
+});
+
+it('repairs only explicitly selected legacy face checkout records and preserves manual absences', function () {
+    [$actor, $schedule, $student] = faceAttendanceFixture();
+    $records = collect([
+        ['piket_pulang', 'Presensi wajah 10:00:00'],
+        ['piket_pulang', 'Pulang ke rumah'],
+        ['mapel', 'Presensi wajah 10:00:00'],
+    ])->map(function (array $case) use ($actor, $schedule, $student) {
+        $logbook = Logbook::create(['jadwal_id' => $schedule->id, 'kelas_id' => $schedule->kelas_id, 'pegawai_id' => $actor->pegawai_id, 'kategori' => $case[0], 'tanggal' => '2026-10-01']);
+
+        return Absensi::create(['logbook_id' => $logbook->id, 'siswa_id' => $student->id, 'status' => 'Pulang', 'keterangan' => $case[1]]);
+    });
+    $this->artisan('attendance:repair-face-checkouts')->assertSuccessful();
+    expect($records->first()->fresh()->status)->toBe('Pulang');
+    $this->artisan('attendance:repair-face-checkouts', ['--apply' => true])->assertFailed();
+
+    $this->artisan('attendance:repair-face-checkouts', ['--apply' => true, '--id' => $records->pluck('id')->all()])->assertSuccessful();
+
+    expect($records->first()->fresh()->status)->toBe('Hadir');
+    expect($records[1]->fresh()->status)->toBe('Pulang');
+    expect($records[2]->fresh()->status)->toBe('Pulang');
+    $this->artisan('attendance:repair-face-checkouts', ['--apply' => true, '--id' => [$records->first()->id]])
+        ->expectsOutput('Diperbaiki: 0 catatan.')->assertSuccessful();
+    $this->assertDatabaseCount('absensis', 3);
+});
 
 it('rejects teachers outside their schedule or duty assignment', function (string $mode) {
     [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
@@ -165,8 +270,8 @@ it('requires login and refuses inactive accounts', function () {
 it('renders the scanner without exposing stored face descriptors', function () {
     [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
     $this->actingAs($actor)->get(route('face-attendance.index', ['mode' => 'mapel', 'jadwal_id' => $schedule->id]))
-        ->assertOk()->assertSee('Pindai & catat absensi', false)->assertSee('Performa absensi wajah')
-        ->assertSee('Mulai pemindaian otomatis')->assertSee('data-scan-identity', false)
+        ->assertOk()->assertSee('Pindai & catat', false)->assertSee('Performa absensi wajah')
+        ->assertSee('Mulai otomatis')->assertSee('data-scan-identity', false)
         ->assertSee('data-scan-perf-server', false)->assertDontSee(json_encode($payload['descriptor']), false);
 });
 

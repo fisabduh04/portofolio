@@ -51,7 +51,7 @@
                      {{-- Use details collection for rich info --}}
                      @foreach($data->details as $log)
                         @if ($log->status !== 'Hadir')
-                            [{{ strtoupper($log->status) }}] {{ $log->mapel }} ({{ $log->guru }})
+                            [{{ strtoupper($log->status) }}] {{ $log->mapel }} ({{ $log->guru }}) {{ $log->catatan }}
                             @if(!$loop->last), @endif
                         @endif
                      @endforeach

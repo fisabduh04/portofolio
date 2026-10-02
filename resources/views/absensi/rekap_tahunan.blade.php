@@ -63,6 +63,9 @@
                     <select id="view_mode" name="view_mode"
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         <option value="detail_harian" @selected($viewMode == 'detail_harian')>Detail Harian (Sesi)</option>
+                        @if($typeGuru === 'piket')
+                            <option value="sederhana" @selected($viewMode == 'sederhana')>Sederhana (Harian)</option>
+                        @endif
                         <option value="detail" @selected($viewMode == 'detail')>Detail (Rincian Absensi)</option>
                     </select>
                 </div>
@@ -183,17 +186,20 @@
                 </div>
             </div>
 
-            @if($viewMode == 'detail')
+            @if($viewMode == 'detail' || $viewMode == 'sederhana')
                  {{-- Mode Detail: List Rincian Absensi per Siswa --}}
                  <div class="relative overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg border border-gray-200 dark:border-gray-700">
                      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                         <h3 class="font-bold text-gray-900 dark:text-white">Rincian Ketidakhadiran Tahunan</h3>
+                         <h3 class="font-bold text-gray-900 dark:text-white">{{ $viewMode === 'sederhana' ? 'Ringkasan Kehadiran Tahunan (Harian)' : 'Rincian Ketidakhadiran Tahunan' }}</h3>
                      </div>
                      <div class="overflow-x-auto">
                         <table class="w-full text-sm text-center text-gray-500 dark:text-gray-400">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>
                                     <th scope="col" class="px-6 py-4 text-left">Nama Siswa</th>
+                                    @if($viewMode === 'sederhana')
+                                        <th scope="col" class="px-4 py-4 w-24">Total Hadir</th>
+                                    @endif
                                     <th scope="col" class="px-4 py-4 w-24">Total Sakit</th>
                                     <th scope="col" class="px-4 py-4 w-24">Total Izin</th>
                                     <th scope="col" class="px-4 py-4 w-24">Total Alpha</th>
@@ -208,6 +214,9 @@
                                         <th scope="row" class="px-6 py-4 text-left font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                             {{ $student->nama }}
                                         </th>
+                                        @if($viewMode === 'sederhana')
+                                            <td class="px-4 py-4 font-bold text-green-600">{{ $student->total['H'] ?: '-' }}</td>
+                                        @endif
                                         <td class="px-4 py-4 font-bold text-orange-600">{{ $student->total['S'] ?: '-' }}</td>
                                         <td class="px-4 py-4 font-bold text-yellow-600">{{ ($student->total['I'] ?? 0) ?: '-' }}</td>
                                         <td class="px-4 py-4 font-bold text-red-600">{{ ($student->total['A'] ?? 0) ?: '-' }}</td>
@@ -230,6 +239,9 @@
                                                         @endphp
                                                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full border {{ $bgColor }}">
                                                             <span class="font-bold">{{ $date->format('d M') }}</span>: {{ $log['status'] }}
+                                                            @if($log['reason'] ?? '')
+                                                                <span> · {{ $log['reason'] }}</span>
+                                                            @endif
                                                         </span>
                                                     @endforeach
                                                 </div>

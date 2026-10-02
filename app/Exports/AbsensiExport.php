@@ -3,11 +3,13 @@
 namespace App\Exports;
 
 use App\Models\Absensi;
+use App\Services\DutyAttendanceRecap;
 use Maatwebsite\Excel\Concerns\FromCollection;
 
 class AbsensiExport implements FromCollection
 {
     protected $filters;
+
     protected $type;
 
     public function __construct($filters = [], $type = 'all')
@@ -17,33 +19,35 @@ class AbsensiExport implements FromCollection
     }
 
     /**
-    * @return \Illuminate\Support\Collection
-    */
+     * @return \Illuminate\Support\Collection
+     */
     public function collection()
     {
-        $query = Absensi::with(['siswa.kelas', 'logbook.jadwal.mapel', 'logbook.jadwal.pegawai']);
+        $query = Absensi::with(['siswa.kelas', 'logbook.kelas', 'logbook.jadwal.mapel', 'logbook.jadwal.pegawai']);
 
         if ($this->type == 'harian') {
             $date = $this->filters['date'] ?? now()->toDateString();
-            $query->whereHas('logbook', fn($q) => $q->where('tanggal', $date));
+            $query->whereHas('logbook', fn ($q) => $q->where('tanggal', $date));
         } elseif ($this->type == 'bulanan') {
             $month = $this->filters['month'] ?? date('m');
             $year = $this->filters['year'] ?? date('Y');
-            $query->whereHas('logbook', fn($q) => $q->whereMonth('tanggal', $month)->whereYear('tanggal', $year));
+            $query->whereHas('logbook', fn ($q) => $q->whereMonth('tanggal', $month)->whereYear('tanggal', $year));
+        } elseif ($this->type == 'periode') {
+            $query->whereHas('logbook', fn ($q) => $q->whereBetween('tanggal', [$this->filters['start_date'], $this->filters['end_date']]));
         } elseif ($this->type == 'tahunan') {
             $tahunId = $this->filters['tahun_id'] ?? null;
             if ($tahunId) {
-                $query->whereHas('logbook.jadwal', fn($q) => $q->where('tahun_id', $tahunId));
+                $query->whereHas('logbook.jadwal', fn ($q) => $q->where('tahun_id', $tahunId));
             }
         }
 
         if (isset($this->filters['kelas_id']) && $this->filters['kelas_id']) {
-            $query->whereHas('siswa', fn($q) => $q->where('kelas_id', $this->filters['kelas_id']));
+            $query->whereHas('logbook', fn ($q) => $q->where('kelas_id', $this->filters['kelas_id']));
         }
 
         // Filter Type Guru
         $typeGuru = $this->filters['type_guru'] ?? 'mapel';
-        $query->whereHas('logbook', function($q) use ($typeGuru) {
+        $query->whereHas('logbook', function ($q) use ($typeGuru) {
             if ($typeGuru === 'mapel') {
                 $q->whereIn('kategori', ['mapel', 'piket_sub']);
             } elseif ($typeGuru === 'piket') {
@@ -51,14 +55,19 @@ class AbsensiExport implements FromCollection
             }
         });
 
-        return $query->get()->map(function($absensi) {
+        $records = $query->get();
+        if ($typeGuru === 'piket' && in_array($this->filters['view_mode'] ?? 'sederhana', ['sederhana', 'ringkasan_harian', 'detail_harian'], true)) {
+            $records = app(DutyAttendanceRecap::class)->summarize($records);
+        }
+
+        return $records->map(function ($absensi) {
             return [
                 'Tanggal' => $absensi->logbook->tanggal ?? '-',
                 'Siswa' => $absensi->siswa->nama ?? '-',
-                'Kelas' => $absensi->siswa->kelas->kelas ?? '-',
+                'Kelas' => $absensi->logbook->kelas->kelas ?? '-',
                 'Mapel' => $absensi->logbook->jadwal->mapel->mapel ?? '-',
                 'Status' => $absensi->status,
-                'Keterangan' => $absensi->keterangan ?? '-',
+                'Keterangan' => collect([$absensi->rekap_note ?? '', $absensi->keterangan])->filter()->implode('; '),
             ];
         });
     }

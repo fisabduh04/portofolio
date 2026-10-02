@@ -9,6 +9,7 @@ use App\Models\Logbook;
 use App\Models\Mapel;
 use App\Models\Pegawai;
 use App\Models\Tahun;
+use App\Services\DutyAttendanceRecap;
 use App\Traits\AbsensiRekapTrait;
 use Illuminate\Http\Request;
 
@@ -86,6 +87,9 @@ class AbsensiReportController extends Controller
         });
 
         $absensiData = $query->get();
+        if ($kategori === 'piket') {
+            $absensiData = app(DutyAttendanceRecap::class)->summarize($absensiData);
+        }
 
         // Hitung Statistik
         $stats = [
@@ -178,7 +182,7 @@ class AbsensiReportController extends Controller
         ];
 
         if ($request->has('kelas_id')) {
-            $data = $this->getPrivateRekapData($date, $kelasId, $pegawaiId, $typeGuru);
+            $data = $this->getPrivateRekapData($date, $kelasId, $pegawaiId, $typeGuru, $viewMode === 'sederhana');
             $rekapData = $data['rekapData'];
             $summaryStats = $data['summaryStats'];
 
@@ -228,7 +232,7 @@ class AbsensiReportController extends Controller
         $data = ['rekapData' => collect([]), 'summaryStats' => ['Total' => 0, 'Hadir' => 0, 'Sakit' => 0, 'Izin' => 0, 'Alpha' => 0, 'Pulang' => 0], 'dates' => []];
 
         if ($kelasId) {
-            $data = $this->getPrivateRekapBulananData($month, $year, $kelasId, $typeGuru);
+            $data = $this->getPrivateRekapBulananData($month, $year, $kelasId, $typeGuru, $viewMode === 'sederhana');
         }
 
         $rekapData = $data['rekapData'];
@@ -244,7 +248,7 @@ class AbsensiReportController extends Controller
     {
         $kelasId = $request->input('kelas_id');
         $year = $request->input('year', now()->year);
-        $viewMode = $request->input('view_mode', 'detail_harian');
+        $viewMode = $request->input('view_mode', $request->input('type_guru') === 'piket' ? 'sederhana' : 'detail_harian');
         $typeGuru = $request->input('type_guru', 'mapel');
 
         $listKelas = Kelas::orderBy('kelas')->get();
@@ -256,7 +260,7 @@ class AbsensiReportController extends Controller
         $selectedKelas = null;
 
         if ($kelasId) {
-            $data = $this->getPrivateRekapTahunanData($year, $kelasId, $typeGuru);
+            $data = $this->getPrivateRekapTahunanData($year, $kelasId, $typeGuru, $viewMode === 'sederhana');
             $rekapData = $data['rekapData'];
             $summaryStats = $data['summaryStats'];
             $selectedKelas = Kelas::find($kelasId);
@@ -270,7 +274,7 @@ class AbsensiReportController extends Controller
         $kelasId = $request->input('kelas_id');
         $startDate = $request->input('start_date', now()->subMonth()->toDateString());
         $endDate = $request->input('end_date', now()->toDateString());
-        $viewMode = $request->input('view_mode', 'ringkasan');
+        $viewMode = $request->input('view_mode', $request->input('type_guru') === 'piket' ? 'ringkasan_harian' : 'ringkasan');
         $typeGuru = $request->input('type_guru', 'mapel');
 
         $listKelas = Kelas::orderBy('kelas')->get();
@@ -281,7 +285,7 @@ class AbsensiReportController extends Controller
         $dates = [];
 
         if ($kelasId) {
-            $data = $this->getPrivateRekapPeriodeData($startDate, $endDate, $kelasId, $typeGuru);
+            $data = $this->getPrivateRekapPeriodeData($startDate, $endDate, $kelasId, $typeGuru, in_array($viewMode, ['sederhana', 'ringkasan_harian', 'detail_harian'], true));
             $rekapData = $data['rekapData'];
             $summaryStats = $data['summaryStats'];
             $dates = $data['dates'];

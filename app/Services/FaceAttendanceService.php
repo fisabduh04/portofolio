@@ -72,7 +72,7 @@ class FaceAttendanceService
             $existing = Absensi::where('logbook_id', $logbook->id)->where('siswa_id', $student->id)->first();
             $attendance = $existing ?? Absensi::create([
                 'logbook_id' => $logbook->id, 'siswa_id' => $student->id,
-                'status' => ! $schedule && $type === 'pulang' ? 'Pulang' : 'Hadir',
+                'status' => 'Hadir',
                 'keterangan' => 'Presensi wajah '.now()->format('H:i:s'),
             ]);
 
