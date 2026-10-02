@@ -165,10 +165,28 @@ it('requires login and refuses inactive accounts', function () {
 it('renders the scanner without exposing stored face descriptors', function () {
     [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
     $this->actingAs($actor)->get(route('face-attendance.index', ['mode' => 'mapel', 'jadwal_id' => $schedule->id]))
-        ->assertOk()->assertSee('Pindai & catat absensi', false)->assertSee('Performa absensi wajah')
-        ->assertSee('Mulai pemindaian otomatis')->assertSee('data-scan-identity', false)
+        ->assertOk()->assertSee('Pindai & catat', false)->assertSee('Performa absensi wajah')
+        ->assertSee('Mulai otomatis')->assertSee('data-scan-identity', false)
         ->assertSee('data-scan-perf-server', false)->assertDontSee(json_encode($payload['descriptor']), false);
 });
+
+it('enables the motion experiment only on the local scanner', function (string $environment, bool $enabled) {
+    [$actor, $schedule] = faceAttendanceFixture();
+    $this->app->instance('env', $environment);
+
+    try {
+        $response = $this->actingAs($actor)->get(route('face-attendance.index', ['mode' => 'mapel', 'jadwal_id' => $schedule->id]));
+        $response->assertOk();
+        if ($enabled) {
+            $response->assertSee('data-liveness="local-motion"', false)->assertSee('data-scan-liveness-status', false);
+        } else {
+            $response->assertDontSee('data-liveness="local-motion"', false)->assertDontSee('data-scan-liveness-status', false);
+        }
+        $this->assertDatabaseCount('absensis', 0);
+    } finally {
+        $this->app->instance('env', 'testing');
+    }
+})->with([['local', true], ['production', false]]);
 
 it('allows queue scanning beyond thirty requests while still rate limiting excessive traffic', function () {
     [$actor, $schedule, $student, $payload] = faceAttendanceFixture();

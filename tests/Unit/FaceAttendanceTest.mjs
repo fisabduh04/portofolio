@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { initializeFaceAttendance } from '../../resources/js/face-attendance.js';
 
-function scanner(mode = 'piket') {
+function scanner(mode = 'piket', liveness = false) {
     const control = () => ({ handlers: {}, disabled: false, textContent: '', value: '', children: [], classList: { toggle() {}, add() {} },
         addEventListener(name, handler) { this.handlers[name] = handler; }, focus() {},
         prepend(item) { item.remove = () => { this.children = this.children.filter(child => child !== item); }; this.children.unshift(item); },
@@ -12,7 +12,7 @@ function scanner(mode = 'piket') {
         if (!fields.has(name)) fields.set(name, control());
         return fields.get(name);
     };
-    const root = { dataset: { mode, jadwal: '9', type: 'masuk', endpoint: '/presensi-wajah' }, querySelector: selector => get(selector.slice(11, -1)) };
+    const root = { dataset: { mode, jadwal: '9', type: 'masuk', endpoint: '/presensi-wajah', liveness: liveness ? 'local-motion' : '' }, querySelector: selector => get(selector.slice(11, -1)) };
     const document = { ...control(), querySelector: selector => selector === '[data-face-attendance]' ? root : { content: 'token' },
         createElement: tag => tag === 'canvas' ? { getContext: () => ({ drawImage() {} }) } : control() };
     const track = { ...control(), stop() {} };
@@ -50,6 +50,88 @@ function scanner(mode = 'piket') {
             await timer.handler();
         }, click: name => get(name).handlers.click() };
 }
+
+function motionScanner(yaws = [0, 0, 0.22, 0.22, 0, 0]) {
+    const page = scanner('piket', true);
+    let frame = 0;
+    page.environment.crypto = { getRandomValues: bytes => { bytes[0] = 1; return bytes; } };
+    const original = page.environment.loadFaceModels;
+    page.environment.loadFaceModels = async () => {
+        const extract = await original();
+        extract.motion = async () => {
+            page.advance(250);
+            const yaw = yaws[Math.min(frame++, yaws.length - 1)];
+            if (yaw instanceof Error) throw yaw;
+            return { yaw, descriptor: Array(128).fill(0.1) };
+        };
+        return extract;
+    };
+    return page;
+}
+
+test('local scans complete motion before sending attendance and measure motion separately', async () => {
+    const page = motionScanner();
+    await page.click('start');
+
+    await page.click('capture');
+
+    assert.equal(page.calls.length, 1);
+    assert.equal(page.get('perf-liveness').textContent, '1500 ms');
+    assert.equal(page.get('perf-detection').textContent, '400 ms');
+    assert.equal(page.get('perf-total').textContent, '2200 ms');
+    assert.match(page.get('liveness-status').textContent, /Periksa nama/);
+    assert.equal('liveness' in page.calls[0], false);
+});
+
+test('failed motion in automatic mode pauses the queue without recording attendance', async () => {
+    const page = motionScanner([Object.assign(new Error('Wajah hilang'), { code: 'no_face' })]);
+    await page.click('start');
+
+    await page.click('auto');
+
+    assert.equal(page.calls.length, 0);
+    assert.equal(page.timers.size, 0);
+    assert.equal(page.get('auto').textContent, 'Mulai otomatis');
+    assert.match(page.get('liveness-status').textContent, /Wajah hilang/);
+});
+
+for (const action of ['stop', 'auto']) {
+    test(`${action} during motion cancels a late result without sending attendance`, async () => {
+        const page = motionScanner();
+        let release;
+        let reached;
+        const ready = new Promise(resolve => { reached = resolve; });
+        const original = page.environment.loadFaceModels;
+        page.environment.loadFaceModels = async () => {
+            const extract = await original();
+            extract.motion = () => { reached(); return new Promise(resolve => { release = resolve; }); };
+            return extract;
+        };
+        await page.click('start');
+        const pending = page.click('auto');
+        await ready;
+
+        await page.click(action);
+        release({ yaw: 0, descriptor: Array(128).fill(0.1) });
+        await pending;
+
+        assert.equal(page.calls.length, 0);
+        assert.equal(page.timers.size, 0);
+    });
+}
+
+test('a completed local automatic scan waits for departure before another motion challenge', async () => {
+    const page = motionScanner();
+    await page.click('start');
+    await page.click('auto');
+    assert.equal(page.calls.length, 1);
+
+    await page.tick();
+
+    assert.equal(page.calls.length, 1);
+    assert.match(page.get('auto-status').textContent, /Keluar dari bingkai/);
+    await page.click('stop');
+});
 
 test('a scan submits the descriptor and renders server identity as plain text', async () => {
     const page = scanner();

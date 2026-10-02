@@ -1,11 +1,15 @@
 import { requestFaceCamera } from './siswa-face-enrollment.js';
 import { waitForFaceStep } from './siswa-face-weights.js';
+import { runHeadTurnChallenge } from './face-attendance-liveness.js';
 
 export function initializeFaceAttendance(documentRoot = document, environment = window) {
     const root = documentRoot.querySelector('[data-face-attendance]');
     if (!root) return;
     const get = name => root.querySelector(`[data-scan-${name}]`);
     const video = get('video');
+    const liveness = root.dataset.liveness === 'local-motion';
+    const livenessMessage = text => { if (liveness) get('liveness-status').textContent = text; };
+    let mirrored = true;
     let stream;
     let extract;
     let busy = false;
@@ -78,6 +82,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         extract = null;
         video.srcObject = null;
         busy = false;
+        livenessMessage('Uji gerakan lokal: aktifkan kamera untuk mulai.');
         render();
     }
     async function start() {
@@ -102,7 +107,8 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
                 return;
             }
             stream = acquired;
-            video.classList.toggle('-scale-x-100', (stream.getVideoTracks()[0]?.getSettings?.().facingMode || facingMode) === 'user');
+            mirrored = (stream.getVideoTracks()[0]?.getSettings?.().facingMode || facingMode) === 'user';
+            video.classList.toggle('-scale-x-100', mirrored);
             stream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
                 if (run !== generation) return;
                 stop();
@@ -128,6 +134,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
             metric('backend', model.backend === 'webgl' ? 'WebGL (GPU fisik belum diverifikasi)'
                 : model.backend === 'cpu' ? 'CPU' : model.backend || 'Tidak tersedia');
             busy = false;
+            livenessMessage('Siap. Klik Pindai & catat, lalu ikuti arah gerakan di sini.');
             message('Kamera siap. Hadapkan satu siswa lalu klik Pindai & catat absensi.');
             render();
         } catch (error) {
@@ -157,9 +164,12 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         let success = false;
         let rejectedFace = false;
         let measured = false;
+        let motionStarted;
+        let motionMs = 0;
         function beginMeasurement() {
             measured = true;
             for (const name of ['detection', 'response', 'server', 'overhead', 'total']) metric(name, '—');
+            if (liveness) metric('liveness', 'Belum dimulai');
             metric('status', 'Memindai…');
         }
         if (!isAutomatic) beginMeasurement();
@@ -171,7 +181,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
             canvas.width = Math.min(video.videoWidth, 960);
             canvas.height = Math.round(video.videoHeight * canvas.width / video.videoWidth);
             canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            const descriptor = await waitForFaceStep(extract(canvas), 30000, 'Pemindaian terlalu lama. Perbaiki pencahayaan lalu coba lagi.');
+            let descriptor = await waitForFaceStep(extract(canvas), 30000, 'Pemindaian terlalu lama. Perbaiki pencahayaan lalu coba lagi.');
             if (run !== generation) return;
             if (isAutomatic && (!automatic || autoRun !== automaticGeneration)) return;
             if (isAutomatic) {
@@ -184,6 +194,30 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
                 autoMessage('Sedang mencatat. Tunggu hasil sebelum berganti siswa.');
             }
             detectionMs = clock() - scanStarted;
+            metric('detection', duration(detectionMs));
+            if (liveness) {
+                if (!extract.motion) throw new Error('Modul uji gerakan belum siap. Muat ulang halaman.');
+                motionStarted = clock();
+                metric('liveness', 'Memeriksa gerakan…');
+                livenessMessage('Memulai uji gerakan…');
+                const result = await runHeadTurnChallenge({
+                    reference: descriptor, mirrored, random: environment.crypto, now: clock,
+                    active: () => run === generation && (!isAutomatic || (automatic && autoRun === automaticGeneration)),
+                    notify: livenessMessage,
+                    capture: () => {
+                        canvas.width = Math.min(video.videoWidth, 640);
+                        canvas.height = Math.round(video.videoHeight * canvas.width / video.videoWidth);
+                        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                        return extract.motion(canvas);
+                    },
+                });
+                if (run !== generation || (isAutomatic && (!automatic || autoRun !== automaticGeneration))) return;
+                descriptor = result.descriptor;
+                motionMs = clock() - motionStarted;
+                metric('liveness', duration(motionMs));
+                livenessMessage('Gerakan selesai. Mencocokkan wajah…');
+            }
+            detectionMs = clock() - scanStarted - motionMs;
             metric('detection', duration(detectionMs));
             submitting = true;
             render();
@@ -217,6 +251,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
             }
             if (!result.already_recorded) count++;
             success = true;
+            livenessMessage('Gerakan selesai. Periksa nama hasil sebelum siswa berikutnya maju.');
             waitingForClear = true;
             emptyFrames = 0;
             get('identity').textContent = `${result.student} · ${result.kelas} · ${result.status}${result.already_recorded ? ' · Sudah tercatat' : ' · Berhasil dicatat'}`;
@@ -231,6 +266,10 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
             get('empty').classList.add('hidden');
             message(`${result.student}: ${result.message} Siap untuk siswa berikutnya.`);
         } catch (error) {
+            if (liveness && run === generation && motionStarted !== undefined && motionMs === 0) {
+                metric('liveness', `${duration(clock() - motionStarted)} (tidak selesai)`);
+                livenessMessage(error.message);
+            }
             if (isAutomatic && run === generation && automatic && autoRun === automaticGeneration
                 && ['no_face', 'multiple_faces'].includes(error.code)) {
                 if (error.code === 'no_face') {

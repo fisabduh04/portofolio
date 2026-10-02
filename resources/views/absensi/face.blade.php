@@ -4,7 +4,7 @@
         ['name' => $mode === 'mapel' ? 'Presensi Guru Mapel' : 'Guru Piket', 'href' => $mode === 'mapel' ? route('jadwal.presensiHarian') : route('absensi.piket')],
         ['name' => 'Absensi Wajah', 'href' => '#'],
     ]" />
-    <section data-face-attendance data-endpoint="{{ route('face-attendance.store') }}" data-mode="{{ $mode }}" data-jadwal="{{ $jadwal?->id }}" data-type="{{ $type }}" class="mt-5 space-y-5">
+    <section data-face-attendance @env('local') data-liveness="local-motion" @endenv data-endpoint="{{ route('face-attendance.store') }}" data-mode="{{ $mode }}" data-jadwal="{{ $jadwal?->id }}" data-type="{{ $type }}" class="mt-5 space-y-5">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p class="text-sm leading-6 text-gray-500 dark:text-gray-400">{{ $mode === 'mapel' ? $jadwal->kelas->kelas.' · '.$jadwal->mapel->mapel : 'Semua kelas · '.($type === 'masuk' ? 'Presensi masuk' : 'Presensi pulang') }}</p>
             <span class="w-fit rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{{ now()->locale('id')->translatedFormat('l, d F Y') }} · {{ config('app.timezone') }}</span>
@@ -29,6 +29,11 @@
                     <div class="relative aspect-video overflow-hidden rounded-lg bg-gray-950">
                         <video data-scan-video autoplay muted playsinline class="size-full -scale-x-100 object-contain" aria-label="Kamera absensi wajah"></video>
                         <div data-scan-placeholder class="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-gray-300">Aktifkan kamera untuk memulai absensi.</div>
+                        @env('local')
+                            <div class="pointer-events-none absolute inset-x-0 bottom-0 bg-gray-950/90 px-3 py-2 text-center text-sm font-medium text-white" role="status" aria-live="polite">
+                                <span data-scan-liveness-status>Uji gerakan lokal: aktifkan kamera untuk mulai.</span>
+                            </div>
+                        @endenv
                     </div>
                     <div role="group" aria-label="Kontrol kamera dan pemindaian" class="grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-2 dark:bg-gray-900/50 xl:grid-cols-4">
                         <button data-scan-start type="button" class="h-10 min-w-0 touch-manipulation whitespace-nowrap rounded-lg border border-blue-200 bg-white px-2 text-xs font-medium leading-5 sm:text-sm text-blue-700 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-800 dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700">Aktifkan</button>
@@ -37,6 +42,9 @@
                         <button data-scan-capture type="button" disabled class="h-10 min-w-0 touch-manipulation whitespace-nowrap rounded-lg bg-blue-700 px-2 text-xs font-medium leading-5 sm:text-sm text-white transition-colors hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50">Pindai & catat</button>
                     </div>
                     <p data-scan-message role="status" aria-live="polite" class="text-sm leading-5 text-gray-600 dark:text-gray-300">Satu siswa setiap pemindaian. Hasil yang cocok langsung dicatat ke logbook.</p>
+                    @env('local')
+                        <p class="text-xs leading-5 text-gray-500 dark:text-gray-400">Uji liveness lokal: hadap depan, ikuti arah acak, lalu kembali depan dalam 20 detik. Guru tetap memeriksa identitas; uji gerakan ini belum menjamin keaslian wajah.</p>
+                    @endenv
                     <div class="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/30 sm:p-4" role="status" aria-live="polite">
                         <p data-scan-auto-status class="text-sm font-medium text-blue-800 dark:text-blue-200">Untuk antrean: aktifkan kamera, lalu mulai pemindaian otomatis sekali.</p>
                         <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">Hasil terakhir</p>
@@ -80,6 +88,12 @@
             <summary class="cursor-pointer text-base font-semibold text-gray-900 dark:text-white">Performa absensi wajah</summary>
             <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Server: <span data-scan-perf-host class="font-medium"></span>. <span data-scan-perf-environment></span></p>
             <dl class="mt-4 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                @env('local')
+                    <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
+                        <dt class="text-gray-500 dark:text-gray-400">Uji gerakan (terpisah dari deteksi)</dt>
+                        <dd data-scan-perf-liveness class="mt-2 font-medium tabular-nums text-gray-900 dark:text-white">Belum dimulai</dd>
+                    </div>
+                @endenv
                 @foreach ([
                     'camera' => 'Persiapan kamera + izin',
                     'model' => 'Persiapan model',

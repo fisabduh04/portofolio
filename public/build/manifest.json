@@ -12,12 +12,12 @@
     "src": "node_modules/@vladmandic/face-api/model/tiny_face_detector_model.bin"
   },
   "resources/css/app.css": {
-    "file": "assets/app-0aJhOf9l.css",
+    "file": "assets/app-co_YWNPV.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-D7u10hdC.js",
+    "file": "assets/app-CtAba3vw.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -34,7 +34,7 @@
     "isDynamicEntry": true
   },
   "resources/js/siswa-face-models.js": {
-    "file": "assets/siswa-face-models-vA3KVyIS.js",
+    "file": "assets/siswa-face-models-Ct02u7-r.js",
     "name": "siswa-face-models",
     "src": "resources/js/siswa-face-models.js",
     "isDynamicEntry": true,

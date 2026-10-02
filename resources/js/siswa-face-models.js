@@ -7,6 +7,7 @@ import recognitionManifest from '@vladmandic/face-api/model/face_recognition_mod
 import recognitionWeights from '@vladmandic/face-api/model/face_recognition_model.bin?url';
 import { initializeFaceBackend } from './face-prototype-performance';
 import { loadFaceWeights, waitForFaceStep } from './siswa-face-weights';
+import { motionSignals } from './face-prototype-challenge.js';
 
 let loading;
 
@@ -29,7 +30,7 @@ export async function loadFaceModels(onProgress = () => {}) {
         });
     }
     await loading;
-    const extract = async canvas => {
+    const observe = async canvas => {
         const faces = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.65 }))
             .withFaceLandmarks(true).withFaceDescriptors();
         if (faces.length !== 1) {
@@ -41,7 +42,12 @@ export async function loadFaceModels(onProgress = () => {}) {
         if (descriptor.length !== 128 || !descriptor.every(Number.isFinite)) {
             throw new Error('Pola wajah belum terbaca. Silakan ambil ulang.');
         }
-        return descriptor;
+        return { descriptor, landmarks: faces[0].landmarks };
+    };
+    const extract = async canvas => (await observe(canvas)).descriptor;
+    extract.motion = async canvas => {
+        const { descriptor, landmarks } = await observe(canvas);
+        return { descriptor, yaw: motionSignals(landmarks).yaw };
     };
     extract.backend = faceapi.tf.getBackend();
     return extract;
