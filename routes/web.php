@@ -177,6 +177,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('importsiswa', [SiswaController::class, 'import'])->name('importsiswa');
         Route::resource('siswa', SiswaController::class);
         Route::post('siswa/{siswa}/wajah', [SiswaFaceController::class, 'store'])->middleware('throttle:10,1')->name('siswa.face.store');
+        Route::delete('siswa/{siswa}/wajah', [SiswaFaceController::class, 'destroy'])->middleware('throttle:10,1')->name('siswa.face.destroy');
         Route::resource('kelassiswa', KelasSiswaController::class);
         // Jadwal Specific Routes (Must be before resource to avoid ID conflict)
         Route::get('/jadwal/data', [JadwalController::class, 'getJadwalJson']);

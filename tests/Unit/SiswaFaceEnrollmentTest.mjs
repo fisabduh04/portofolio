@@ -60,6 +60,48 @@ test('three captures enable saving and successful saving stops the camera', asyn
     assert.equal(page.get('face-save').disabled, true);
 });
 
+test('deleting stored faces confirms student identity and cancellation keeps the camera and samples', async () => {
+    const page = setup();
+    page.get('face-delete-form').dataset.identity = 'Zeinal — X TKJ';
+    await page.click('camera-start');
+    await page.click('face-capture');
+    let prompt;
+    let prevented = false;
+    page.environment.confirm = text => { prompt = text; return false; };
+    page.get('face-delete-form').handlers.submit({ preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.match(prompt, /Zeinal — X TKJ/);
+    assert.equal(page.track.stopped, false);
+    assert.equal(page.get('sample-count').textContent, '1 dari 3 sampel');
+
+    page.environment.confirm = () => true;
+    prevented = false;
+    page.get('face-delete-form').handlers.submit({ preventDefault() { prevented = true; } });
+    assert.equal(prevented, false);
+    assert.equal(page.track.stopped, true);
+    assert.equal(page.get('face-delete').disabled, true);
+    assert.equal(page.get('face-save').disabled, true);
+    page.environment.handlers.beforeunload({ preventDefault() { prevented = true; } });
+    assert.equal(prevented, false);
+});
+
+test('face deletion cannot be submitted while enrollment is being saved', async () => {
+    const page = setup();
+    await page.click('camera-start');
+    for (let i = 0; i < 3; i++) await page.click('face-capture');
+    let finish;
+    page.environment.fetch = () => new Promise(resolve => { finish = resolve; });
+    const saving = page.click('face-save');
+    let prevented = false;
+    page.environment.confirm = () => { throw new Error('Should not confirm while saving'); };
+    page.get('face-delete-form').handlers.submit({ preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.equal(page.get('face-delete').disabled, true);
+    finish({ ok: true, json: async () => ({ count: 3 }) });
+    await saving;
+    assert.equal(page.get('face-delete').disabled, false);
+});
+
 test('enrollment can stop the front camera and capture with the rear camera without losing samples', async () => {
     const page = setup();
     const requests = [];

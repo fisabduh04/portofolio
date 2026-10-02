@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\FaceSample;
 use App\Models\Siswa;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SiswaFaceController extends Controller
 {
@@ -30,7 +32,7 @@ class SiswaFaceController extends Controller
 
         DB::transaction(function () use ($data, $siswa, $request): void {
             Siswa::whereKey($siswa->id)->lockForUpdate()->firstOrFail();
-            FaceSample::where('siswa_id', $siswa->id)->where('is_active', true)->update(['is_active' => false]);
+            FaceSample::where('siswa_id', $siswa->id)->delete();
 
             foreach (['front', 'left', 'right'] as $index => $label) {
                 FaceSample::create([
@@ -45,5 +47,19 @@ class SiswaFaceController extends Controller
         });
 
         return response()->json(['message' => 'Tiga sampel wajah berhasil disimpan.', 'count' => 3]);
+    }
+
+    public function destroy(Request $request, Siswa $siswa): RedirectResponse
+    {
+        $request->validate(['confirm_delete' => ['required', 'accepted']]);
+
+        $deleted = DB::transaction(function () use ($siswa): int {
+            Siswa::whereKey($siswa->id)->lockForUpdate()->firstOrFail();
+
+            return FaceSample::where('siswa_id', $siswa->id)->delete();
+        });
+        Log::info('Data wajah siswa dihapus', ['siswa_id' => $siswa->id, 'actor_id' => $request->user()->id, 'deleted_samples' => $deleted]);
+
+        return redirect()->route('siswa.show', $siswa)->with('message', 'Data wajah berhasil dihapus. Profil dan riwayat absensi tetap tersimpan.')->with('type', 'success');
     }
 }

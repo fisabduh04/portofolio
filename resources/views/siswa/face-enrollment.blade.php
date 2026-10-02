@@ -74,7 +74,7 @@
                     <li class="flex gap-3"><span class="font-semibold text-blue-600 dark:text-blue-400">03</span>Pastikan wajah terlihat jelas dan kamera sejajar dengan mata.</li>
                 </ul>
                 <div class="mt-5 border-t border-gray-200 pt-4 dark:border-gray-700">
-                    <p class="text-xs leading-5 text-gray-500 dark:text-gray-400">Foto hanya untuk pratinjau. Saat disimpan, pola wajah dienkripsi dan dikaitkan dengan siswa ini. Sampel baru menggantikan sampel aktif sebelumnya.</p>
+                    <p class="text-xs leading-5 text-gray-500 dark:text-gray-400">Foto hanya untuk pratinjau. Saat disimpan, pola wajah dienkripsi dan dikaitkan dengan siswa ini. Rekam ulang mengganti seluruh sampel lama; hanya tiga sampel terbaru yang disimpan.</p>
                 </div>
             </div>
         </aside>
@@ -108,4 +108,15 @@
             <button data-face-reset type="button" disabled class="shrink-0 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">Hapus pratinjau</button>
         </div>
     </div>
+    <form method="POST" action="{{ route('siswa.face.destroy', $siswa) }}" data-face-delete-form data-identity="{{ $siswa->nama }} — {{ $kelasAktif ?? 'Kelas belum ditentukan' }}" class="rounded-lg border border-red-200 p-4 dark:border-red-900">
+        @csrf
+        @method('DELETE')
+        <p class="text-sm font-medium text-gray-900 dark:text-white">Hapus data wajah tersimpan</p>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Gunakan jika wajah direkam pada siswa yang salah. Profil siswa dan riwayat absensi tetap tersimpan. Wajah perlu direkam kembali untuk pemindaian berikutnya.</p>
+        <label class="mt-3 flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <input type="checkbox" name="confirm_delete" value="1" required class="mt-0.5 rounded border-gray-300 text-red-600 focus:ring-red-500">
+            <span>Saya ingin menghapus seluruh data wajah {{ $siswa->nama }} ({{ $kelasAktif ?? 'Kelas belum ditentukan' }}).</span>
+        </label>
+        <button type="submit" data-face-delete class="mt-3 rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-red-900">Hapus data wajah</button>
+    </form>
 </section>

@@ -49,6 +49,7 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
     let generation = 0;
     let busy = false;
     let saving = false;
+    let deleting = false;
     let dirty = false;
     let extract;
 
@@ -63,6 +64,7 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
         get('face-capture').textContent = busy ? (extract ? 'Memeriksa wajah…' : 'Menyiapkan kamera…') : 'Ambil sampel';
         get('face-save').disabled = busy || saving || count !== 3 || !dirty || selected >= 0;
         get('face-reset').disabled = busy || saving || count === 0;
+        if (get('face-delete')) get('face-delete').disabled = busy || saving;
         get('camera-status').textContent = stream ? 'Kamera aktif' : 'Kamera nonaktif';
         get('camera-placeholder').classList.toggle('hidden', !!stream);
         get('face-guide').classList.toggle('hidden', !stream);
@@ -217,6 +219,18 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
     get('camera-stop').addEventListener('click', () => { stopCamera(); message('Kamera dimatikan. Sampel yang sudah diambil tetap tersedia.'); });
     get('face-capture').addEventListener('click', capture);
     get('face-save').addEventListener('click', save);
+    get('face-delete-form')?.addEventListener('submit', event => {
+        if (busy || saving || !environment.confirm(`Hapus permanen seluruh data wajah ${get('face-delete-form').dataset.identity}? Profil dan riwayat absensi tidak dihapus.`)) {
+            event.preventDefault();
+            return;
+        }
+        dirty = false;
+        deleting = true;
+        saving = true;
+        stopCamera();
+        get('face-delete').disabled = true;
+        get('face-delete').textContent = 'Menghapus…';
+    });
     for (const eventName of ['loadeddata', 'canplay', 'playing', 'resize']) {
         video.addEventListener(eventName, render);
     }
@@ -244,7 +258,7 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
     }));
     environment.addEventListener('pagehide', stopCamera);
     environment.addEventListener('beforeunload', event => {
-        if (dirty || saving) { event.preventDefault(); event.returnValue = ''; }
+        if (!deleting && (dirty || saving)) { event.preventDefault(); event.returnValue = ''; }
     });
     render();
 }
