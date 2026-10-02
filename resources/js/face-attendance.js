@@ -63,8 +63,8 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         get('stop').disabled = submitting || (!busy && !stream);
         get('capture').disabled = automatic || !cameraReady();
         get('auto').disabled = !automatic && !cameraReady();
-        get('auto').textContent = automatic ? 'Jeda otomatis' : 'Mulai pemindaian otomatis';
-        get('capture').textContent = submitting ? 'Mencatat…' : busy ? 'Menyiapkan…' : 'Pindai & catat absensi';
+        get('auto').textContent = automatic ? 'Jeda otomatis' : 'Mulai otomatis';
+        get('capture').textContent = submitting ? 'Mencatat…' : busy ? 'Menyiapkan…' : 'Pindai & catat';
         get('placeholder').classList.toggle('hidden', !!stream);
     }
     function stop() {

@@ -15,30 +15,32 @@
                     <h2 class="text-base font-semibold text-gray-900 dark:text-white">Pindai siswa</h2>
                     <span data-scan-count class="text-xs text-gray-500 dark:text-gray-400">0 presensi baru</span>
                 </div>
-                <div class="space-y-4 p-5">
-                    <label class="block text-sm font-medium text-gray-900 dark:text-white">
-                        Kamera
-                        <select data-scan-facing class="mt-2 block w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-                            <option value="user">Kamera depan / webcam</option>
-                            <option value="environment">Kamera belakang</option>
-                        </select>
-                        <span class="mt-1 block text-xs font-normal text-gray-500 dark:text-gray-400">Matikan kamera sebelum mengganti pilihan kamera.</span>
-                    </label>
+                <div class="space-y-3 p-3 sm:space-y-4 sm:p-5">
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <label for="scan-camera-facing" class="shrink-0 text-sm font-medium text-gray-900 dark:text-white">Kamera</label>
+                            <select id="scan-camera-facing" data-scan-facing aria-describedby="scan-camera-help" class="block min-h-11 min-w-0 flex-1 rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                <option value="user">Kamera depan / webcam</option>
+                                <option value="environment">Kamera belakang</option>
+                            </select>
+                        </div>
+                        <p id="scan-camera-help" class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Matikan kamera untuk mengganti depan / belakang.</p>
+                    </div>
                     <div class="relative aspect-video overflow-hidden rounded-lg bg-gray-950">
                         <video data-scan-video autoplay muted playsinline class="size-full -scale-x-100 object-contain" aria-label="Kamera absensi wajah"></video>
                         <div data-scan-placeholder class="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-gray-300">Aktifkan kamera untuk memulai absensi.</div>
                     </div>
-                    <p data-scan-message role="status" aria-live="polite" class="min-h-12 text-sm leading-6 text-gray-600 dark:text-gray-300">Satu siswa setiap pemindaian. Hasil yang cocok langsung dicatat ke logbook.</p>
-                    <div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/30" role="status" aria-live="polite">
+                    <div role="group" aria-label="Kontrol kamera dan pemindaian" class="grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-2 dark:bg-gray-900/50 xl:grid-cols-4">
+                        <button data-scan-start type="button" class="h-10 min-w-0 touch-manipulation whitespace-nowrap rounded-lg border border-blue-200 bg-white px-2 text-xs font-medium leading-5 sm:text-sm text-blue-700 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-800 dark:bg-gray-800 dark:text-blue-300 dark:hover:bg-gray-700">Aktifkan</button>
+                        <button data-scan-stop type="button" disabled class="h-10 min-w-0 touch-manipulation whitespace-nowrap rounded-lg border border-gray-300 bg-white px-2 text-xs font-medium leading-5 sm:text-sm text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">Matikan</button>
+                        <button data-scan-auto type="button" disabled class="h-10 min-w-0 touch-manipulation whitespace-nowrap rounded-lg bg-green-700 px-2 text-xs font-medium leading-5 sm:text-sm text-white transition-colors hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:cursor-not-allowed disabled:opacity-50">Mulai otomatis</button>
+                        <button data-scan-capture type="button" disabled class="h-10 min-w-0 touch-manipulation whitespace-nowrap rounded-lg bg-blue-700 px-2 text-xs font-medium leading-5 sm:text-sm text-white transition-colors hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50">Pindai & catat</button>
+                    </div>
+                    <p data-scan-message role="status" aria-live="polite" class="text-sm leading-5 text-gray-600 dark:text-gray-300">Satu siswa setiap pemindaian. Hasil yang cocok langsung dicatat ke logbook.</p>
+                    <div class="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/30 sm:p-4" role="status" aria-live="polite">
                         <p data-scan-auto-status class="text-sm font-medium text-blue-800 dark:text-blue-200">Untuk antrean: aktifkan kamera, lalu mulai pemindaian otomatis sekali.</p>
                         <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">Hasil terakhir</p>
-                        <p data-scan-identity class="mt-1 text-xl font-semibold text-gray-900 dark:text-white">Belum ada hasil</p>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <button data-scan-start type="button" class="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50">Aktifkan kamera</button>
-                        <button data-scan-auto type="button" disabled class="rounded-lg bg-green-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:cursor-not-allowed disabled:opacity-50">Mulai pemindaian otomatis</button>
-                        <button data-scan-capture type="button" disabled class="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50">Pindai & catat absensi</button>
-                        <button data-scan-stop type="button" disabled class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">Matikan kamera</button>
+                        <p data-scan-identity class="mt-1 break-words text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">Belum ada hasil</p>
                     </div>
                 </div>
             </div>

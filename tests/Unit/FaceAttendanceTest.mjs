@@ -388,7 +388,7 @@ for (const status of [401, 403, 419, 422, 429, 500]) {
         await page.click('auto');
 
         assert.equal(page.timers.size, 0);
-        assert.equal(page.get('auto').textContent, 'Mulai pemindaian otomatis');
+        assert.equal(page.get('auto').textContent, 'Mulai otomatis');
         if (status === 429) assert.match(page.get('message').textContent, /Tunggu satu menit/);
     });
 }
