@@ -63,6 +63,89 @@ test('a scan submits the descriptor and renders server identity as plain text', 
     assert.equal(page.get('capture').disabled, false);
 });
 
+test('rear camera selection supports scanning and can be changed after stopping', async () => {
+    const page = scanner();
+    const original = page.environment.navigator.mediaDevices.getUserMedia;
+    let requested;
+    let mirrored;
+    page.environment.navigator.mediaDevices.getUserMedia = async constraints => {
+        requested = constraints;
+        return original();
+    };
+    page.get('video').classList.toggle = (name, enabled) => { if (name === '-scale-x-100') mirrored = enabled; };
+    page.get('facing').value = 'environment';
+
+    await page.click('start');
+    await page.click('capture');
+
+    assert.deepEqual(requested.video.facingMode, { exact: 'environment' });
+    assert.equal(mirrored, false);
+    assert.equal(page.get('facing').disabled, true);
+    assert.equal(page.calls.length, 1);
+    await page.click('stop');
+    assert.equal(page.get('facing').disabled, false);
+});
+
+test('an old camera ending does not interrupt attendance after switching cameras', async () => {
+    const page = scanner();
+    await page.click('start');
+    const oldCameraEnded = page.get('video').srcObject.getVideoTracks()[0].handlers.ended;
+    await page.click('stop');
+    page.get('facing').value = 'environment';
+    await page.click('start');
+    const currentCameraEnded = page.get('video').srcObject.getVideoTracks()[0].handlers.ended;
+
+    oldCameraEnded();
+    await page.click('capture');
+
+    assert.equal(page.calls.length, 1);
+    assert.equal(page.get('capture').disabled, false);
+    currentCameraEnded();
+    assert.equal(page.get('capture').disabled, true);
+    assert.match(page.get('message').textContent, /Kamera terputus/);
+});
+
+test('attendance prepares inline muted playback before starting mobile video', async () => {
+    const page = scanner();
+    const video = page.get('video');
+    video.play = async () => {
+        if (!video.muted || !video.playsInline) throw new Error('Mobile playback blocked');
+    };
+
+    await page.click('start');
+    await page.click('capture');
+
+    assert.equal(page.calls.length, 1);
+});
+
+test('attendance waits for video height before scanning a mobile camera frame', async () => {
+    const page = scanner();
+    page.get('video').videoHeight = 0;
+    await page.click('start');
+    await page.click('capture');
+    assert.equal(page.get('capture').disabled, true);
+    assert.equal(page.calls.length, 0);
+
+    page.get('video').videoHeight = 480;
+    page.get('video').handlers.resize();
+    await page.click('capture');
+
+    assert.equal(page.calls.length, 1);
+});
+
+test('missing rear camera leaves attendance inactive and allows a different selection', async () => {
+    const page = scanner();
+    page.get('facing').value = 'environment';
+    page.environment.navigator.mediaDevices.getUserMedia = async () => { throw { name: 'NotFoundError' }; };
+
+    await page.click('start');
+
+    assert.match(page.get('message').textContent, /Kamera belakang tidak tersedia/);
+    assert.equal(page.get('facing').disabled, false);
+    assert.equal(page.get('capture').disabled, true);
+    assert.equal(page.calls.length, 0);
+});
+
 test('a mapel scan requires lesson material before sending any attendance', async () => {
     const page = scanner('mapel');
     await page.click('start');

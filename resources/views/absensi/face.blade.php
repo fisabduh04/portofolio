@@ -16,6 +16,14 @@
                     <span data-scan-count class="text-xs text-gray-500 dark:text-gray-400">0 presensi baru</span>
                 </div>
                 <div class="space-y-4 p-5">
+                    <label class="block text-sm font-medium text-gray-900 dark:text-white">
+                        Kamera
+                        <select data-scan-facing class="mt-2 block w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                            <option value="user">Kamera depan / webcam</option>
+                            <option value="environment">Kamera belakang</option>
+                        </select>
+                        <span class="mt-1 block text-xs font-normal text-gray-500 dark:text-gray-400">Matikan kamera sebelum mengganti pilihan kamera.</span>
+                    </label>
                     <div class="relative aspect-video overflow-hidden rounded-lg bg-gray-950">
                         <video data-scan-video autoplay muted playsinline class="size-full -scale-x-100 object-contain" aria-label="Kamera absensi wajah"></video>
                         <div data-scan-placeholder class="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-gray-300">Aktifkan kamera untuk memulai absensi.</div>

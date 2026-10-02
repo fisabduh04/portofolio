@@ -27,7 +27,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         : 'Pengukuran menuju server halaman ini; bandingkan saat jam sibuk.');
     const message = text => { get('message').textContent = text; };
     const autoMessage = text => { get('auto-status').textContent = text; };
-    const cameraReady = () => !busy && !submitting && stream && extract && video.readyState >= 2 && video.videoWidth;
+    const cameraReady = () => !busy && !submitting && stream && extract && video.readyState >= 2 && video.videoWidth && video.videoHeight;
     function pauseAutomatic() {
         automatic = false;
         automaticGeneration++;
@@ -58,6 +58,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         return automaticTick();
     }
     function render() {
+        get('facing').disabled = busy || submitting || !!stream;
         get('start').disabled = busy || submitting || !!stream;
         get('stop').disabled = submitting || (!busy && !stream);
         get('capture').disabled = automatic || !cameraReady();
@@ -94,13 +95,21 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         render();
         message('Menunggu izin kamera. Pilih Izinkan pada browser.');
         try {
-            const acquired = await requestFaceCamera(environment.navigator.mediaDevices);
+            const facingMode = get('facing').value || 'user';
+            const acquired = await requestFaceCamera(environment.navigator.mediaDevices, 30000, facingMode);
             if (run !== generation) {
                 acquired.getTracks().forEach(track => track.stop());
                 return;
             }
             stream = acquired;
-            stream.getVideoTracks().forEach(track => track.addEventListener('ended', () => { stop(); message('Kamera terputus. Aktifkan kembali.'); }, { once: true }));
+            video.classList.toggle('-scale-x-100', (stream.getVideoTracks()[0]?.getSettings?.().facingMode || facingMode) === 'user');
+            stream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
+                if (run !== generation) return;
+                stop();
+                message('Kamera terputus. Aktifkan kembali.');
+            }, { once: true }));
+            video.muted = true;
+            video.playsInline = true;
             video.srcObject = stream;
             render();
             message('Menunggu gambar kamera…');

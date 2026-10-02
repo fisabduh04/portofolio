@@ -6,12 +6,29 @@ const poses = [
     ['Sedikit ke kanan', 'Putar wajah sedikit ke kanan. Kedua mata tetap terlihat.'],
 ];
 
-export async function requestFaceCamera(mediaDevices, timeoutMs = 30000) {
-    const pending = mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+export async function requestFaceCamera(mediaDevices, timeoutMs = 30000, facingMode = 'user') {
+    let expired = false;
+    const pending = (async () => {
+        try {
+            return await mediaDevices.getUserMedia({ video: { facingMode: facingMode === 'environment' ? { exact: 'environment' } : 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+        } catch (error) {
+            if (expired || facingMode !== 'environment' || error.name !== 'OverconstrainedError') throw error;
+            const stream = await mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+            if (stream.getVideoTracks()[0]?.getSettings?.().facingMode === 'user') {
+                stream.getTracks().forEach(track => track.stop());
+                throw error;
+            }
+            return stream;
+        }
+    })();
     try {
         return await waitForFaceStep(pending, timeoutMs, 'Kamera belum memberikan respons. Periksa izin kamera di browser, lalu klik Aktifkan kamera kembali.');
     } catch (error) {
+        if (facingMode === 'environment' && ['OverconstrainedError', 'NotFoundError'].includes(error.name)) {
+            throw new Error('Kamera belakang tidak tersedia. Pilih kamera depan / webcam lalu aktifkan kembali.');
+        }
         if (error.name === 'FaceStartupTimeout') {
+            expired = true;
             pending.then(stream => stream.getTracks().forEach(track => track.stop()), () => {});
         }
         throw error;
@@ -37,6 +54,7 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
 
     const message = text => { get('face-message').textContent = text; };
     function render() {
+        get('camera-facing').disabled = busy || saving || !!stream;
         const count = samples.filter(Boolean).length;
         get('sample-count').textContent = `${count} dari 3 sampel`;
         get('camera-start').disabled = busy || saving || !!stream;
@@ -76,16 +94,21 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
         render();
         message('Menunggu izin kamera dari browser. Pilih Izinkan jika muncul permintaan akses.');
         try {
-            const acquired = await requestFaceCamera(environment.navigator.mediaDevices);
+            const facingMode = get('camera-facing').value || 'user';
+            const acquired = await requestFaceCamera(environment.navigator.mediaDevices, 30000, facingMode);
             if (run !== generation) {
                 acquired.getTracks().forEach(track => track.stop());
                 return;
             }
             stream = acquired;
+            video.classList.toggle('-scale-x-100', (stream.getVideoTracks()[0]?.getSettings?.().facingMode || facingMode) === 'user');
             stream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
+                if (run !== generation) return;
                 stopCamera();
                 message('Kamera terputus. Aktifkan kembali untuk melanjutkan.');
             }, { once: true }));
+            video.muted = true;
+            video.playsInline = true;
             video.srcObject = stream;
             render();
             message('Menunggu gambar kamera…');
@@ -109,8 +132,8 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
                 NotFoundError: 'Kamera tidak ditemukan. Hubungkan kamera lalu coba lagi.',
                 NotReadableError: 'Kamera sedang digunakan aplikasi lain. Tutup aplikasi tersebut lalu coba lagi.',
             };
-            message(messages[error.name] || (error.name === 'FaceStartupTimeout' ? error.message : 'Model wajah gagal dimuat. Muat ulang halaman dengan Ctrl + Shift + R lalu coba lagi.'));
-            if (!messages[error.name]) console.error('Persiapan model wajah gagal:', error);
+            message(messages[error.name] || error.message || 'Persiapan wajah gagal. Muat ulang halaman lalu coba lagi.');
+            if (!messages[error.name]) console.error('Persiapan kamera/model wajah gagal:', error);
         } finally {
             if (run === generation) {
                 busy = false;
