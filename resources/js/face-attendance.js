@@ -81,6 +81,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         return automaticTick();
     }
     function render() {
+        get('detector').disabled = busy || submitting || !!stream;
         get('facing').disabled = busy || submitting || !!stream;
         get('start').disabled = busy || submitting || !!stream;
         get('stop').disabled = submitting || (!busy && !stream);
@@ -148,8 +149,9 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
             metric('model', 'Memuat…');
             message('Memuat model wajah…');
             const progress = text => { if (run === generation) message(text); };
-            const model = await waitForFaceStep(environment.loadFaceModels ? environment.loadFaceModels(progress)
-                : import('./siswa-face-models').then(module => module.loadFaceModels(progress)), 60000, 'Model terlalu lama dimuat. Muat ulang halaman lalu coba lagi.');
+            const detector = get('detector').value || 'ssd';
+            const model = await waitForFaceStep(environment.loadFaceModels ? environment.loadFaceModels(progress, detector)
+                : import('./siswa-face-models').then(module => module.loadFaceModels(progress, detector)), 60000, 'Model terlalu lama dimuat. Muat ulang halaman lalu coba lagi.');
             if (run !== generation) return;
             extract = model;
             metric('model', duration(clock() - modelStarted));
@@ -311,6 +313,13 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         }
     }
     get('start').addEventListener('click', start);
+    get('detector').addEventListener('change', () => {
+        if (busy || submitting || stream) return;
+        samples.length = 0;
+        showMatching(null);
+        for (const name of ['average', 'detection', 'model', 'backend', 'server', 'response', 'overhead', 'total', 'status']) metric(name, '—');
+        message('Model diganti. Aktifkan kamera untuk memulai perbandingan.');
+    });
     get('capture').addEventListener('click', () => scan());
     get('auto').addEventListener('click', toggleAutomatic);
     get('stop').addEventListener('click', () => { stop(); message('Kamera dimatikan. Presensi yang tersimpan tetap tersedia di logbook.'); });

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createFaceExtractor } from '../../resources/js/siswa-face-extractor.js';
 
-function fixture({ brightness = 128, textured = true, box = { x: 100, y: 100, width: 160, height: 160 }, count = 1 } = {}) {
+function fixture({ brightness = 128, textured = true, box = { x: 100, y: 100, width: 160, height: 160 }, count = 1, detector = 'ssd' } = {}) {
     const descriptor = Array(128).fill(0.1);
     const image = { width: 64, height: 64, data: new Uint8ClampedArray(64 * 64 * 4) };
     for (let i = 0; i < 64 * 64; i++) {
@@ -12,11 +12,29 @@ function fixture({ brightness = 128, textured = true, box = { x: 100, y: 100, wi
     const draws = [];
     const context = { drawImage: (...args) => draws.push(args), getImageData: () => image };
     const canvas = { width: 640, height: 480, ownerDocument: { createElement: () => ({ getContext: () => context }) } };
-    const api = { TinyFaceDetectorOptions: class {}, detectAllFaces: () => ({ withFaceLandmarks: () => ({
+    const api = { TinyFaceDetectorOptions: class { constructor(options) { Object.assign(this, options); } },
+        SsdMobilenetv1Options: class { constructor(options) { Object.assign(this, options); } }, detectAllFaces: (input, options) => {
+        assert.equal(input, canvas);
+        if (detector === 'tiny') {
+            assert.ok(options instanceof api.TinyFaceDetectorOptions);
+            assert.equal(options.inputSize, 320);
+            assert.equal(options.scoreThreshold, 0.65);
+        } else {
+            assert.ok(options instanceof api.SsdMobilenetv1Options);
+            assert.equal(options.minConfidence, 0.65);
+        }
+        return { withFaceLandmarks: () => ({
         withFaceDescriptors: async () => Array.from({ length: count }, () => ({ detection: { box }, descriptor })),
-    }) }) };
-    return { canvas, descriptor, draws, extract: createFaceExtractor(api) };
+    }) }; } };
+    return { canvas, descriptor, draws, extract: createFaceExtractor(api, detector) };
 }
+
+test('tiny detector uses the same descriptor pipeline and rejects multiple faces', async () => {
+    const { canvas, descriptor, extract } = fixture({ detector: 'tiny' });
+    assert.deepEqual(await extract(canvas), descriptor);
+    const multiple = fixture({ detector: 'tiny', count: 2 });
+    await assert.rejects(multiple.extract(multiple.canvas), /lebih dari satu wajah/);
+});
 
 for (const [name, options, message] of [
     ['dark', { brightness: 30 }, /terlalu gelap/],

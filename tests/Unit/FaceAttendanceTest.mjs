@@ -51,6 +51,28 @@ function scanner(mode = 'piket') {
         }, click: name => get(name).handlers.click() };
 }
 
+test('detector selection reaches the loader and switching clears comparison metrics', async () => {
+    const page = scanner();
+    const load = page.environment.loadFaceModels;
+    const selected = [];
+    page.environment.loadFaceModels = (progress, detector) => { selected.push(detector); return load(); };
+    page.get('detector').value = 'tiny';
+    await page.click('start');
+    assert.equal(page.get('detector').disabled, true);
+    await page.click('capture');
+    await page.click('stop');
+    assert.equal(page.get('detector').disabled, false);
+    page.get('detector').value = 'ssd';
+    page.get('detector').handlers.change();
+    assert.equal(page.get('perf-average').textContent, '—');
+    assert.equal(page.get('perf-detection').textContent, '—');
+    assert.equal(page.get('match-distance').textContent, '—');
+    await page.click('start');
+    await page.click('capture');
+    assert.deepEqual(selected, ['tiny', 'ssd']);
+    assert.match(page.get('perf-average').textContent, /1 pindai berhasil terakhir/);
+});
+
 test('a scan submits the descriptor and renders server identity as plain text', async () => {
     const page = scanner();
     await page.click('start');

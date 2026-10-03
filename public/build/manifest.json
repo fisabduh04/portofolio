@@ -7,6 +7,10 @@
     "file": "assets/face_recognition_model-Qs_P-Wn5.bin",
     "src": "node_modules/@vladmandic/face-api/model/face_recognition_model.bin"
   },
+  "node_modules/@vladmandic/face-api/model/ssd_mobilenetv1_model.bin": {
+    "file": "assets/ssd_mobilenetv1_model-CwVKCpPc.bin",
+    "src": "node_modules/@vladmandic/face-api/model/ssd_mobilenetv1_model.bin"
+  },
   "node_modules/@vladmandic/face-api/model/tiny_face_detector_model.bin": {
     "file": "assets/tiny_face_detector_model-C4Zmc5xe.bin",
     "src": "node_modules/@vladmandic/face-api/model/tiny_face_detector_model.bin"
@@ -17,7 +21,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BEfEXhH1.js",
+    "file": "assets/app-Cfh1rE7K.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -34,7 +38,7 @@
     "isDynamicEntry": true
   },
   "resources/js/siswa-face-models.js": {
-    "file": "assets/siswa-face-models-BP08g9hw.js",
+    "file": "assets/siswa-face-models-DczFtUom.js",
     "name": "siswa-face-models",
     "src": "resources/js/siswa-face-models.js",
     "isDynamicEntry": true,
@@ -42,6 +46,7 @@
       "resources/js/app.js"
     ],
     "assets": [
+      "assets/ssd_mobilenetv1_model-CwVKCpPc.bin",
       "assets/tiny_face_detector_model-C4Zmc5xe.bin",
       "assets/face_landmark_68_tiny_model-DPIjmK7S.bin",
       "assets/face_recognition_model-Qs_P-Wn5.bin"

@@ -1,8 +1,12 @@
 import { facePositionAssessment, faceImageQuality } from './face-prototype-quality.js';
 
-export function createFaceExtractor(faceapi) {
+export function createFaceExtractor(faceapi, detector = 'ssd') {
+    if (!['tiny', 'ssd'].includes(detector)) throw new Error('Model deteksi tidak tersedia.');
+    const options = detector === 'tiny'
+        ? new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.65 })
+        : new faceapi.SsdMobilenetv1Options({ minConfidence: 0.65 });
     return async (canvas, { checkQuality = false } = {}) => {
-        const faces = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.65 }))
+        const faces = await faceapi.detectAllFaces(canvas, options)
             .withFaceLandmarks(true).withFaceDescriptors();
         if (faces.length !== 1) {
             const error = new Error(faces.length ? 'Ada lebih dari satu wajah. Pastikan hanya siswa ini di depan kamera.' : 'Wajah belum terdeteksi. Perbaiki posisi dan pencahayaan, lalu coba lagi.');
