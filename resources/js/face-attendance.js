@@ -61,9 +61,9 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
     async function automaticTick() {
         const run = automaticGeneration;
         if (!automatic) return;
-        await scan(true);
+        const nextDelay = await scan(true);
         if (automatic && run === automaticGeneration) {
-            automaticTimer = environment.setTimeout(automaticTick, 600);
+            automaticTimer = environment.setTimeout(automaticTick, nextDelay ?? 600);
         }
     }
     function toggleAutomatic() {
@@ -242,10 +242,10 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
             }
             if (!response.ok) {
                 if (isAutomatic) {
-                    if (response.status === 422 && result.errors?.descriptor) {
+                    if (response.status === 422 && result.errors?.descriptor
+                        && ['unknown', 'ambiguous'].includes(result.matching?.status)) {
                         rejectedFace = true;
-                        waitingForClear = true;
-                        autoMessage('Wajah belum cocok. Siswa keluar dari bingkai lalu coba lagi atau gunakan presensi manual.');
+                        autoMessage('Wajah belum cocok. Tetap di bingkai; pencocokan diulang otomatis dalam 2 detik.');
                     } else {
                         pauseAutomatic();
                     }
@@ -291,6 +291,12 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
                 message(detail);
                 feedback('error', uncertain ? 'Periksa hasil di logbook' : 'Pemindaian belum berhasil',
                     error.code === 'no_face' ? 'Wajah belum terdeteksi' : error.code === 'multiple_faces' ? 'Lebih dari satu wajah' : 'Perlu diperiksa', detail);
+                if (rejectedFace && automatic && autoRun === automaticGeneration) {
+                    const retryDetail = 'Sesuaikan posisi dan pencahayaan. Pencocokan diulang otomatis dalam 2 detik tanpa keluar bingkai. Jika tetap gagal, gunakan presensi manual.';
+                    message(`${detail} ${retryDetail}`);
+                    feedback('error', 'Wajah terdeteksi', 'Belum cocok', retryDetail);
+                    return 2000;
+                }
             }
         } finally {
             if (measured && (run === generation || submitting)) {

@@ -485,22 +485,66 @@ test('automatic matching has only one pending request and pause lets that reques
     assert.equal(page.get('result-label').textContent, 'Berhasil dicatat');
 });
 
-test('unknown faces wait for departure rather than repeatedly querying the server', async () => {
+for (const status of ['unknown', 'ambiguous']) {
+    test(`${status} faces retry a fresh sample after two seconds without leaving the frame`, async () => {
+        const page = scanner();
+        const save = page.environment.fetch;
+        let requests = 0;
+        const descriptors = [];
+        page.environment.loadFaceModels = async () => async () => Array(128).fill(descriptors.length / 10);
+        page.environment.fetch = async (url, options) => {
+            requests++;
+            descriptors.push(JSON.parse(options.body).descriptor);
+            if (requests === 3) return save(url, options);
+            return { ok: false, status: 422, json: async () => ({ errors: { descriptor: ['Wajah belum cocok'] }, matching: { status } }) };
+        };
+        await page.click('start');
+        await page.click('auto');
+        assert.equal(requests, 1);
+        assert.equal(page.get('results').children.length, 0);
+        assert.equal(page.get('perf-status').textContent, 'Gagal / dibatalkan');
+        assert.equal(page.get('identity').textContent, 'Belum cocok');
+        assert.match(page.get('result-detail').textContent, /tanpa keluar bingkai/);
+        assert.equal(page.timers.size, 1);
+        assert.equal([...page.timers.values()][0].delay, 2000);
+        await page.tick();
+        assert.equal(requests, 2);
+        assert.equal([...page.timers.values()][0].delay, 2000);
+        assert.notDeepEqual(descriptors[0], descriptors[1]);
+        await page.tick();
+        assert.equal(requests, 3);
+        assert.equal(page.get('results').children.length, 1);
+        assert.equal(page.get('count').textContent, '1 presensi baru');
+        assert.equal([...page.timers.values()][0].delay, 600);
+        await page.tick();
+        assert.equal(requests, 3);
+    });
+}
+
+test('descriptor validation errors pause automatic scanning instead of retrying', async () => {
     const page = scanner();
-    let requests = 0;
-    page.environment.fetch = async () => {
-        requests++;
-        return { ok: false, status: 422, json: async () => ({ errors: { descriptor: ['Wajah tidak dikenali'] } }) };
-    };
+    page.environment.fetch = async () => ({ ok: false, status: 422,
+        json: async () => ({ errors: { descriptor: ['Penempatan kelas siswa belum jelas.'] } }) });
     await page.click('start');
     await page.click('auto');
-    await page.tick();
-
-    assert.equal(requests, 1);
-    assert.equal(page.get('results').children.length, 0);
-    assert.equal(page.get('perf-status').textContent, 'Gagal / dibatalkan');
-    assert.equal(page.timers.size, 1);
+    assert.equal(page.timers.size, 0);
+    assert.equal(page.get('auto').textContent, 'Mulai otomatis');
+    assert.equal(page.get('message').textContent, 'Penempatan kelas siswa belum jelas.');
 });
+
+for (const action of ['auto', 'stop']) {
+    test(`${action} cancels a scheduled unmatched-face retry`, async () => {
+        const page = scanner();
+        page.environment.fetch = async () => ({ ok: false, status: 422,
+            json: async () => ({ errors: { descriptor: ['Wajah belum cocok'] }, matching: { status: 'unknown' } }) });
+        await page.click('start');
+        await page.click('auto');
+        assert.equal(page.timers.size, 1);
+        await page.click(action);
+        assert.equal(page.timers.size, 0);
+        assert.equal(page.get('auto').textContent, 'Mulai otomatis');
+    });
+}
 
 for (const status of [401, 403, 419, 422, 429, 500]) {
     test(`automatic scanning pauses on server failure ${status}`, async () => {
