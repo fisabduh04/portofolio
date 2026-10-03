@@ -66,8 +66,20 @@ test('a scan submits the descriptor and renders server identity as plain text', 
     assert.equal(page.get('result-label').textContent, 'Berhasil dicatat');
 });
 
+test('repeated checkout displays the stored time and update message without counting a new attendance', async () => {
+    const page = scanner();
+    page.environment.fetch = async () => ({ ok: true, json: async () => ({ student: 'Ahmad', kelas: 'X A',
+        status: 'Hadir', time: '14:30:00', already_recorded: true, message: 'Waktu pulang diperbarui ke pemindaian terakhir.' }) });
+    await page.click('start');
+    await page.click('capture');
+
+    assert.equal(page.get('result-detail').textContent, 'X A · Hadir · 14:30:00. Waktu pulang diperbarui ke pemindaian terakhir.');
+    assert.equal(page.get('count').textContent, '0 presensi baru');
+});
+
 for (const [status, distance, second, gap, expected] of [
     ['candidate', 0, 0.2, 0.2, /Cocok/],
+    ['candidate', 0.1935, 0.52, 0.3265, /Cocok/],
     ['unknown', 0.6, null, null, /melebihi ambang/],
     ['ambiguous', 0.3, 0.34, 0.04, /Ambigu/],
     ['unknown', null, null, null, /Tidak ada referensi/],
@@ -88,14 +100,16 @@ for (const [status, distance, second, gap, expected] of [
         assert.equal(page.get('match-threshold').textContent, '0.4500');
         assert.equal(page.get('match-minimum_gap').textContent, '0.0800');
         assert.match(page.get('match-status').textContent, expected);
-        assert.equal(page.get('match-candidates').textContent, distance === null ? 'Belum ada kandidat siswa.'
+        assert.equal(page.get('match-candidates').hidden, status !== 'ambiguous');
+        assert.equal(page.get('match-candidates').textContent, status !== 'ambiguous' ? ''
             : `Kandidat terdekat (bukan kepastian identitas): 1. <b>Ahmad</b> — ${distance.toFixed(4)}${second === null ? '' : `; 2. Budi — ${second.toFixed(4)}`}`);
 
         page.environment.fetch = async () => { throw new TypeError('Offline'); };
         await page.click('capture');
         assert.equal(page.get('match-distance').textContent, '—');
         assert.match(page.get('match-status').textContent, /Belum ada hasil/);
-        assert.equal(page.get('match-candidates').textContent, 'Belum ada kandidat siswa.');
+        assert.equal(page.get('match-candidates').textContent, '');
+        assert.equal(page.get('match-candidates').hidden, true);
     });
 }
 

@@ -59,6 +59,37 @@ it('records a matched face in the same mapel logbook and prevents duplicate scan
         ->assertViewHas('existingLogbook', fn ($entry) => $entry->absensis->contains('siswa_id', $student->id));
 });
 
+it('keeps the first entry time and the latest checkout time on repeated face scans', function (string $type, string $expectedTime) {
+    [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
+    JadwalPiket::create(['pegawai_id' => $actor->pegawai_id, 'tahun_id' => $schedule->tahun_id, 'hari' => 'Kamis']);
+    $scan = ['mode' => 'piket', 'type' => $type, 'descriptor' => $payload['descriptor']];
+    $this->actingAs($actor)->postJson(route('face-attendance.store'), $scan)
+        ->assertOk()->assertJsonPath('time', '10:00:00');
+    $this->travelTo(\Carbon\Carbon::parse('2026-10-01 10:30:00'));
+
+    $this->postJson(route('face-attendance.store'), $scan)
+        ->assertOk()->assertJsonPath('already_recorded', true)->assertJsonPath('time', $expectedTime);
+
+    $this->assertDatabaseCount('absensis', 1);
+    $this->assertDatabaseHas('absensis', ['siswa_id' => $student->id, 'status' => 'Hadir', 'keterangan' => 'Presensi wajah '.$expectedTime]);
+    $this->travelTo(\Carbon\Carbon::parse('2026-10-01 10:15:00'));
+    $this->postJson(route('face-attendance.store'), $scan)->assertJsonPath('time', $expectedTime);
+    $this->assertDatabaseHas('absensis', ['siswa_id' => $student->id, 'keterangan' => 'Presensi wajah '.$expectedTime]);
+})->with([['masuk', '10:00:00'], ['pulang', '10:30:00']]);
+
+it('preserves manual attendance notes during repeated checkout scans', function () {
+    [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
+    JadwalPiket::create(['pegawai_id' => $actor->pegawai_id, 'tahun_id' => $schedule->tahun_id, 'hari' => 'Kamis']);
+    $logbook = Logbook::create(['jadwal_id' => $schedule->id, 'kelas_id' => $schedule->kelas_id, 'pegawai_id' => $actor->pegawai_id, 'kategori' => 'piket_pulang', 'tanggal' => '2026-10-01']);
+    Absensi::create(['logbook_id' => $logbook->id, 'siswa_id' => $student->id, 'status' => 'Hadir', 'keterangan' => 'Dicatat guru piket']);
+    $this->travelTo(\Carbon\Carbon::parse('2026-10-01 10:30:00'));
+
+    $this->actingAs($actor)->postJson(route('face-attendance.store'), ['mode' => 'piket', 'type' => 'pulang', 'descriptor' => $payload['descriptor']])
+        ->assertOk()->assertJsonPath('time', '10:00:00')->assertJsonPath('already_recorded', true);
+
+    $this->assertDatabaseHas('absensis', ['logbook_id' => $logbook->id, 'status' => 'Hadir', 'keterangan' => 'Dicatat guru piket']);
+});
+
 it('returns Euclidean monitoring values for duty checkout', function () {
     [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
     $handler = new TestHandler;

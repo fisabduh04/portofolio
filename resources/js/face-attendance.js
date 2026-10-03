@@ -29,10 +29,11 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
     const autoMessage = text => { get('auto-status').textContent = text; };
     const distanceText = value => Number.isFinite(value) ? value.toFixed(4) : '—';
     function showMatching(matching) {
-        const candidates = matching?.candidates || [];
+        const candidates = matching?.status === 'ambiguous' ? matching.candidates || [] : [];
+        get('match-candidates').hidden = candidates.length === 0;
         get('match-candidates').textContent = candidates.length
             ? `Kandidat terdekat (bukan kepastian identitas): ${candidates.map((candidate, index) => `${index + 1}. ${candidate.student} — ${distanceText(candidate.distance)}`).join('; ')}`
-            : 'Belum ada kandidat siswa.';
+            : '';
         for (const name of ['distance', 'second_distance', 'gap', 'threshold', 'minimum_gap']) {
             get(`match-${name}`).textContent = distanceText(matching?.[name]);
         }
@@ -42,6 +43,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
                     : matching.distance === null ? 'Tidak ada referensi wajah yang memenuhi syarat.'
                         : 'Tidak dikenali: jarak melebihi ambang.';
     }
+    showMatching(null);
     function feedback(state, label, identity, detail) {
         get('feedback').dataset.state = state;
         get('result-label').textContent = label;
@@ -255,7 +257,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
             waitingForClear = true;
             emptyFrames = 0;
             feedback('success', result.already_recorded ? 'Sudah tercatat' : 'Berhasil dicatat', result.student,
-                `${result.kelas} · ${result.status} · ${result.time}. ${result.already_recorded ? 'Status sebelumnya tetap dipertahankan.' : 'Silakan keluar dari bingkai kamera.'}`);
+                `${result.kelas} · ${result.status} · ${result.time}. ${result.already_recorded ? result.message : 'Silakan keluar dari bingkai kamera.'}`);
             if (isAutomatic && automatic) autoMessage('Berhasil. Siswa keluar dari bingkai; berikutnya maju setelah tanda siap.');
             get('count').textContent = `${count} presensi baru`;
             const item = documentRoot.createElement('li');

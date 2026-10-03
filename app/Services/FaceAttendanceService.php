@@ -112,18 +112,28 @@ class FaceAttendanceService
                 'materi' => $schedule ? $materi : ($type === 'masuk' ? 'Absensi Masuk' : 'Absensi Pulang'),
             ]);
             $existing = Absensi::where('logbook_id', $logbook->id)->where('siswa_id', $student->id)->first();
+            $scanTime = now()->format('H:i:s');
             $attendance = $existing ?? Absensi::create([
                 'logbook_id' => $logbook->id, 'siswa_id' => $student->id,
                 'status' => 'Hadir',
-                'keterangan' => 'Presensi wajah '.now()->format('H:i:s'),
+                'keterangan' => 'Presensi wajah '.$scanTime,
             ]);
+            $hasFaceTime = preg_match('/\APresensi wajah ([0-2][0-9]:[0-5][0-9]:[0-5][0-9])\z/', $attendance->keterangan ?? '', $storedTime) === 1;
+            $recordedTime = $hasFaceTime ? $storedTime[1] : ($attendance->created_at?->format('H:i:s') ?? '—');
+            $timeUpdated = $existing && ! $schedule && $type === 'pulang'
+                && $attendance->status === 'Hadir' && $hasFaceTime && $scanTime > $recordedTime;
+            if ($timeUpdated) {
+                $attendance->update(['keterangan' => 'Presensi wajah '.$scanTime]);
+                $recordedTime = $scanTime;
+            }
 
             return [
                 'matching' => $matching,
                 'student' => $student->nama, 'kelas' => $kelas->kelas, 'status' => $attendance->status,
                 'already_recorded' => $existing !== null, 'logbook_id' => $logbook->id,
-                'time' => now()->format('H:i:s'),
-                'message' => $existing ? 'Sudah tercatat. Status sebelumnya tetap dipertahankan.' : 'Presensi berhasil dicatat di logbook.',
+                'time' => $recordedTime,
+                'message' => $timeUpdated ? 'Waktu pulang diperbarui ke pemindaian terakhir.'
+                    : ($existing ? 'Sudah tercatat. Catatan sebelumnya tetap dipertahankan.' : 'Presensi berhasil dicatat di logbook.'),
             ];
         });
     }
