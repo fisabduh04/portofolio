@@ -14,7 +14,7 @@ test('an unanswered camera request times out and releases a stream granted after
     assert.equal(stopped, true);
 });
 
-function setup() {
+function setup(maximumSampleDistance = '0.6') {
     const element = () => {
         const classes = new Set();
         return { dataset: {}, handlers: {}, disabled: false, textContent: '', classList: {
@@ -31,7 +31,7 @@ function setup() {
     const previews = Array.from({ length: 3 }, element);
     const placeholders = Array.from({ length: 3 }, element);
     const retakes = Array.from({ length: 3 }, element);
-    const root = { dataset: { saveUrl: '/siswa/7/wajah' }, querySelector: selector => get(selector.slice(6, -1)),
+    const root = { dataset: { saveUrl: '/siswa/7/wajah', maximumSampleDistance }, querySelector: selector => get(selector.slice(6, -1)),
         querySelectorAll: selector => ({ '[data-face-sample]': previews, '[data-sample-placeholder]': placeholders, '[data-retake]': retakes })[selector] };
     const document = { ...element(), hidden: false, querySelector: selector => selector === '[data-face-enrollment]' ? root : { content: 'csrf-token' },
         querySelectorAll: () => [], createElement: () => ({ getContext: () => ({ drawImage() {} }), toDataURL: () => 'data:image/jpeg;base64,preview' }) };
@@ -316,6 +316,42 @@ test('invalid face detection keeps the current slot empty', async () => {
     assert.equal(page.get('face-save').disabled, true);
 });
 
+test('quality rejection cannot save or replace a sample and a successful retake recovers', async () => {
+    const page = setup();
+    let rejectQuality = true;
+    let saves = 0;
+    page.environment.loadFaceModels = async () => async (canvas, options) => {
+        assert.equal(options.checkQuality, true);
+        if (rejectQuality) throw new Error('Gambar wajah kurang tajam. Diam sebentar dan periksa fokus kamera.');
+        return Array(128).fill(0.1);
+    };
+    page.environment.fetch = async () => { saves++; return { ok: true, json: async () => ({ count: 3 }) }; };
+    await page.click('camera-start');
+    await page.click('face-capture');
+    await page.click('face-save');
+    assert.equal(saves, 0);
+    assert.equal(page.get('sample-count').textContent, '0 dari 3 sampel');
+    assert.equal(page.previews[0].src, undefined);
+    assert.match(page.get('face-message').textContent, /kurang tajam/);
+
+    rejectQuality = false;
+    for (let i = 0; i < 3; i++) await page.click('face-capture');
+    const previous = page.previews[1].src;
+    page.retakes[1].handlers.click();
+    rejectQuality = true;
+    await page.click('face-capture');
+    await page.click('face-save');
+    assert.equal(saves, 0);
+    assert.equal(page.previews[1].src, previous);
+    assert.equal(page.get('sample-count').textContent, '3 dari 3 sampel');
+    assert.equal(page.get('face-save').disabled, true);
+
+    rejectQuality = false;
+    await page.click('face-capture');
+    await page.click('face-save');
+    assert.equal(saves, 1);
+});
+
 test('retaking replaces one slot and clearing previews leaves registered status intact', async () => {
     const page = setup();
     await page.click('camera-start');
@@ -328,4 +364,128 @@ test('retaking replaces one slot and clearing previews leaves registered status 
     assert.equal(page.get('sample-count').textContent, '0 dari 3 sampel');
     assert.equal(page.get('enrollment-status').textContent, '3 sampel terdaftar');
     assert.ok(page.previews.every(preview => !preview.src));
+});
+
+test('third sample must match both earlier positions and can recover after retaking', async () => {
+    const page = setup();
+    const coordinates = [0, -0.4, 0.4, -0.2];
+    page.environment.loadFaceModels = async () => async () => {
+        const descriptor = Array(128).fill(0.125);
+        descriptor[0] = coordinates.shift();
+        return descriptor;
+    };
+    await page.click('camera-start');
+    for (let i = 0; i < 3; i++) await page.click('face-capture');
+
+    assert.equal(page.get('sample-count').textContent, '2 dari 3 sampel');
+    assert.equal(page.get('face-save').disabled, true);
+    assert.equal(page.previews[2].src, undefined);
+    assert.match(page.get('face-message').textContent, /Sedikit ke kanan.*Sedikit ke kiri.*0.8000/);
+
+    await page.click('face-capture');
+    assert.equal(page.get('face-save').disabled, false);
+});
+
+test('retaking an earlier position checks every other slot and preserves its previous preview on rejection', async () => {
+    const page = setup();
+    const coordinates = [0, -0.2, 0.3, -0.4];
+    page.environment.loadFaceModels = async () => async () => {
+        const descriptor = Array(128).fill(0.125);
+        descriptor[0] = coordinates.shift();
+        return descriptor;
+    };
+    await page.click('camera-start');
+    for (let i = 0; i < 3; i++) await page.click('face-capture');
+    const previous = page.previews[0].src;
+    page.retakes[0].handlers.click();
+    await page.click('face-capture');
+
+    assert.equal(page.previews[0].src, previous);
+    assert.equal(page.get('face-save').disabled, true);
+    assert.match(page.get('face-message').textContent, /Menghadap depan.*Sedikit ke kanan.*0.7000/);
+});
+
+test('browser uses the configured threshold and accepts equality', async () => {
+    const page = setup('0.25');
+    const coordinates = [0, 0.25, 0.3];
+    page.environment.loadFaceModels = async () => async () => {
+        const descriptor = Array(128).fill(0.125);
+        descriptor[0] = coordinates.shift();
+        return descriptor;
+    };
+    await page.click('camera-start');
+    await page.click('face-capture');
+    await page.click('face-capture');
+    assert.equal(page.get('sample-count').textContent, '2 dari 3 sampel');
+    await page.click('face-capture');
+    assert.equal(page.get('sample-count').textContent, '2 dari 3 sampel');
+    assert.match(page.get('face-message').textContent, /Maksimum 0.2500/);
+});
+
+test('server consistency errors show all conflicting pairs without losing captured samples', async () => {
+    const page = setup();
+    page.environment.fetch = async () => ({ ok: false, status: 422, json: async () => ({ errors: {
+        'samples.0': ['Depan dan kiri belum konsisten.', 'Depan dan kanan belum konsisten.'],
+        'samples.1': ['Depan dan kiri belum konsisten.'],
+    } }) });
+    await page.click('camera-start');
+    for (let i = 0; i < 3; i++) await page.click('face-capture');
+    await page.click('face-save');
+
+    assert.equal(page.get('save-message').textContent, 'Depan dan kiri belum konsisten. Depan dan kanan belum konsisten.');
+    assert.equal(page.get('sample-count').textContent, '3 dari 3 sampel');
+    assert.ok(page.previews.every(preview => preview.src));
+});
+
+for (const confirmed of [false, true]) {
+    test(`similarity warning ${confirmed ? 'saves only after confirmation' : 'preserves samples when cancelled'}`, async () => {
+        const page = setup();
+        const requests = [];
+        let prompt;
+        page.environment.confirm = text => { prompt = text; return confirmed; };
+        page.environment.fetch = async (url, options) => {
+            requests.push(JSON.parse(options.body));
+            return requests.length === 1
+                ? { ok: false, status: 409, json: async () => ({ code: 'face_similarity_review', message: 'Periksa identitas.',
+                    candidates: [{ siswa_id: 8, student: '<b>Budi</b>', distance: 0.3 }], threshold: 0.45, confirmation_token: 'review-token' }) }
+                : { ok: true, json: async () => ({ count: 3 }) };
+        };
+        await page.click('camera-start');
+        for (let i = 0; i < 3; i++) await page.click('face-capture');
+        await page.click('face-save');
+
+        assert.match(prompt, /<b>Budi<\/b>.*0.3000/);
+        assert.equal(requests.length, confirmed ? 2 : 1);
+        assert.equal(requests[0].similarity_confirmation, undefined);
+        if (confirmed) {
+            assert.equal(requests[1].similarity_confirmation, 'review-token');
+            assert.deepEqual(requests[1].samples, requests[0].samples);
+            assert.equal(page.track.stopped, true);
+        } else {
+            assert.match(page.get('save-message').textContent, /Belum disimpan/);
+            assert.equal(page.get('sample-count').textContent, '3 dari 3 sampel');
+            assert.equal(page.track.stopped, false);
+        }
+    });
+}
+
+test('changed similarity review does not silently retry confirmation', async () => {
+    const page = setup();
+    let requests = 0;
+    let prompts = 0;
+    page.environment.confirm = () => { prompts++; return true; };
+    page.environment.fetch = async () => {
+        requests++;
+        return { ok: false, status: 409, json: async () => ({ code: 'face_similarity_review', message: 'Periksa kembali kandidat.',
+            candidates: [{ siswa_id: 8, student: 'Budi', distance: 0.3 }], threshold: 0.45, confirmation_token: 'token' }) };
+    };
+    await page.click('camera-start');
+    for (let i = 0; i < 3; i++) await page.click('face-capture');
+    await page.click('face-save');
+
+    assert.equal(requests, 2);
+    assert.equal(prompts, 1);
+    assert.match(page.get('save-message').textContent, /Periksa kembali/);
+    assert.equal(page.get('sample-count').textContent, '3 dari 3 sampel');
+    assert.equal(page.get('face-save').disabled, false);
 });

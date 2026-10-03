@@ -53,6 +53,26 @@
                         <p data-scan-identity class="mt-3 break-words text-2xl font-bold leading-tight text-gray-900 dark:text-white xl:text-3xl">Belum ada hasil</p>
                         <p data-scan-result-detail class="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">Aktifkan kamera, lalu mulai pemindaian.</p>
                     </div>
+                    <div class="mt-4 rounded-xl border border-gray-200 p-4 dark:border-gray-600" role="status" aria-live="polite" aria-atomic="true">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Monitor jarak Euclidean</h3>
+                        <p data-scan-match-status class="mt-2 text-sm text-gray-600 dark:text-gray-300">Belum ada hasil pencocokan untuk pemindaian ini.</p>
+                        <p data-scan-match-candidates class="mt-2 break-words text-sm text-gray-900 dark:text-white">Belum ada kandidat siswa.</p>
+                        <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                            @foreach ([
+                                'distance' => 'Jarak terdekat',
+                                'threshold' => 'Ambang maksimum',
+                                'second_distance' => 'Jarak kandidat kedua',
+                                'gap' => 'Selisih dua kandidat',
+                                'minimum_gap' => 'Selisih minimum',
+                            ] as $metric => $label)
+                                <div>
+                                    <dt class="text-gray-500 dark:text-gray-400">{{ $label }}</dt>
+                                    <dd data-scan-match-{{ $metric }} class="mt-1 font-semibold tabular-nums text-gray-900 dark:text-white">—</dd>
+                                </div>
+                            @endforeach
+                        </dl>
+                        <p class="mt-3 text-xs leading-5 text-gray-500 dark:text-gray-400">Semakin kecil jarak, semakin mirip; bukan persentase keyakinan. Jarak harus ≤ ambang dan, jika ada dua kandidat siswa, selisih harus ≥ minimum. Angka dibulatkan ke 4 desimal; keputusan memakai nilai asli. Tanda — berarti tidak tersedia.</p>
+                    </div>
                     <div class="mt-5 flex items-center justify-between gap-3">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Riwayat pemindaian</h3>
                         <span class="text-xs text-gray-500 dark:text-gray-400">20 hasil terakhir</span>

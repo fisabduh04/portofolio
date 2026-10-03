@@ -12,6 +12,8 @@ use App\Models\Siswa;
 use App\Models\Tahun;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Monolog\Handler\TestHandler;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
@@ -55,6 +57,46 @@ it('records a matched face in the same mapel logbook and prevents duplicate scan
     expect($logbook->fresh()->materi)->toBe('Materi manual');
     $this->get(route('absensi.create', ['jadwal_id' => $schedule->id, 'date' => '2026-10-01']))->assertOk()
         ->assertViewHas('existingLogbook', fn ($entry) => $entry->absensis->contains('siswa_id', $student->id));
+});
+
+it('returns Euclidean monitoring values for duty checkout', function () {
+    [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
+    $handler = new TestHandler;
+    Log::channel('face-attendance')->getLogger()->setHandlers([$handler]);
+    config(['face-attendance.threshold' => 0.45, 'face-attendance.minimum_gap' => 0.08]);
+    JadwalPiket::create(['pegawai_id' => $actor->pegawai_id, 'tahun_id' => $schedule->tahun_id, 'hari' => 'Kamis']);
+    $payload['descriptor'][0] = 0.4;
+    $scan = ['mode' => 'piket', 'type' => 'pulang', 'descriptor' => $payload['descriptor']];
+
+    $response = $this->actingAs($actor)->postJson(route('face-attendance.store'), $scan);
+
+    $response->assertOk()->assertJsonPath('matching.status', 'candidate')
+        ->assertJsonPath('matching.distance', fn ($distance) => abs($distance - 0.3) < 0.000001)
+        ->assertJsonPath('matching.second_distance', null)->assertJsonPath('matching.gap', null)
+        ->assertJsonPath('matching.threshold', 0.45)->assertJsonPath('matching.minimum_gap', 0.08)
+        ->assertJsonMissingPath('matching.descriptor')->assertJsonCount(1, 'matching.candidates')
+        ->assertJsonPath('matching.candidates.0.student', $student->nama)
+        ->assertJsonMissingPath('matching.candidates.0.descriptor');
+    $this->assertDatabaseHas('absensis', ['siswa_id' => $student->id, 'status' => 'Hadir']);
+    $this->postJson(route('face-attendance.store'), $scan)->assertJsonPath('already_recorded', true)
+        ->assertJsonPath('matching.status', 'candidate');
+    $this->assertDatabaseCount('absensis', 1);
+    expect($handler->getRecords())->toBe([]);
+    $this->get(route('face-attendance.index', ['mode' => 'piket', 'type' => 'pulang']))
+        ->assertSee('Monitor jarak Euclidean')->assertSee('data-scan-match-distance', false);
+});
+
+it('returns empty monitoring distances when no eligible reference exists', function () {
+    [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
+    FaceSample::where('siswa_id', $student->id)->update(['is_active' => false]);
+
+    $this->actingAs($actor)->postJson(route('face-attendance.store'), $payload)
+        ->assertUnprocessable()->assertInvalid(['descriptor'])
+        ->assertJsonPath('matching.status', 'unknown')->assertJsonPath('matching.distance', null)
+        ->assertJsonPath('matching.second_distance', null)->assertJsonPath('matching.gap', null)
+        ->assertJsonPath('matching.candidates', []);
+
+    $this->assertDatabaseCount('absensis', 0);
 });
 
 it('preserves an existing manual status instead of replacing it with a face scan', function () {
@@ -245,19 +287,83 @@ it('rejects inactive periods and invalid descriptors', function () {
 
 it('does not record unknown or ambiguous faces', function (bool $ambiguous) {
     [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
+    $handler = new TestHandler;
+    Log::channel('face-attendance')->getLogger()->setHandlers([$handler]);
     if ($ambiguous) {
         $other = Siswa::factory()->create();
         KelasSiswa::create(['siswa_id' => $other->id, 'kelas_id' => $schedule->kelas_id, 'tahun_id' => $schedule->tahun_id]);
         FaceSample::create(['siswa_id' => $other->id, 'model' => config('face-attendance.model'), 'descriptor' => $payload['descriptor'], 'created_by' => $actor->id]);
     } else {
-        $payload['descriptor'] = array_fill(0, 128, 1);
+        $payload['descriptor'][0] = 0.7;
     }
 
-    $this->actingAs($actor)->postJson(route('face-attendance.store'), $payload)->assertInvalid(['descriptor']);
+    $response = $this->actingAs($actor)->postJson(route('face-attendance.store'), $payload)->assertInvalid(['descriptor'])
+        ->assertJsonPath('matching.status', $ambiguous ? 'ambiguous' : 'unknown')
+        ->assertJsonPath('matching.distance', fn ($distance) => abs($distance - ($ambiguous ? 0 : 0.6)) < 0.000001)
+        ->assertJsonPath('matching.gap', $ambiguous ? 0 : null)
+        ->assertJsonPath('matching.second_distance', $ambiguous ? 0 : null);
+
+    $names = array_column($response->json('matching.candidates'), 'student');
+    expect($names)->toContain($student->nama)->toHaveCount($ambiguous ? 2 : 1);
+    if ($ambiguous) {
+        expect($names)->toContain($other->nama);
+        expect($response->json('errors.descriptor.0'))->toContain($student->nama, $other->nama, 'Identitas belum dipastikan');
+    }
+    $response->assertJsonMissingPath('matching.candidates.0.descriptor');
+    expect($handler->getRecords())->toHaveCount($ambiguous ? 1 : 0);
+    if ($ambiguous) {
+        $record = $handler->getRecords()[0];
+        expect($record->message)->toBe('Presensi wajah ambigu');
+        expect($record->context)->toBe([
+            'occurred_at' => now()->toIso8601String(),
+            'actor_id' => $actor->id,
+            'pegawai_id' => $actor->pegawai_id,
+            'mode' => 'mapel',
+            'session' => 'mapel',
+            'jadwal_id' => $schedule->id,
+            'model' => config('face-attendance.model'),
+            'threshold' => (float) config('face-attendance.threshold'),
+            'minimum_gap' => (float) config('face-attendance.minimum_gap'),
+            'gap' => 0.0,
+            'candidates' => [
+                ['siswa_id' => $student->id, 'student' => $student->nama, 'distance' => 0.0],
+                ['siswa_id' => $other->id, 'student' => $other->nama, 'distance' => 0.0],
+            ],
+            'attendance_saved' => false,
+        ]);
+    }
 
     $this->assertDatabaseCount('absensis', 0);
     $this->assertDatabaseCount('logbooks', 0);
 })->with([false, true]);
+
+it('logs the duty session and nonzero distances when a scan is ambiguous', function (string $type) {
+    [$actor, $schedule, $student, $payload] = faceAttendanceFixture();
+    $handler = new TestHandler;
+    Log::channel('face-attendance')->getLogger()->setHandlers([$handler]);
+    JadwalPiket::create(['pegawai_id' => $actor->pegawai_id, 'tahun_id' => $schedule->tahun_id, 'hari' => 'Kamis']);
+    $other = Siswa::factory()->create();
+    KelasSiswa::create(['siswa_id' => $other->id, 'kelas_id' => $schedule->kelas_id, 'tahun_id' => $schedule->tahun_id]);
+    $reference = $payload['descriptor'];
+    $reference[0] = 0.75;
+    FaceSample::create(['siswa_id' => $other->id, 'model' => config('face-attendance.model'), 'descriptor' => $reference, 'created_by' => $actor->id]);
+    $payload['descriptor'][0] = 0.4;
+
+    $this->actingAs($actor)->postJson(route('face-attendance.store'), [
+        'mode' => 'piket', 'type' => $type, 'descriptor' => $payload['descriptor'],
+    ])->assertUnprocessable()->assertJsonPath('matching.status', 'ambiguous');
+
+    expect($handler->getRecords())->toHaveCount(1);
+    $context = $handler->getRecords()[0]->context;
+    expect($context['session'])->toBe('piket_'.$type);
+    expect($context['mode'])->toBe('piket');
+    expect($context['jadwal_id'])->toBeNull();
+    expect(abs($context['candidates'][0]['distance'] - 0.3))->toBeLessThan(0.000001);
+    expect(abs($context['candidates'][1]['distance'] - 0.35))->toBeLessThan(0.000001);
+    expect(abs($context['gap'] - 0.05))->toBeLessThan(0.000001);
+    $this->assertDatabaseCount('absensis', 0);
+    $this->assertDatabaseCount('logbooks', 0);
+})->with(['masuk', 'pulang']);
 
 it('requires login and refuses inactive accounts', function () {
     $this->postJson(route('face-attendance.store'), [])->assertUnauthorized();

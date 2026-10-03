@@ -8,6 +8,159 @@ use Illuminate\Support\Facades\DB;
 
 uses(Tests\TestCase::class, RefreshDatabase::class);
 
+it('requires review of similar students and saves only after confirmation', function () {
+    $operator = User::factory()->create(['role' => 'operator', 'is_active' => 1]);
+    $student = Siswa::factory()->create();
+    $other = Siswa::factory()->create(['nama' => '<b>Siswa lain</b>']);
+    $samples = array_fill(0, 3, array_fill(0, 128, 0.125));
+    $previous = FaceSample::create(['siswa_id' => $student->id, 'model' => 'old', 'descriptor' => [0.25], 'created_by' => $operator->id]);
+    foreach (['front', 'left'] as $label) {
+        FaceSample::create(['siswa_id' => $other->id, 'label' => $label, 'model' => config('face-attendance.model'), 'descriptor' => $samples[0], 'created_by' => $operator->id]);
+    }
+    $handler = new \Monolog\Handler\TestHandler;
+    \Illuminate\Support\Facades\Log::channel('face-attendance')->getLogger()->setHandlers([$handler]);
+
+    $response = $this->actingAs($operator)->postJson(route('siswa.face.store', $student), ['samples' => $samples])
+        ->assertConflict()->assertJsonPath('code', 'face_similarity_review')
+        ->assertJsonCount(1, 'candidates')->assertJsonPath('candidates.0.student', $other->nama)
+        ->assertJsonPath('candidates.0.distance', 0)->assertJsonMissingPath('candidates.0.descriptor');
+
+    expect($previous->fresh()->descriptor)->toBe([0.25]);
+    $this->assertDatabaseCount('face_samples', 3);
+    expect($handler->getRecords())->toHaveCount(0);
+    $this->postJson(route('siswa.face.store', $student), [
+        'samples' => $samples, 'similarity_confirmation' => $response->json('confirmation_token'),
+    ])->assertOk();
+    expect($previous->fresh())->toBeNull();
+    expect(FaceSample::where('siswa_id', $student->id)->count())->toBe(3);
+    expect(FaceSample::where('siswa_id', $other->id)->count())->toBe(2);
+    expect($handler->getRecords())->toHaveCount(1);
+    expect($handler->getRecords()[0]->context)->toBe([
+        'actor_id' => $operator->id, 'siswa_id' => $student->id,
+        'candidates' => [['siswa_id' => $other->id, 'student' => $other->nama, 'distance' => 0.0]],
+        'threshold' => 0.45,
+    ]);
+    $this->postJson(route('siswa.face.store', $student), [
+        'samples' => $samples, 'similarity_confirmation' => $response->json('confirmation_token'),
+    ])->assertConflict();
+});
+
+it('requires fresh similarity review when confirmation is stale or altered', function (string $change) {
+    $operator = User::factory()->create(['role' => 'operator', 'is_active' => 1]);
+    $student = Siswa::factory()->create();
+    $other = Siswa::factory()->create();
+    $samples = array_fill(0, 3, array_fill(0, 128, 0.125));
+    FaceSample::create(['siswa_id' => $other->id, 'model' => config('face-attendance.model'), 'descriptor' => $samples[0], 'created_by' => $operator->id]);
+    $response = $this->actingAs($operator)->postJson(route('siswa.face.store', $student), ['samples' => $samples])->assertConflict();
+    $token = $response->json('confirmation_token');
+    if ($change === 'samples') {
+        $samples[0][0] = 0.15;
+    } elseif ($change === 'token') {
+        $token = str_repeat('x', 40);
+    } elseif ($change === 'expired') {
+        $this->travel(11)->minutes();
+    } else {
+        $additional = Siswa::factory()->create();
+        FaceSample::create(['siswa_id' => $additional->id, 'model' => config('face-attendance.model'), 'descriptor' => $samples[0], 'created_by' => $operator->id]);
+    }
+
+    $this->postJson(route('siswa.face.store', $student), [
+        'samples' => $samples, 'similarity_confirmation' => $token,
+    ])->assertConflict()->assertJsonPath('code', 'face_similarity_review');
+
+    expect(FaceSample::where('siswa_id', $student->id)->count())->toBe(0);
+    $this->travelBack();
+})->with(['samples', 'token', 'expired', 'new candidate']);
+
+it('ignores own samples inactive samples other models and distant students during similarity review', function () {
+    $operator = User::factory()->create(['role' => 'operator', 'is_active' => 1]);
+    $student = Siswa::factory()->create();
+    $other = Siswa::factory()->create();
+    $samples = array_fill(0, 3, array_fill(0, 128, 0.125));
+    $base = ['model' => config('face-attendance.model'), 'descriptor' => $samples[0], 'created_by' => $operator->id];
+    FaceSample::create([...$base, 'siswa_id' => $student->id]);
+    FaceSample::create([...$base, 'siswa_id' => $other->id, 'is_active' => false]);
+    FaceSample::create([...$base, 'siswa_id' => $other->id, 'model' => 'old']);
+    FaceSample::create([...$base, 'siswa_id' => $other->id, 'descriptor' => [0.125]]);
+    FaceSample::create([...$base, 'siswa_id' => $other->id, 'descriptor' => array_fill(0, 128, 1)]);
+
+    $this->actingAs($operator)->postJson(route('siswa.face.store', $student), ['samples' => $samples])->assertOk();
+
+    expect(FaceSample::where('siswa_id', $student->id)->count())->toBe(3);
+    expect(FaceSample::where('siswa_id', $other->id)->count())->toBe(4);
+});
+
+it('checks every new sample and uses the configured similarity threshold', function () {
+    config(['face-enrollment.similarity_threshold' => 0.25]);
+    $operator = User::factory()->create(['role' => 'operator', 'is_active' => 1]);
+    $student = Siswa::factory()->create();
+    $other = Siswa::factory()->create();
+    $samples = array_fill(0, 3, array_fill(0, 128, 0.125));
+    $samples[0][0] = 0;
+    $samples[1][0] = 0;
+    $samples[2][0] = 0.5;
+    $reference = $samples[0];
+    $reference[0] = 0.75;
+    FaceSample::create(['siswa_id' => $other->id, 'model' => config('face-attendance.model'), 'descriptor' => $reference, 'created_by' => $operator->id]);
+
+    $this->actingAs($operator)->postJson(route('siswa.face.store', $student), ['samples' => $samples])
+        ->assertConflict()->assertJsonPath('candidates.0.distance', 0.25);
+
+    expect(FaceSample::where('siswa_id', $student->id)->count())->toBe(0);
+    config(['face-enrollment.similarity_threshold' => 0.24]);
+    $this->postJson(route('siswa.face.store', $student), ['samples' => $samples])->assertOk();
+    expect(FaceSample::where('siswa_id', $student->id)->count())->toBe(3);
+});
+
+it('rejects inconsistent sample pairs without replacing saved faces', function (int $first, int $second, string $positions) {
+    config(['face-enrollment.maximum_sample_distance' => 0.6]);
+    $operator = User::factory()->create(['role' => 'operator', 'is_active' => 1]);
+    $student = Siswa::factory()->create();
+    $previous = FaceSample::create(['siswa_id' => $student->id, 'model' => 'old', 'descriptor' => [0.25], 'created_by' => $operator->id]);
+    $samples = array_fill(0, 3, array_fill(0, 128, 0.125));
+    foreach ($samples as &$sample) {
+        $sample[0] = 0.0;
+    }
+    unset($sample);
+    $samples[$first][0] = -0.4;
+    $samples[$second][0] = 0.4;
+
+    $this->actingAs($operator)->postJson(route('siswa.face.store', $student), [
+        'samples' => $samples, 'maximum_sample_distance' => 99,
+    ])->assertUnprocessable()->assertInvalid([
+        'samples.'.$first => 'Sampel '.$positions.' belum konsisten',
+        'samples.'.$second => 'jarak 0.8000, maksimum 0.6000',
+    ]);
+
+    expect($previous->fresh()->descriptor)->toBe([0.25]);
+    expect($previous->fresh()->is_active)->toBeTrue();
+    $this->assertDatabaseCount('face_samples', 1);
+})->with([
+    'front and left' => [0, 1, 'depan dan kiri'],
+    'front and right' => [0, 2, 'depan dan kanan'],
+    'left and right' => [1, 2, 'kiri dan kanan'],
+]);
+
+it('accepts consistent samples at the configured maximum distance', function () {
+    config(['face-enrollment.maximum_sample_distance' => 0.5]);
+    $operator = User::factory()->create(['role' => 'operator', 'is_active' => 1]);
+    $student = Siswa::factory()->create();
+    $samples = array_fill(0, 3, array_fill(0, 128, 0.125));
+    $samples[0][0] = 0;
+    $samples[1][0] = 0.25;
+    $samples[2][0] = 0.5;
+
+    $this->actingAs($operator)->postJson(route('siswa.face.store', $student), ['samples' => $samples])->assertOk();
+
+    expect(FaceSample::where('siswa_id', $student->id)->orderBy('id')->get()->pluck('descriptor')->all())->toBe($samples);
+    $html = view('siswa.face-enrollment', ['siswa' => $student, 'faceSampleCount' => 3, 'kelasAktif' => 'X A'])->render();
+    expect($html)->toContain('data-maximum-sample-distance="0.5"');
+    config(['face-enrollment.maximum_sample_distance' => 0.49]);
+    $this->postJson(route('siswa.face.store', $student), ['samples' => $samples])
+        ->assertInvalid(['samples.0' => 'maksimum 0.4900', 'samples.2' => 'maksimum 0.4900']);
+    expect(FaceSample::where('siswa_id', $student->id)->orderBy('id')->get()->pluck('descriptor')->all())->toBe($samples);
+});
+
 it('stores only three encrypted samples when reenrolling and removes previous versions for that student', function (string $role) {
     $operator = User::factory()->create(['role' => $role, 'is_active' => 1]);
     $student = Siswa::factory()->create();

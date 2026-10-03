@@ -7,6 +7,7 @@ import recognitionManifest from '@vladmandic/face-api/model/face_recognition_mod
 import recognitionWeights from '@vladmandic/face-api/model/face_recognition_model.bin?url';
 import { initializeFaceBackend } from './face-prototype-performance';
 import { loadFaceWeights, waitForFaceStep } from './siswa-face-weights';
+import { createFaceExtractor } from './siswa-face-extractor.js';
 
 let loading;
 
@@ -29,20 +30,7 @@ export async function loadFaceModels(onProgress = () => {}) {
         });
     }
     await loading;
-    const extract = async canvas => {
-        const faces = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.65 }))
-            .withFaceLandmarks(true).withFaceDescriptors();
-        if (faces.length !== 1) {
-            const error = new Error(faces.length ? 'Ada lebih dari satu wajah. Pastikan hanya siswa ini di depan kamera.' : 'Wajah belum terdeteksi. Perbaiki posisi dan pencahayaan, lalu coba lagi.');
-            error.code = faces.length ? 'multiple_faces' : 'no_face';
-            throw error;
-        }
-        const descriptor = Array.from(faces[0].descriptor);
-        if (descriptor.length !== 128 || !descriptor.every(Number.isFinite)) {
-            throw new Error('Pola wajah belum terbaca. Silakan ambil ulang.');
-        }
-        return descriptor;
-    };
+    const extract = createFaceExtractor(faceapi);
     extract.backend = faceapi.tf.getBackend();
     return extract;
 }

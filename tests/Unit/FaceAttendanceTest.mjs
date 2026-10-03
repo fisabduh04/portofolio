@@ -66,6 +66,52 @@ test('a scan submits the descriptor and renders server identity as plain text', 
     assert.equal(page.get('result-label').textContent, 'Berhasil dicatat');
 });
 
+for (const [status, distance, second, gap, expected] of [
+    ['candidate', 0, 0.2, 0.2, /Cocok/],
+    ['unknown', 0.6, null, null, /melebihi ambang/],
+    ['ambiguous', 0.3, 0.34, 0.04, /Ambigu/],
+    ['unknown', null, null, null, /Tidak ada referensi/],
+]) {
+    test(`monitor displays server distances for ${status} with distance ${distance}`, async () => {
+        const page = scanner();
+        page.environment.fetch = async () => ({ ok: status === 'candidate', status: status === 'candidate' ? 200 : 422,
+            json: async () => ({ student: 'Siswa', kelas: 'X', status: 'Hadir', time: '10:00',
+                errors: status === 'candidate' ? undefined : { descriptor: ['Wajah belum cocok.'] },
+                matching: { status, distance, second_distance: second, gap, threshold: 0.45, minimum_gap: 0.08,
+                    candidates: distance === null ? [] : [{ student: '<b>Ahmad</b>', distance }, ...(second === null ? [] : [{ student: 'Budi', distance: second }])] } }) });
+        await page.click('start');
+        await page.click('capture');
+
+        assert.equal(page.get('match-distance').textContent, distance === null ? '—' : distance.toFixed(4));
+        assert.equal(page.get('match-second_distance').textContent, second === null ? '—' : second.toFixed(4));
+        assert.equal(page.get('match-gap').textContent, gap === null ? '—' : gap.toFixed(4));
+        assert.equal(page.get('match-threshold').textContent, '0.4500');
+        assert.equal(page.get('match-minimum_gap').textContent, '0.0800');
+        assert.match(page.get('match-status').textContent, expected);
+        assert.equal(page.get('match-candidates').textContent, distance === null ? 'Belum ada kandidat siswa.'
+            : `Kandidat terdekat (bukan kepastian identitas): 1. <b>Ahmad</b> — ${distance.toFixed(4)}${second === null ? '' : `; 2. Budi — ${second.toFixed(4)}`}`);
+
+        page.environment.fetch = async () => { throw new TypeError('Offline'); };
+        await page.click('capture');
+        assert.equal(page.get('match-distance').textContent, '—');
+        assert.match(page.get('match-status').textContent, /Belum ada hasil/);
+        assert.equal(page.get('match-candidates').textContent, 'Belum ada kandidat siswa.');
+    });
+}
+
+test('automatic waiting preserves the last Euclidean result', async () => {
+    const page = scanner();
+    page.environment.fetch = async () => ({ ok: true, json: async () => ({ student: 'Siswa',
+        matching: { status: 'candidate', distance: 0.3, second_distance: null, gap: null, threshold: 0.45, minimum_gap: 0.08 } }) });
+    await page.click('start');
+    await page.click('auto');
+    page.setFaceError('no_face');
+    await page.tick();
+
+    assert.equal(page.get('match-distance').textContent, '0.3000');
+    assert.match(page.get('match-status').textContent, /Cocok/);
+});
+
 test('rear camera selection supports scanning and can be changed after stopping', async () => {
     const page = scanner();
     const original = page.environment.navigator.mediaDevices.getUserMedia;

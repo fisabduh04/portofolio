@@ -27,6 +27,21 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         : 'Pengukuran menuju server halaman ini; bandingkan saat jam sibuk.');
     const message = text => { get('message').textContent = text; };
     const autoMessage = text => { get('auto-status').textContent = text; };
+    const distanceText = value => Number.isFinite(value) ? value.toFixed(4) : '—';
+    function showMatching(matching) {
+        const candidates = matching?.candidates || [];
+        get('match-candidates').textContent = candidates.length
+            ? `Kandidat terdekat (bukan kepastian identitas): ${candidates.map((candidate, index) => `${index + 1}. ${candidate.student} — ${distanceText(candidate.distance)}`).join('; ')}`
+            : 'Belum ada kandidat siswa.';
+        for (const name of ['distance', 'second_distance', 'gap', 'threshold', 'minimum_gap']) {
+            get(`match-${name}`).textContent = distanceText(matching?.[name]);
+        }
+        get('match-status').textContent = !matching ? 'Belum ada hasil pencocokan untuk pemindaian ini.'
+            : matching.status === 'candidate' ? 'Cocok: jarak dan selisih memenuhi syarat.'
+                : matching.status === 'ambiguous' ? 'Ambigu: selisih dua kandidat terlalu kecil.'
+                    : matching.distance === null ? 'Tidak ada referensi wajah yang memenuhi syarat.'
+                        : 'Tidak dikenali: jarak melebihi ambang.';
+    }
     function feedback(state, label, identity, detail) {
         get('feedback').dataset.state = state;
         get('result-label').textContent = label;
@@ -173,6 +188,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
         let measured = false;
         function beginMeasurement() {
             measured = true;
+            showMatching(null);
             for (const name of ['detection', 'response', 'server', 'overhead', 'total']) metric(name, '—');
             metric('status', 'Memindai…');
         }
@@ -213,6 +229,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
                 body: JSON.stringify({ mode: root.dataset.mode, jadwal_id: root.dataset.jadwal || null, type: root.dataset.type, materi, descriptor }),
             });
             const result = await response.json().catch(() => ({}));
+            showMatching(result.matching);
             responseMs = clock() - requestStarted;
             metric('response', duration(responseMs));
             if (Number.isFinite(result.server_ms) && result.server_ms >= 0) {

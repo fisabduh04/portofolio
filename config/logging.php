@@ -52,6 +52,16 @@ return [
 
     'channels' => [
 
+        'face-attendance' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/face-attendance.log'),
+            'level' => 'info',
+            'days' => 14,
+            'locking' => true,
+            'permission' => 0600,
+            'replace_placeholders' => true,
+        ],
+
         'stack' => [
             'driver' => 'stack',
             'channels' => explode(',', env('LOG_STACK', 'single')),

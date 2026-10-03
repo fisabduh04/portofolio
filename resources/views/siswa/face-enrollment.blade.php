@@ -1,4 +1,4 @@
-<section data-face-enrollment data-save-url="{{ route('siswa.face.store', $siswa) }}" class="space-y-5" aria-labelledby="face-heading">
+<section data-face-enrollment data-save-url="{{ route('siswa.face.store', $siswa) }}" data-student-name="{{ $siswa->nama }}" data-maximum-sample-distance="{{ config('face-enrollment.maximum_sample_distance') }}" class="space-y-5" aria-labelledby="face-heading">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
             <h2 id="face-heading" class="text-xl font-semibold text-gray-900 dark:text-white">Perekaman wajah</h2>

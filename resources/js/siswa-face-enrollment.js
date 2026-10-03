@@ -38,6 +38,7 @@ export async function requestFaceCamera(mediaDevices, timeoutMs = 30000, facingM
 export function initializeFaceEnrollment(documentRoot = document, environment = window) {
     const root = documentRoot.querySelector('[data-face-enrollment]');
     if (!root) return;
+    const maximumSampleDistance = Number(root.dataset.maximumSampleDistance ?? 0.6);
     const get = name => root.querySelector(`[data-${name}]`);
     const video = get('face-video');
     const previews = [...root.querySelectorAll('[data-face-sample]')];
@@ -160,11 +161,18 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
             canvas.width = Math.min(video.videoWidth, 960);
             canvas.height = Math.round(video.videoHeight * canvas.width / video.videoWidth);
             canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            const descriptor = await extract(canvas);
+            const descriptor = await extract(canvas, { checkQuality: true });
             if (run !== generation) return;
-            const reference = samples.find((sample, index) => sample && index !== target);
-            if (reference && Math.hypot(...descriptor.map((value, index) => value - reference[index])) > 0.6) {
-                throw new Error('Sampel berbeda dari wajah sebelumnya. Pastikan siswa yang sama dan coba lagi.');
+            const conflicts = [];
+            samples.forEach((reference, index) => {
+                if (!reference || index === target) return;
+                const distance = Math.hypot(...descriptor.map((value, dimension) => value - reference[dimension]));
+                if (distance > maximumSampleDistance) {
+                    conflicts.push(`${poses[index][0]} (jarak ${distance.toFixed(4)})`);
+                }
+            });
+            if (conflicts.length) {
+                throw new Error(`Sampel ${poses[target][0]} belum konsisten dengan ${conflicts.join(' dan ')}. Maksimum ${maximumSampleDistance.toFixed(4)}. Periksa foto pembanding dan ambil ulang posisi yang berbeda; pastikan siswa yang sama.`);
             }
             previews[target].src = canvas.toDataURL('image/jpeg', 0.85);
             previews[target].classList.remove('hidden');
@@ -191,15 +199,27 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
         get('face-save').textContent = 'Menyimpan…';
         get('save-message').textContent = 'Sedang menyimpan sampel wajah…';
         try {
-            const response = await environment.fetch(root.dataset.saveUrl, {
+            const submit = confirmation => environment.fetch(root.dataset.saveUrl, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': documentRoot.querySelector('meta[name="csrf-token"]').content },
-                body: JSON.stringify({ samples }),
+                body: JSON.stringify({ samples, ...(confirmation ? { similarity_confirmation: confirmation } : {}) }),
             });
-            const result = await response.json().catch(() => ({}));
+            let response = await submit();
+            let result = await response.json().catch(() => ({}));
+            if (response.status === 409 && result.code === 'face_similarity_review') {
+                const candidates = (result.candidates || []).map(candidate => `${candidate.student} (ID ${candidate.siswa_id}): jarak ${Number(candidate.distance).toFixed(4)}`).join('; ');
+                const detail = `${result.message} Kandidat: ${candidates}. Ambang ${Number(result.threshold).toFixed(4)}.`;
+                get('save-message').textContent = detail;
+                if (!environment.confirm(`${detail}\n\nSaya sudah memeriksa bahwa ketiga foto benar milik ${root.dataset.studentName || 'siswa ini'}. Tetap simpan?\nPilih Batal untuk mengambil ulang atau memeriksa data.`)) {
+                    get('save-message').textContent = `${detail} Belum disimpan. Periksa identitas atau ambil ulang sampel.`;
+                    return;
+                }
+                response = await submit(result.confirmation_token);
+                result = await response.json().catch(() => ({}));
+            }
             if (!response.ok) {
-                throw new Error(response.status === 419 ? 'Sesi berakhir. Muat ulang halaman dan rekam kembali.' : Object.values(result.errors || {}).flat()[0] || result.message || 'Penyimpanan gagal. Coba simpan kembali.');
+                throw new Error(response.status === 419 ? 'Sesi berakhir. Muat ulang halaman dan rekam kembali.' : [...new Set(Object.values(result.errors || {}).flat())].join(' ') || result.message || 'Penyimpanan gagal. Coba simpan kembali.');
             }
             dirty = false;
             get('enrollment-status').textContent = '3 sampel terdaftar';
