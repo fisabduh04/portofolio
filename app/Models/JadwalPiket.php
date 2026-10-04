@@ -18,6 +18,6 @@ class JadwalPiket extends Model
 
     public function tahun()
     {
-        return $this->belongsTo(tahun::class);
+        return $this->belongsTo(Tahun::class);
     }
 }
