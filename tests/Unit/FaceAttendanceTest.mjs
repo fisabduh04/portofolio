@@ -51,12 +51,11 @@ function scanner(mode = 'piket') {
         }, click: name => get(name).handlers.click() };
 }
 
-test('detector selection reaches the loader and switching clears comparison metrics', async () => {
+test('scanning defaults to tiny and switching to ssd clears comparison metrics', async () => {
     const page = scanner();
     const load = page.environment.loadFaceModels;
     const selected = [];
     page.environment.loadFaceModels = (progress, detector) => { selected.push(detector); return load(); };
-    page.get('detector').value = 'tiny';
     await page.click('start');
     assert.equal(page.get('detector').disabled, true);
     await page.click('capture');

@@ -29,8 +29,8 @@
                     <div>
                         <label for="scan-detector" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Model deteksi wajah</label>
                         <select id="scan-detector" data-scan-detector aria-describedby="scan-detector-help" class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                            <option value="tiny">TinyFaceDetector</option>
-                            <option value="ssd" selected>SSD MobileNet V1</option>
+                            <option value="tiny" selected>TinyFaceDetector</option>
+                            <option value="ssd">SSD MobileNet V1</option>
                         </select>
                         <p id="scan-detector-help" class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Matikan kamera untuk mengganti model. Bandingkan jarak Euclidean dan waktu deteksi dengan siswa serta pencahayaan yang sama. Pemindaian tetap mencatat presensi.</p>
                     </div>

@@ -149,7 +149,7 @@ export function initializeFaceAttendance(documentRoot = document, environment = 
             metric('model', 'Memuat…');
             message('Memuat model wajah…');
             const progress = text => { if (run === generation) message(text); };
-            const detector = get('detector').value || 'ssd';
+            const detector = get('detector').value || 'tiny';
             const model = await waitForFaceStep(environment.loadFaceModels ? environment.loadFaceModels(progress, detector)
                 : import('./siswa-face-models').then(module => module.loadFaceModels(progress, detector)), 60000, 'Model terlalu lama dimuat. Muat ulang halaman lalu coba lagi.');
             if (run !== generation) return;
