@@ -16,14 +16,26 @@
                 <span data-camera-status class="text-xs text-gray-500 dark:text-gray-400">Kamera nonaktif</span>
             </div>
             <div class="p-4 sm:p-5">
-                <label class="mb-4 block text-sm font-medium text-gray-900 dark:text-white">
-                    Kamera
-                    <select data-camera-facing class="mt-2 block w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-                        <option value="user">Kamera depan / webcam</option>
-                        <option value="environment">Kamera belakang</option>
-                    </select>
-                    <span class="mt-1 block text-xs font-normal text-gray-500 dark:text-gray-400">Matikan kamera sebelum mengganti pilihan kamera.</span>
-                </label>
+                <div class="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/50">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="min-w-0">
+                            <label for="enrollment-camera-facing" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Kamera</label>
+                            <select id="enrollment-camera-facing" data-camera-facing aria-describedby="enrollment-settings-help" class="block min-h-11 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                <option value="user">Kamera depan / webcam</option>
+                                <option value="environment">Kamera belakang</option>
+                            </select>
+                        </div>
+                        <div class="min-w-0">
+                            <label for="enrollment-detector" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Model deteksi wajah</label>
+                            <select id="enrollment-detector" data-face-detector aria-describedby="enrollment-detector-help enrollment-settings-help" class="block min-h-11 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                <option value="tiny">TinyFaceDetector</option>
+                                <option value="ssd" selected>SSD MobileNet V1</option>
+                            </select>
+                            <p id="enrollment-detector-help" class="mt-1.5 text-xs leading-5 text-gray-500 dark:text-gray-400">Tiny lebih ringan untuk HP. SSD adalah model awal perekaman.</p>
+                        </div>
+                    </div>
+                    <p id="enrollment-settings-help" class="mt-3 border-t border-gray-200 pt-3 text-xs leading-5 text-gray-500 dark:border-gray-700 dark:text-gray-400">Matikan kamera untuk mengganti kamera atau model. Uji dengan posisi dan pencahayaan yang sama. Sampel baru tersimpan setelah Anda menekan Simpan wajah.</p>
+                </div>
                 <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-950 sm:aspect-video">
                     <video data-face-video autoplay muted playsinline class="size-full -scale-x-100 object-contain" aria-label="Pratinjau kamera siswa"></video>
                     <div data-camera-placeholder class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">

@@ -57,6 +57,7 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
     const message = text => { get('face-message').textContent = text; };
     function render() {
         get('camera-facing').disabled = busy || saving || !!stream;
+        get('face-detector').disabled = busy || saving || !!stream;
         const count = samples.filter(Boolean).length;
         get('sample-count').textContent = `${count} dari 3 sampel`;
         get('camera-start').disabled = busy || saving || !!stream;
@@ -119,8 +120,9 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
             if (run !== generation) return;
             message('Memuat modul pengenalan wajah…');
             const progress = text => { if (run === generation) message(text); };
+            const detector = get('face-detector').value || 'ssd';
             const models = await waitForFaceStep(
-                environment.loadFaceModels ? environment.loadFaceModels(progress) : import('./siswa-face-models').then(module => module.loadFaceModels(progress)),
+                environment.loadFaceModels ? environment.loadFaceModels(progress, detector) : import('./siswa-face-models').then(module => module.loadFaceModels(progress, detector)),
                 60000,
                 'Pemuatan model belum selesai setelah satu menit. Muat ulang halaman dengan Ctrl + Shift + R lalu coba lagi.',
             );

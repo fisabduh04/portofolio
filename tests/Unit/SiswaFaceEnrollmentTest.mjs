@@ -47,6 +47,81 @@ function setup(maximumSampleDistance = '0.6') {
     return { get, click, environment, track, document, retakes, previews };
 }
 
+test('enrollment switches detectors after stopping the camera and preserves captured samples', async () => {
+    const page = setup();
+    const loaded = [];
+    const captured = [];
+    page.environment.loadFaceModels = async (progress, detector) => {
+        loaded.push(detector);
+        return async () => {
+            captured.push(detector);
+            return Array(128).fill(0.1);
+        };
+    };
+
+    assert.equal(page.get('face-detector').disabled, false);
+    await page.click('camera-start');
+    assert.equal(page.get('face-detector').disabled, true);
+    await page.click('face-capture');
+    await page.click('camera-stop');
+    assert.equal(page.get('face-detector').disabled, false);
+    page.get('face-detector').value = 'tiny';
+    await page.click('camera-start');
+    await page.click('face-capture');
+    await page.click('camera-stop');
+    page.get('face-detector').value = 'ssd';
+    await page.click('camera-start');
+    await page.click('face-capture');
+
+    assert.deepEqual(loaded, ['ssd', 'tiny', 'ssd']);
+    assert.deepEqual(captured, ['ssd', 'tiny', 'ssd']);
+    assert.equal(page.get('sample-count').textContent, '3 dari 3 sampel');
+    assert.equal(page.get('face-save').disabled, false);
+});
+
+test('detector choice stays locked during startup and unlocks after model loading fails', async t => {
+    const page = setup();
+    t.mock.method(console, 'error', () => {});
+    let rejectModel;
+    page.environment.loadFaceModels = () => new Promise((resolve, reject) => { rejectModel = reject; });
+
+    const starting = page.click('camera-start');
+    assert.equal(page.get('face-detector').disabled, true);
+    await new Promise(resolve => setImmediate(resolve));
+    const error = new Error('Model gagal dimuat.');
+    rejectModel(error);
+    await starting;
+
+    assert.equal(page.get('face-detector').disabled, false);
+    assert.equal(page.get('face-capture').disabled, true);
+    assert.equal(page.get('face-message').textContent, 'Model gagal dimuat.');
+    assert.equal(page.track.stopped, true);
+    page.get('face-detector').value = 'tiny';
+    page.environment.loadFaceModels = async (progress, detector) => {
+        assert.equal(detector, 'tiny');
+        return async () => Array(128).fill(0.1);
+    };
+    await page.click('camera-start');
+    await page.click('face-capture');
+    assert.equal(page.get('sample-count').textContent, '1 dari 3 sampel');
+});
+
+test('detector choice stays locked while saving with the camera stopped', async () => {
+    const page = setup();
+    await page.click('camera-start');
+    for (let index = 0; index < 3; index++) await page.click('face-capture');
+    await page.click('camera-stop');
+    let finish;
+    page.environment.fetch = () => new Promise(resolve => { finish = resolve; });
+
+    const saving = page.click('face-save');
+    assert.equal(page.get('face-detector').disabled, true);
+    finish({ ok: true, json: async () => ({ count: 3 }) });
+    await saving;
+
+    assert.equal(page.get('face-detector').disabled, false);
+});
+
 test('three captures enable saving and successful saving stops the camera', async () => {
     const page = setup();
     assert.equal(page.get('face-save').disabled, true);
