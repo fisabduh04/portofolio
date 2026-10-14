@@ -9,7 +9,10 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 class PegawaiController extends Controller
@@ -171,17 +174,28 @@ class PegawaiController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id): RedirectResponse
     {
         $pegawai = pegawai::findOrFail($id); // Ensure model is loaded
+        $user = $pegawai->user;
+
+        if (is_string($request->input('email'))) {
+            $request->merge(['email' => strtolower(trim($request->input('email')))]);
+        }
 
         $request->validate([
             'name' => 'required',
             'nuptk' => 'required',
             'foto' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+            'email' => ['sometimes', $user ? 'required' : 'nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
         ]);
 
         $data = $request->all();
+        $changesLoginEmail = $user && array_key_exists('email', $data) && $data['email'] !== $user->email;
+
+        if ($changesLoginEmail) {
+            Gate::authorize('manage', $user);
+        }
 
         if ($request->hasFile('foto')) {
             // Delete old photo if exists
@@ -191,7 +205,16 @@ class PegawaiController extends Controller
             $data['foto'] = $request->file('foto')->store('uploads/pegawai', 'public');
         }
 
-        $pegawai->update($data);
+        DB::transaction(function () use ($pegawai, $user, $data, $changesLoginEmail): void {
+            $pegawai->update($data);
+
+            if ($changesLoginEmail) {
+                Password::broker(config('fortify.passwords'))->deleteToken($user);
+                $user->email = $data['email'];
+                $user->email_verified_at = null;
+                $user->save();
+            }
+        });
 
         return redirect()->route('pegawai.index')->with('message', 'Data Pegawai berhasil diperbarui')->with('type', 'success');
     }
