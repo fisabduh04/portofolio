@@ -118,6 +118,6 @@ class SiswaFaceController extends Controller
         });
         Log::info('Data wajah siswa dihapus', ['siswa_id' => $siswa->id, 'actor_id' => $request->user()->id, 'deleted_samples' => $deleted]);
 
-        return redirect()->route('siswa.show', $siswa)->with('message', 'Data wajah berhasil dihapus. Profil dan riwayat absensi tetap tersimpan.')->with('type', 'success');
+        return redirect()->route('siswa.show', ['siswa' => $siswa, 'tab' => 'face-enrollment'])->with('message', 'Data wajah berhasil dihapus. Profil dan riwayat absensi tetap tersimpan.')->with('type', 'success');
     }
 }

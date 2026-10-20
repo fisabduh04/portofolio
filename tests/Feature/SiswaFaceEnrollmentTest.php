@@ -233,9 +233,11 @@ it('renders the face panel with escaped student identity and saved status', func
     $html = view('siswa.face-enrollment', ['siswa' => $student, 'faceSampleCount' => 3, 'kelasAktif' => 'X A'])->render();
 
     expect($html)->toContain('3 sampel terdaftar', 'Simpan wajah', 'Hapus data wajah', 'X A', 'confirm_delete', '&lt;script&gt;alert(1)&lt;/script&gt;')->not->toContain('<script>alert(1)</script>');
+    expect($html)->toContain('<option value="tiny" selected>TinyFaceDetector</option>')->not->toContain('<option value="ssd" selected>');
 });
 
 it('deletes only the selected students face samples after confirmation and preserves attendance', function () {
+    \Illuminate\Support\Facades\View::share('sekolah', (object) ['logo_url' => '/logo.png', 'nama_sekolah' => 'Sekolah']);
     $operator = User::factory()->create(['role' => 'operator', 'is_active' => 1]);
     $student = Siswa::factory()->create();
     $other = Siswa::factory()->create();
@@ -248,7 +250,11 @@ it('deletes only the selected students face samples after confirmation and prese
     $attendance = \App\Models\Absensi::create(['siswa_id' => $student->id, 'logbook_id' => $logbook->id, 'status' => 'Hadir']);
     $this->actingAs($operator)->deleteJson(route('siswa.face.destroy', $student))->assertInvalid(['confirm_delete']);
     $this->assertDatabaseCount('face_samples', 4);
-    $this->delete(route('siswa.face.destroy', $student), ['confirm_delete' => 1, 'siswa_id' => $other->id])->assertRedirect(route('siswa.show', $student));
+    $enrollmentUrl = route('siswa.show', ['siswa' => $student, 'tab' => 'face-enrollment']);
+    $this->delete(route('siswa.face.destroy', $student), ['confirm_delete' => 1, 'siswa_id' => $other->id])->assertRedirect($enrollmentUrl);
+    $this->withoutVite()->get($enrollmentUrl)
+        ->assertSee('aria-controls="face-enrollment" aria-selected="true"', false)
+        ->assertSee('Belum terdaftar');
     expect(FaceSample::where('siswa_id', $student->id)->count())->toBe(0);
     expect(FaceSample::where('siswa_id', $other->id)->count())->toBe(2);
     expect($student->fresh())->not->toBeNull();

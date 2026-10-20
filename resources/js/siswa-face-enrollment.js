@@ -120,7 +120,7 @@ export function initializeFaceEnrollment(documentRoot = document, environment = 
             if (run !== generation) return;
             message('Memuat modul pengenalan wajah…');
             const progress = text => { if (run === generation) message(text); };
-            const detector = get('face-detector').value || 'ssd';
+            const detector = get('face-detector').value || 'tiny';
             const models = await waitForFaceStep(
                 environment.loadFaceModels ? environment.loadFaceModels(progress, detector) : import('./siswa-face-models').then(module => module.loadFaceModels(progress, detector)),
                 60000,

@@ -47,7 +47,7 @@ function setup(maximumSampleDistance = '0.6') {
     return { get, click, environment, track, document, retakes, previews };
 }
 
-test('enrollment switches detectors after stopping the camera and preserves captured samples', async () => {
+test('enrollment defaults to tiny and switches detectors without losing captured samples', async () => {
     const page = setup();
     const loaded = [];
     const captured = [];
@@ -65,16 +65,16 @@ test('enrollment switches detectors after stopping the camera and preserves capt
     await page.click('face-capture');
     await page.click('camera-stop');
     assert.equal(page.get('face-detector').disabled, false);
-    page.get('face-detector').value = 'tiny';
-    await page.click('camera-start');
-    await page.click('face-capture');
-    await page.click('camera-stop');
     page.get('face-detector').value = 'ssd';
     await page.click('camera-start');
     await page.click('face-capture');
+    await page.click('camera-stop');
+    page.get('face-detector').value = 'tiny';
+    await page.click('camera-start');
+    await page.click('face-capture');
 
-    assert.deepEqual(loaded, ['ssd', 'tiny', 'ssd']);
-    assert.deepEqual(captured, ['ssd', 'tiny', 'ssd']);
+    assert.deepEqual(loaded, ['tiny', 'ssd', 'tiny']);
+    assert.deepEqual(captured, ['tiny', 'ssd', 'tiny']);
     assert.equal(page.get('sample-count').textContent, '3 dari 3 sampel');
     assert.equal(page.get('face-save').disabled, false);
 });

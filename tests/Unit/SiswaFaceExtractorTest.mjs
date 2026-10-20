@@ -17,7 +17,7 @@ function fixture({ brightness = 128, textured = true, box = { x: 100, y: 100, wi
         assert.equal(input, canvas);
         if (detector === 'tiny') {
             assert.ok(options instanceof api.TinyFaceDetectorOptions);
-            assert.equal(options.inputSize, 320);
+            assert.equal(options.inputSize, 512);
             assert.equal(options.scoreThreshold, 0.65);
         } else {
             assert.ok(options instanceof api.SsdMobilenetv1Options);

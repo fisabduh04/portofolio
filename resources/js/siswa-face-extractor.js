@@ -3,7 +3,7 @@ import { facePositionAssessment, faceImageQuality } from './face-prototype-quali
 export function createFaceExtractor(faceapi, detector = 'ssd') {
     if (!['tiny', 'ssd'].includes(detector)) throw new Error('Model deteksi tidak tersedia.');
     const options = detector === 'tiny'
-        ? new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.65 })
+        ? new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.65 })
         : new faceapi.SsdMobilenetv1Options({ minConfidence: 0.65 });
     return async (canvas, { checkQuality = false } = {}) => {
         const faces = await faceapi.detectAllFaces(canvas, options)

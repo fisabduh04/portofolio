@@ -28,10 +28,10 @@
                         <div class="min-w-0">
                             <label for="enrollment-detector" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Model deteksi wajah</label>
                             <select id="enrollment-detector" data-face-detector aria-describedby="enrollment-detector-help enrollment-settings-help" class="block min-h-11 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-                                <option value="tiny">TinyFaceDetector</option>
-                                <option value="ssd" selected>SSD MobileNet V1</option>
+                                <option value="tiny" selected>TinyFaceDetector</option>
+                                <option value="ssd">SSD MobileNet V1</option>
                             </select>
-                            <p id="enrollment-detector-help" class="mt-1.5 text-xs leading-5 text-gray-500 dark:text-gray-400">Tiny lebih ringan untuk HP. SSD adalah model awal perekaman.</p>
+                            <p id="enrollment-detector-help" class="mt-1.5 text-xs leading-5 text-gray-500 dark:text-gray-400">TinyFaceDetector dipilih secara default dan lebih ringan untuk HP. SSD tersedia sebagai pilihan alternatif.</p>
                         </div>
                     </div>
                     <p id="enrollment-settings-help" class="mt-3 border-t border-gray-200 pt-3 text-xs leading-5 text-gray-500 dark:border-gray-700 dark:text-gray-400">Matikan kamera untuk mengganti kamera atau model. Uji dengan posisi dan pencahayaan yang sama. Sampel baru tersimpan setelah Anda menekan Simpan wajah.</p>

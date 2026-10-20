@@ -10,6 +10,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Http/Controllers/AbsensiController.php, app/Http/Controllers/GuruAbsensiController.php, app/Http/Controllers/PegawaiWajibHadirController.php | .ai/rules/controllers.md |
 | app/Services/**, app/Traits/AbsensiRekapTrait.php, app/Http/Controllers/Absensi*Controller.php, app/Exports/** | .ai/rules/exports.md |
 | tests/Feature/WaliKelasTest.php | .ai/rules/feature.md |
+| **/* | .ai/rules/general.md |
 | resources/views/jadwal/** | .ai/rules/jadwal.md |
 | resources/js/face-attendance.js | .ai/rules/js.md |
 | resources/views/kelassiswa/** | .ai/rules/kelassiswa.md |
