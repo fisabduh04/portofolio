@@ -229,7 +229,7 @@
                                             @can('manage', $user)
                                                 <form action="{{ route('operator.users.resend-reset') }}" method="POST" class="inline">
                                                     @csrf
-                                                    <input type="hidden" name="email" value="{{ $user->email }}">
+                                                    <input type="hidden" name="email" value="{{ $p->email }}">
                                                     <button type="submit" class="text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-gray-100" title="Kirim Ulang Reset Password">
                                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
                                                     </button>
@@ -274,7 +274,8 @@
 
                                                             <div>
                                                                 <label for="email-{{ $p->id }}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email Login</label>
-                                                                <input type="email" name="email" id="email-{{ $p->id }}" value="{{ $p->email }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" placeholder="name@school.com" required>
+                                                                <input type="email" id="email-{{ $p->id }}" value="{{ $p->email }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" placeholder="Isi email di data pegawai" readonly>
+                                                                <p>Email mengikuti data pegawai. Ubah email melalui menu Pegawai.</p>
                                                             </div>
                                                             <div>
                                                                 <label for="role-{{ $p->id }}" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Role Awal</label>

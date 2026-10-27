@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
@@ -20,7 +20,8 @@ class PasswordResetLinkController extends Controller
         ]);
 
         // 1. Custom Check: User Active?
-        $user = User::where('email', $request->email)->first();
+        $user = Auth::createUserProvider(config('auth.guards.'.config('fortify.guard').'.provider'))
+            ->retrieveByCredentials($request->only('email'));
 
         // If user exists AND is inactive (0)
         if ($user && (int) $user->is_active === 0) {

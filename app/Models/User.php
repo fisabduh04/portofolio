@@ -4,7 +4,10 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -80,9 +83,27 @@ class User extends Authenticatable
         return (bool) $this->is_active && ($this->role?->canManagePayroll() ?? false);
     }
 
-    public function pegawai()
+    public function pegawai(): BelongsTo
     {
         return $this->belongsTo(Pegawai::class);
+    }
+
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => $this->pegawai_id !== null
+                ? $this->pegawai?->email
+                : $value,
+        );
+    }
+
+    public function scopeForLoginEmail(Builder $query, string $email): Builder
+    {
+        $email = strtolower(trim($email));
+
+        return $query->where(fn (Builder $accounts): Builder => $accounts
+            ->whereHas('pegawai', fn (Builder $employees): Builder => $employees->where('email', $email))
+            ->orWhere(fn (Builder $unlinked): Builder => $unlinked->whereNull('pegawai_id')->where('email', $email)));
     }
 
     public function isPiketToday(): bool

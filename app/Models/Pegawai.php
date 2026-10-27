@@ -7,10 +7,55 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class Pegawai extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::saving(function (Pegawai $pegawai): void {
+            if ($pegawai->isDirty('email') && is_string($pegawai->email)) {
+                $pegawai->email = strtolower(trim($pegawai->email));
+            }
+        });
+
+        static::updating(function (Pegawai $pegawai): void {
+            if (! $pegawai->isDirty('email')) {
+                return;
+            }
+
+            $account = $pegawai->user()->first();
+            if (! $account) {
+                return;
+            }
+
+            if (Auth::check()) {
+                Gate::authorize('manage', $account);
+            }
+
+            Validator::make(['email' => $pegawai->email], [
+                'email' => ['required', 'email', 'max:255'],
+            ])->validate();
+
+            if (User::forLoginEmail($pegawai->email)->whereKeyNot($account->id)->exists()) {
+                throw ValidationException::withMessages(['email' => 'Email sudah digunakan oleh akun lain.']);
+            }
+
+            Password::broker(config('fortify.passwords'))->deleteToken($account);
+        });
+
+        static::updated(function (Pegawai $pegawai): void {
+            if ($pegawai->wasChanged('email')) {
+                $pegawai->user()->update(['email_verified_at' => null]);
+            }
+        });
+    }
 
     public function scopeGuru(Builder $query): Builder
     {

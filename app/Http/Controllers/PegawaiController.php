@@ -5,14 +5,14 @@ namespace App\Http\Controllers;
 use App\Exports\PegawaiExport;
 use App\Imports\PegawaiImport;
 use App\Models\Pegawai;
+use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 
 class PegawaiController extends Controller
@@ -187,14 +187,16 @@ class PegawaiController extends Controller
             'name' => 'required',
             'nuptk' => 'required',
             'foto' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
-            'email' => ['sometimes', $user ? 'required' : 'nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
+            'email' => ['sometimes', $user ? 'required' : 'nullable', 'email', 'max:255'],
         ]);
 
         $data = $request->all();
-        $changesLoginEmail = $user && array_key_exists('email', $data) && $data['email'] !== $user->email;
 
-        if ($changesLoginEmail) {
+        if ($user && array_key_exists('email', $data) && $data['email'] !== $pegawai->email) {
             Gate::authorize('manage', $user);
+            if (User::forLoginEmail($data['email'])->whereKeyNot($user->id)->exists()) {
+                throw ValidationException::withMessages(['email' => 'Email sudah digunakan oleh akun lain.']);
+            }
         }
 
         if ($request->hasFile('foto')) {
@@ -205,15 +207,8 @@ class PegawaiController extends Controller
             $data['foto'] = $request->file('foto')->store('uploads/pegawai', 'public');
         }
 
-        DB::transaction(function () use ($pegawai, $user, $data, $changesLoginEmail): void {
+        DB::transaction(function () use ($pegawai, $data): void {
             $pegawai->update($data);
-
-            if ($changesLoginEmail) {
-                Password::broker(config('fortify.passwords'))->deleteToken($user);
-                $user->email = $data['email'];
-                $user->email_verified_at = null;
-                $user->save();
-            }
         });
 
         return redirect()->route('pegawai.index')->with('message', 'Data Pegawai berhasil diperbarui')->with('type', 'success');

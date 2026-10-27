@@ -7,10 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class UserProvisioningController extends Controller
 {
@@ -48,7 +51,6 @@ class UserProvisioningController extends Controller
         Gate::authorize('viewAny', User::class);
         $data = $request->validate([
             'pegawai_id' => ['required', 'integer', 'exists:pegawais,id'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'role' => ['required', 'in:'.implode(',', array_column(UserRole::cases(), 'value'))],
         ]);
 
@@ -70,11 +72,19 @@ class UserProvisioningController extends Controller
                 ->withInput();
         }
 
+        Validator::make(['email' => $pegawai->email], [
+            'email' => ['required', 'email', 'max:255'],
+        ], ['email.required' => 'Isi email pada data pegawai sebelum membuat akun.'])->validate();
+
+        if (User::forLoginEmail($pegawai->email)->exists()) {
+            throw ValidationException::withMessages(['email' => 'Email pegawai sudah digunakan oleh akun lain.']);
+        }
+
         // Buat User Baru
         $user = User::create([
             'pegawai_id' => $pegawai->id,
             'name' => $pegawai->name ?? 'Pegawai',
-            'email' => strtolower(trim($data['email'])),
+            'email' => null,
             'password' => bcrypt(Str::random(40)),
             'role' => $data['role'],
             'is_active' => 0,
@@ -169,10 +179,12 @@ class UserProvisioningController extends Controller
     public function resendReset(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'email', 'exists:users,email'],
+            'email' => ['required', 'email'],
         ]);
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        $user = Auth::createUserProvider(config('auth.guards.'.config('fortify.guard').'.provider'))
+            ->retrieveByCredentials($request->only('email'));
+        abort_unless($user, 404);
 
         // Security Check
         if (Gate::denies('manage', $user)) {
