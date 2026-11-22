@@ -6,6 +6,7 @@ use App\Models\Sekolah;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
+use Livewire\Livewire;
 
 uses(Tests\TestCase::class);
 
@@ -117,7 +118,7 @@ it('refuses an existing livewire master data page after the account becomes a tr
     expect($matches)->toHaveKey(1);
     $snapshot = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
     $actor->update(['role' => 'bendahara']);
-    $this->actingAs($actor->fresh())->postJson(route('livewire.update'), [
+    $this->actingAs($actor->fresh())->postJson(Livewire::getUpdateUri(), [
         'components' => [[
             'snapshot' => $snapshot,
             'updates' => [],

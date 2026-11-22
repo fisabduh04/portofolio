@@ -17,6 +17,11 @@ return [
 
     'default' => env('CACHE_STORE', 'database'),
 
+    /** Cache aplikasi hanya perlu memulihkan objek profil sekolah. */
+    'serializable_classes' => [
+        App\Models\Sekolah::class,
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Cache Stores

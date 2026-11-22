@@ -20,6 +20,9 @@ return [
 
     'driver' => env('SESSION_DRIVER', 'database'),
 
+    /** Pertahankan format sesi agar sesi Laravel 12 tetap dapat dibaca. */
+    'serialization' => 'php',
+
     /*
     |--------------------------------------------------------------------------
     | Session Lifetime
