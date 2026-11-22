@@ -5,6 +5,8 @@
 
     RewriteEngine On
 
+    RewriteRule ^(?:storage|uploads)/.*\.(?:php[0-9]*|phtml|pht|phar|cgi|fcgi|pl|py|sh|shtml|asp|aspx|jsp)(?:[./]|$) - [F,L,NC]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

@@ -68,8 +68,6 @@ Route::middleware(['auth', 'active', 'treasurer-access'])->group(function () {
     // Route::resource('siswa', SiswaController::class);
 
     // Route Kelas Siswa
-    Route::delete('/kelassiswa/bulk-delete', [KelasSiswaController::class, 'destroy'])->name('kelassiswa.bulkDelete');
-    Route::resource('kelassiswa', KelasSiswaController::class);
     Route::get('/kelas-siswa-export', [KelasSiswaController::class, 'export'])->name('kelas-siswa-export');
     Route::post('kelas-siswa-import', [KelasSiswaController::class, 'import'])->name('kelas-siswa-import');
 
@@ -179,7 +177,8 @@ Route::middleware(['auth', 'active', 'treasurer-access'])->group(function () {
         Route::resource('siswa', SiswaController::class);
         Route::post('siswa/{siswa}/wajah', [SiswaFaceController::class, 'store'])->middleware('throttle:10,1')->name('siswa.face.store');
         Route::delete('siswa/{siswa}/wajah', [SiswaFaceController::class, 'destroy'])->middleware('throttle:10,1')->name('siswa.face.destroy');
-        Route::resource('kelassiswa', KelasSiswaController::class);
+        Route::delete('/kelassiswa/bulk-delete', [KelasSiswaController::class, 'destroy'])->name('kelassiswa.bulkDelete');
+        Route::resource('kelassiswa', KelasSiswaController::class)->whereNumber('kelassiswa');
         // Jadwal Specific Routes (Must be before resource to avoid ID conflict)
         Route::get('/jadwal/data', [JadwalController::class, 'getJadwalJson']);
         Route::delete('/jadwal/bulk-delete', [JadwalController::class, 'bulkDelete'])->name('jadwal.bulkDelete');

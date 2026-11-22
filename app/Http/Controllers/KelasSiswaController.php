@@ -12,6 +12,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -220,33 +222,24 @@ class KelasSiswaController extends Controller
 
     public function destroy(Request $request, ?int $id = null): RedirectResponse
     {
-        // 1. Cek apakah ada input 'id' (array) dari Body (Bulk Delete)
-        // Kita prioritaskan ini karena form bulk delete mungkin mengirim ke URL dengan ID sembarang (misal: ID baris pertama)
-        if ($request->has('id') && is_array($request->input('id'))) {
-            $ids = $request->input('id');
-        }
-        // 2. Jika tidak ada di body, cek apakah ada ID dari Route Parameter (Single Delete)
-        elseif ($id) {
-            $ids = [$id];
-        }
-        // 3. Fallback: Cek input 'id' lagi kalau-kalau bukan array (meski jarang)
-        else {
-            $ids = $request->input('id');
-        }
+        Gate::authorize('manage-data-master');
 
-        // Validasi
-        if (empty($ids)) {
-            return redirect()->back(fallback: route('kelassiswa.index'))
-                ->with('message', 'Data tidak valid atau tidak ada yang dipilih.')
-                ->with('type', 'error');
-        }
+        $selectedIds = $id !== null ? [$id] : $request->input('id');
+        $validated = Validator::make(['id' => $selectedIds], [
+            'id' => ['required', 'array', 'list', 'min:1'],
+            'id.*' => ['bail', 'required', 'integer', 'distinct', 'exists:kelas_siswas,id'],
+        ], [
+            'id.required' => 'Pilih setidaknya satu penempatan kelas untuk dihapus.',
+            'id.array' => 'Daftar penempatan kelas tidak valid.',
+            'id.list' => 'Daftar penempatan kelas tidak valid.',
+            'id.min' => 'Pilih setidaknya satu penempatan kelas untuk dihapus.',
+            'id.*.required' => 'ID penempatan kelas wajib diisi.',
+            'id.*.integer' => 'ID penempatan kelas tidak valid.',
+            'id.*.distinct' => 'Penempatan kelas tidak boleh dipilih lebih dari sekali.',
+            'id.*.exists' => 'Penempatan kelas yang dipilih tidak tersedia. Muat ulang halaman.',
+        ])->validate();
 
-        // Pastikan ids adalah array jika belum (untuk safety)
-        if (! is_array($ids)) {
-            $ids = [$ids];
-        }
-
-        KelasSiswa::whereIn('id', $ids)->delete();
+        KelasSiswa::whereKey($validated['id'])->delete();
 
         return redirect()->back(fallback: route('kelassiswa.index'))
             ->with('message', 'Data berhasil dihapus.')

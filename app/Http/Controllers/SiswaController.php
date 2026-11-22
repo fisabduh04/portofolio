@@ -10,13 +10,28 @@ use App\Models\Tahun;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
+use RuntimeException;
+use Throwable;
 
 class SiswaController extends Controller
 {
+    private const PHOTO_RULES = ['bail', 'nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'extensions:jpg,jpeg,png,gif', 'max:2048', 'dimensions:max_width=2048,max_height=2048'];
+
+    private const PHOTO_MESSAGES = [
+        'foto.image' => 'Foto siswa harus berupa gambar yang valid.',
+        'foto.mimes' => 'Format foto siswa harus JPG, PNG, atau GIF.',
+        'foto.extensions' => 'Ekstensi foto siswa harus JPG, PNG, atau GIF.',
+        'foto.max' => 'Ukuran foto siswa maksimal 2 MB.',
+        'foto.dimensions' => 'Dimensi foto siswa maksimal 2048 × 2048 piksel.',
+    ];
+
     /**
      * Display a listing of the resource.
      */
@@ -116,18 +131,13 @@ class SiswaController extends Controller
      */
     public function store(Request $request)
     {
-        // @dd($request->all());
         $request->validate([
             'nama' => 'required',
             'nipd' => 'required',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png,gif,png|max:2048',
-        ]);
-        $data = $request->all();
+            'foto' => self::PHOTO_RULES,
+        ], self::PHOTO_MESSAGES);
 
-        if ($request->hasFile('foto')) {
-            $data['foto'] = $request->file('foto')->store('uploads/foto', 'public');
-        }
-        Siswa::create($data);
+        $this->saveStudent($request);
 
         return redirect('siswa')->with('message', 'Data telah disimpan')->with('type', 'success');
     }
@@ -300,19 +310,10 @@ class SiswaController extends Controller
         $request->validate([
             'nama' => 'required',
             'nipd' => 'required',
-        ]);
+            'foto' => self::PHOTO_RULES,
+        ], self::PHOTO_MESSAGES);
 
-        $data = $request->all();
-
-        if ($request->hasFile('foto')) {
-            // Hapus foto lama jika ada
-            if ($siswa->foto) {
-                Storage::disk('public')->delete($siswa->foto);
-            }
-            $data['foto'] = $request->file('foto')->store('uploads/foto', 'public');
-        }
-
-        $siswa->update($data);
+        $this->saveStudent($request, $siswa);
 
         return redirect()->route('siswa.index')->with('message', 'Data berhasil diperbarui')->with('type', 'success');
     }
@@ -344,5 +345,81 @@ class SiswaController extends Controller
         report($exception);
 
         return back()->with('message', 'Data siswa gagal dihapus. Silakan coba kembali.')->with('type', 'error');
+    }
+
+    private function saveStudent(Request $request, ?Siswa $student = null): void
+    {
+        $data = $request->except('foto');
+        $previousPhoto = $student?->foto;
+        $newPhoto = $request->hasFile('foto') ? $this->storeStudentPhoto($request->file('foto')) : null;
+        if ($newPhoto !== null) {
+            $data['foto'] = $newPhoto;
+        }
+
+        try {
+            DB::transaction(function () use ($student, $data): void {
+                if ($student) {
+                    $student->update($data);
+                } else {
+                    Siswa::create($data);
+                }
+            });
+        } catch (Throwable $exception) {
+            if ($newPhoto !== null) {
+                Storage::disk('public')->delete($newPhoto);
+            }
+
+            throw $exception;
+        }
+
+        if ($newPhoto !== null && $previousPhoto) {
+            Storage::disk('public')->delete($previousPhoto);
+        }
+    }
+
+    private function storeStudentPhoto(UploadedFile $photo): string
+    {
+        $source = @imagecreatefromstring($photo->getContent());
+        if ($source === false) {
+            throw ValidationException::withMessages(['foto' => 'Foto siswa rusak atau tidak dapat diproses.']);
+        }
+
+        $image = false;
+        $stream = false;
+        try {
+            $image = imagecreatetruecolor(imagesx($source), imagesy($source));
+            $stream = fopen('php://temp', 'w+b');
+            if ($image === false || $stream === false) {
+                throw new RuntimeException('Foto siswa tidak dapat diproses.');
+            }
+
+            imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
+            imagecopy($image, $source, 0, 0, 0, 0, imagesx($source), imagesy($source));
+            if (! imagejpeg($image, $stream, 90)) {
+                throw new RuntimeException('Foto siswa tidak dapat diproses.');
+            }
+            rewind($stream);
+
+            $path = 'uploads/foto/'.Str::uuid().'.jpg';
+            try {
+                if (! Storage::disk('public')->put($path, $stream)) {
+                    throw new RuntimeException('Foto siswa gagal disimpan.');
+                }
+            } catch (Throwable $exception) {
+                Storage::disk('public')->delete($path);
+
+                throw $exception;
+            }
+
+            return $path;
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+            if ($image !== false) {
+                imagedestroy($image);
+            }
+            imagedestroy($source);
+        }
     }
 }

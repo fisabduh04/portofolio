@@ -158,6 +158,41 @@ test('daily attendance still defaults to today and allows input outside lesson h
         ->assertOk()->assertViewHas('date', '2026-09-21');
 });
 
+test('daily attendance rejects the entire request for students outside the selected schedule roster', function (string $membership, bool $editing, string $category) {
+    ['user' => $user, 'jadwal' => $jadwal, 'student' => $student] = dailyAttendanceContext();
+    $outsider = Siswa::factory()->create();
+    DB::table('kelas_siswas')->insert([
+        'siswa_id' => $outsider->id,
+        'kelas_id' => $membership === 'other class' ? Kelas::factory()->create()->id : $jadwal->kelas_id,
+        'tahun_id' => $membership === 'other period' ? Tahun::factory()->create(['isActive' => true])->id : $jadwal->tahun_id,
+    ]);
+    $invalidId = $membership === 'malformed key' ? $student->id.'e0' : $outsider->id;
+    if ($editing) {
+        $logbook = Logbook::create([
+            'jadwal_id' => $jadwal->id, 'kelas_id' => $jadwal->kelas_id, 'pegawai_id' => $user->pegawai_id,
+            'kategori' => $category, 'tanggal' => '2026-09-21', 'catatan' => 'Catatan asli',
+        ]);
+        $logbook->absensis()->create(['siswa_id' => $student->id, 'status' => 'Izin']);
+    }
+
+    $this->actingAs($user)->post(route('absensi.harian.store'), [
+        'kelas_id' => $jadwal->kelas_id, 'kategori' => $category, 'tanggal' => '2026-09-21',
+        'catatan' => 'Catatan diganti',
+        'attendance' => [$student->id => ['status' => 'Hadir'], $invalidId => ['status' => 'Hadir']],
+    ])->assertSessionHasErrors([
+        'attendance' => 'Data presensi memuat siswa yang bukan anggota kelas dan periode jadwal yang dipilih.',
+    ]);
+
+    $this->assertDatabaseCount('logbooks', $editing ? 1 : 0);
+    $this->assertDatabaseCount('absensis', $editing ? 1 : 0);
+    if ($editing) {
+        $this->assertDatabaseHas('logbooks', ['id' => $logbook->id, 'catatan' => 'Catatan asli']);
+        $this->assertDatabaseHas('absensis', ['logbook_id' => $logbook->id, 'siswa_id' => $student->id, 'status' => 'Izin']);
+    }
+})->with(['other class', 'other period', 'malformed key'])
+    ->with(['create' => false, 'update' => true])
+    ->with(['piket_masuk', 'piket_pulang']);
+
 test('management can select a date without a duty assignment', function (string $role) {
     ['jadwal' => $jadwal] = dailyAttendanceContext();
     $user = User::factory()->create(['role' => $role, 'is_active' => true]);

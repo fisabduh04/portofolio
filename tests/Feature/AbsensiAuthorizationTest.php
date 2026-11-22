@@ -2,6 +2,7 @@
 
 use App\Models\Jadwal;
 use App\Models\JadwalPiket;
+use App\Models\Kelas;
 use App\Models\Logbook;
 use App\Models\Pegawai;
 use App\Models\Siswa;
@@ -138,3 +139,39 @@ test('guests cannot open or submit attendance', function () {
     $this->get(route('absensi.create'))->assertRedirect(route('login'));
     $this->post(route('absensi.store'))->assertRedirect(route('login'));
 });
+
+test('manual attendance rejects the entire request for students outside the schedule roster', function (string $membership, bool $editing) {
+    $jadwal = Jadwal::factory()->create();
+    $user = User::factory()->create(['role' => 'guru', 'is_active' => true, 'pegawai_id' => $jadwal->pegawai_id]);
+    $student = Siswa::factory()->create();
+    $outsider = Siswa::factory()->create();
+    DB::table('kelas_siswas')->insert([
+        ['siswa_id' => $student->id, 'kelas_id' => $jadwal->kelas_id, 'tahun_id' => $jadwal->tahun_id],
+        ['siswa_id' => $outsider->id,
+            'kelas_id' => $membership === 'other class' ? Kelas::factory()->create()->id : $jadwal->kelas_id,
+            'tahun_id' => $membership === 'other period' ? Tahun::factory()->create()->id : $jadwal->tahun_id],
+    ]);
+    $invalidId = $membership === 'malformed key' ? $student->id.'e0' : $outsider->id;
+    if ($editing) {
+        $logbook = Logbook::create([
+            'jadwal_id' => $jadwal->id, 'kelas_id' => $jadwal->kelas_id, 'pegawai_id' => $user->pegawai_id,
+            'kategori' => 'mapel', 'tanggal' => '2026-09-21', 'materi' => 'Materi asli',
+        ]);
+        $logbook->absensis()->create(['siswa_id' => $student->id, 'status' => 'Izin']);
+    }
+
+    $this->actingAs($user)->post(route('absensi.store'), [
+        'jadwal_id' => $jadwal->id, 'kategori' => 'mapel', 'tanggal' => '2026-09-21',
+        'materi' => 'Materi diganti',
+        'attendance' => [$student->id => ['status' => 'Hadir'], $invalidId => ['status' => 'Hadir']],
+    ])->assertSessionHasErrors([
+        'attendance' => 'Data presensi memuat siswa yang bukan anggota kelas dan periode jadwal yang dipilih.',
+    ]);
+
+    $this->assertDatabaseCount('logbooks', $editing ? 1 : 0);
+    $this->assertDatabaseCount('absensis', $editing ? 1 : 0);
+    if ($editing) {
+        $this->assertDatabaseHas('logbooks', ['id' => $logbook->id, 'materi' => 'Materi asli']);
+        $this->assertDatabaseHas('absensis', ['logbook_id' => $logbook->id, 'siswa_id' => $student->id, 'status' => 'Izin']);
+    }
+})->with(['other class', 'other period', 'malformed key'])->with(['create' => false, 'update' => true]);

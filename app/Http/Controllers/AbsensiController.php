@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Absensi;
 use App\Models\Jadwal;
 use App\Models\Kelas;
+use App\Models\KelasSiswa;
 use App\Models\Logbook;
 use App\Models\Pegawai;
 use App\Models\Siswa;
@@ -12,11 +13,13 @@ use App\Models\Tahun;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class AbsensiController extends Controller
 {
@@ -64,10 +67,7 @@ class AbsensiController extends Controller
             ->first();
 
         // Ambil daftar siswa berdasarkan kelas dan tahun ajaran dari jadwal
-        $students = Siswa::whereHas('KelasSiswa', function ($q) use ($jadwal) {
-            $q->where('kelas_id', $jadwal->kelas_id)
-                ->where('tahun_id', $jadwal->tahun_id);
-        })->orderBy('nama')->get();
+        $students = $this->attendanceStudents($jadwal);
 
         return view('absensi.input', compact('jadwal', 'students', 'existingLogbook', 'mode', 'kategori', 'date'));
     }
@@ -102,6 +102,8 @@ class AbsensiController extends Controller
 
         $jadwal = Jadwal::findOrFail($request->jadwal_id);
         Gate::authorize('input-presensi', [$jadwal, $request->kategori]);
+
+        $this->validateAttendanceStudents($request, $jadwal);
 
         // --- AUTO-FIX: Coba hubungkan akun Admin/Operator ke Pegawai jika belum ada ---
         if (! $user->pegawai_id && in_array($user->role, ['admin', 'operator', 'kepala'])) {
@@ -213,6 +215,32 @@ class AbsensiController extends Controller
         }
     }
 
+    /** @return Collection<int, Siswa> */
+    private function attendanceStudents(Jadwal $jadwal): Collection
+    {
+        return KelasSiswa::with('siswa:id,nama,nipd')
+            ->where('kelas_id', $jadwal->kelas_id)
+            ->where('tahun_id', $jadwal->tahun_id)
+            ->get(['id', 'siswa_id'])
+            ->map(fn (KelasSiswa $placement): Siswa => $placement->siswa)
+            ->unique('id')
+            ->sortBy('nama')
+            ->values();
+    }
+
+    private function validateAttendanceStudents(Request $request, Jadwal $jadwal): void
+    {
+        $allowedStudentIds = KelasSiswa::where('kelas_id', $jadwal->kelas_id)
+            ->where('tahun_id', $jadwal->tahun_id)
+            ->pluck('siswa_id')->all();
+
+        if (array_diff(array_keys($request->input('attendance')), $allowedStudentIds) !== []) {
+            throw ValidationException::withMessages([
+                'attendance' => 'Data presensi memuat siswa yang bukan anggota kelas dan periode jadwal yang dipilih.',
+            ]);
+        }
+    }
+
     // --- PRESENSI HARIAN (PIKET) ---
     public function createHarian(Request $request): View|RedirectResponse
     {
@@ -263,11 +291,8 @@ class AbsensiController extends Controller
             ->where('kategori', $kategori)
             ->first();
 
-        // Ambil Siswa Aktif di Kelas
-        $students = Siswa::whereHas('KelasSiswa', function ($q) use ($kelasId, $jadwal) {
-            $q->where('kelas_id', $kelasId)
-                ->where('tahun_id', $jadwal->tahun_id);
-        })->orderBy('nama')->get();
+        // Ambil daftar siswa berdasarkan kelas dan tahun ajaran dari jadwal
+        $students = $this->attendanceStudents($jadwal);
 
         return view('absensi.harian.create', compact('kelas', 'students', 'existingLogbook', 'type', 'kategori', 'jadwal', 'date'));
     }
@@ -324,6 +349,8 @@ class AbsensiController extends Controller
             return redirect()->route('absensi.harian.index', ['date' => $date])
                 ->with('error', "Tidak ada jadwal pelajaran untuk kelas ini pada $dayName, $date di tahun ajaran aktif. Silakan pilih tanggal lain atau periksa jadwal kelas.");
         }
+
+        $this->validateAttendanceStudents($request, $jadwal);
 
         try {
             DB::beginTransaction();
